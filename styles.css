@@ -200,9 +200,9 @@ a:hover{ color: var(--accent-strong); text-decoration: underline; text-underline
 
 /* Writing list with year column */
 .writing{
-  display:grid; grid-template-columns: 110px 1fr; gap:22px; max-width: 780px; margin: 0 auto;
+  display:block; max-width: 780px; margin: 0 auto;
 }
-.year{ color: var(--muted); font-weight:700; }
+.year{ color: var(--muted); font-weight:700; margin: 22px 0 6px; }
 .postlist{ margin: 0 0 28px 0; padding:0; list-style:none; }
 .postlist li{ margin: 10px 0; }
 .postlist a{ color: var(--text); text-decoration:none; }
@@ -239,6 +239,12 @@ footer{ color: var(--muted); font-size: 14px; margin-top: 40px; padding: 40px 0 
 .post-content p{ margin: 0 0 16px 0; }
 .post-content h2{ margin: 28px 0 8px; }
 .post-content strong{ font-weight: 700; }
+
+/* Post layout: collapse sidebar on mobile */
+@media (max-width: 720px){
+  .post-grid{ grid-template-columns: 1fr; }
+  .post-meta{ display: none; }
+}
 
 /* Mobile: dropdown nav with hamburger */
 @media (max-width: 720px){
