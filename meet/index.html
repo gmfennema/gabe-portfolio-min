@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Redirecting…</title>
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="icon" href="../assets/favicon.png" type="image/png"/>
+  <meta name="robots" content="noindex">
+</head>
+<body>
+  <main style="max-width: 720px; margin: 4rem auto; padding: 0 1rem;">
+    <h1>One moment…</h1>
+    <p>Redirecting if configured. If nothing happens, go <a href="../">home</a>.</p>
+  </main>
+  <script>
+  (function () {
+    function normalizePath(pathname) {
+      try {
+        var path = decodeURIComponent(pathname);
+        path = path.split('?')[0].split('#')[0];
+        path = path.replace(/\.html$/i, '').replace(/^\/+|\/+$/g, '');
+        return path.toLowerCase();
+      } catch (e) {
+        return pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+      }
+    }
+
+    function toUrl(url) {
+      if (/^https?:\/\//i.test(url)) return url;
+      return url;
+    }
+
+    var requestedPath = normalizePath(window.location.pathname);
+    var lastSegment = requestedPath.split('/').filter(Boolean).pop() || 'meet';
+
+    function fetchRedirects() {
+      var candidates = [
+        '../redirects.json',     // project subpath
+        '/redirects.json',       // site root
+        'redirects.json'         // same folder (fallback)
+      ];
+
+      function tryNext(i) {
+        if (i >= candidates.length) return Promise.resolve(null);
+        var url = candidates[i] + '?v=' + Date.now();
+        return fetch(url, { cache: 'no-store' })
+          .then(function (res) { return res.ok ? res.json() : null; })
+          .catch(function () { return null; })
+          .then(function (json) { return json || tryNext(i + 1); });
+      }
+
+      return tryNext(0);
+    }
+
+    fetchRedirects().then(function (mapping) {
+      if (!mapping || typeof mapping !== 'object') return;
+      var target = null;
+
+      if (mapping.hasOwnProperty(requestedPath)) target = mapping[requestedPath];
+      if (!target && lastSegment && mapping.hasOwnProperty(lastSegment)) target = mapping[lastSegment];
+
+      if (typeof target === 'string' && target.trim()) {
+        window.location.replace(toUrl(target.trim()));
+      }
+    });
+  })();
+  </script>
+</body>
+</html>
+
+

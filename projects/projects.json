@@ -1,0 +1,26 @@
+[
+  {
+    "title": "Sheets to Slack",
+    "date": "2025-05-12",
+    "path": "projects/sheets-to-slack.html",
+    "summary": "Send Google Sheets data to Slack with scheduled messages, slash-command triggers, and a visual post builder.",
+    "links": [
+      { "label": "Get Add-on", "url": "https://gabefen.com/sheets-to-slack/" },
+      { "label": "Purchase", "url": "https://gabefen.com/sheets-to-slack/" }
+    ]
+  },
+  {
+    "title": "Google Sheets Theme Generator",
+    "date": "2023-09-11",
+    "path": "https://workspace.google.com/marketplace/app/gabes_theme_generator/407160235109?hl=en&pann=sheets_addon_widget",
+    "summary": "Generate and apply cohesive color themes to Google Sheets with dark mode, saved themes, and font selection.",
+    "links": [
+      {
+        "label": "View on Marketplace",
+        "url": "https://workspace.google.com/marketplace/app/gabes_theme_generator/407160235109?hl=en&pann=sheets_addon_widget"
+      }
+    ]
+  }
+]
+
+

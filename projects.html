@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Projects • Gabe Fennema</title>
+  <meta name="description" content="Selected projects with images and links."/>
+  <link rel="stylesheet" href="styles.css"/>
+  <link rel="icon" href="assets/favicon.png" type="image/png"/>
+  <style>
+  html[data-theme="dark"] { color-scheme: dark; }
+  html[data-theme="light"] { color-scheme: light; }
+  </style>
+  <meta name="robots" content="index,follow"/>
+  <meta property="og:title" content="Projects • Gabe Fennema"/>
+  <meta property="og:description" content="Selected projects with images and links."/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:url" content="projects.html"/>
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="Projects • Gabe Fennema"/>
+  <meta name="twitter:description" content="Selected projects with images and links."/>
+  <link rel="preload" as="fetch" href="projects/projects.json" crossorigin="anonymous"/>
+</head>
+<body>
+  <div class="container">
+    <header class="site">
+      <div class="brand"><a href="index.html">GabeFen.com</a></div>
+      <nav class="nav">
+        <a href="writing.html">WRITING</a>
+        <a href="recommendations.html">RECOMMENDATIONS</a>
+        <a href="projects.html">PROJECTS</a>
+        <a href="about.html">ABOUT</a>
+      </nav>
+      <div class="toggle">
+        <span>AUTO</span>
+        <div class="switch" data-mode="auto" aria-label="Theme toggle"><span class="knob"></span></div>
+      </div>
+    </header>
+    <hr class="rule"/>
+
+  <h1 class="center-title">Projects</h1>
+  <p class="center-sub">A collection of things I've built and things I'm working on.</p>
+
+  <section>
+    <div id="projects-root" class="projects"></div>
+  </section>
+
+    <footer>
+      <p>© <span id="y"></span> Gabe Fennema</p>
+    </footer>
+  </div>
+  <script>
+    document.getElementById('y').textContent = new Date().getFullYear();
+  </script>
+  <script src="scripts.js"></script>
+</body>
+</html>
+
+

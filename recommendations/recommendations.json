@@ -1,0 +1,50 @@
+[
+  {
+    "type": "Book",
+    "title": "Golden Son",
+    "author": "Pierce Brown",
+    "url": "",
+    "date": "2025-08-12",
+    "rating": 4,
+    "note": " I enjoyed this book almost as much as the first, but overall the story moved a little bit slower and there weren't as many interesting mini-arcs as compared to the first."
+  },
+  {
+    "type": "TV",
+    "title": "The Day of the Jackal",
+    "author": "Seasons 1",
+    "url": "",
+    "date": "2025-08-10",
+    "rating": 3.5,
+    "note": "Overall enertaining, but a little slow moving between the 2-3 climactic scenes of the show."
+  },
+  {
+    "type": "Book",
+    "title": "Red Rising",
+    "author": "Pierce Brown",
+    "url": "",
+    "date": "2025-08-07",
+    "rating": 4.5,
+    "note": "Extremely easy read and fast paced. Super easy to get through the whole book very quickly."
+  },
+  {
+    "type": "TV",
+    "title": "Squid Game",
+    "author": "Seasons 3",
+    "url": "",
+    "date": "2024-07-15",
+    "rating": 3.5,
+    "note": "Overall pretty good, but I still enjoyed the shock and awe of Seasons 1 and 2 better. Season 3 was perfectly adequate to wrap up the series."
+  },
+  {
+    "type": "TV",
+    "title": "From",
+    "author": "Seasons 1–3",
+    "url": "",
+    "date": "2024-06-01",
+    "rating": 4,
+    "note": " I genuinely did not think I would like this show as much as I did. It's extremely reminiscent of Lost with a somewhat creepy twist, but as a non-horror fan I was able to stomach it and still really enjoy it."
+  }
+
+]
+
+

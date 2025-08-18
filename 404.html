@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Redirecting…</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="assets/favicon.png" type="image/png"/>
+    <meta name="robots" content="noindex">
+</head>
+<body>
+    <main style="max-width: 720px; margin: 4rem auto; padding: 0 1rem;">
+        <h1>One moment…</h1>
+        <p>Checking for a redirect. If nothing happens, this page may not exist.</p>
+        <p><a href="/">Go back home</a></p>
+    </main>
+
+    <script>
+    (function () {
+        function normalizePath(pathname) {
+            try {
+                var path = decodeURIComponent(pathname);
+                // Remove query/hash if somehow present
+                path = path.split('?')[0].split('#')[0];
+                // Remove leading/trailing slashes and ".html"
+                path = path.replace(/\.html$/i, '').replace(/^\/+|\/+$/g, '');
+                // Collapse multiple slashes
+                path = path.replace(/\/+/, '/');
+                // Lowercase for consistency
+                return path.toLowerCase();
+            } catch (e) {
+                return pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+            }
+        }
+
+        function toNavigableUrl(url) {
+            // Absolute external URLs pass through; others resolve relative to current path
+            if (/^https?:\/\//i.test(url)) return url;
+            return url;
+        }
+
+        var requestedPath = normalizePath(window.location.pathname);
+        var lastSegment = requestedPath.split('/').filter(Boolean).pop() || '';
+
+        function fetchRedirects() {
+            var segments = window.location.pathname.split('/').filter(Boolean);
+            var candidates = [];
+
+            // Try project-site base (e.g., /repo/redirects.json)
+            if (segments.length >= 1) {
+                candidates.push('/' + segments[0] + '/redirects.json');
+            }
+
+            // Try site root
+            candidates.push('/redirects.json');
+
+            // As a last resort, relative
+            candidates.push('redirects.json');
+
+            function tryNext(index) {
+                if (index >= candidates.length) return Promise.resolve(null);
+                var url = candidates[index] + '?v=' + Date.now();
+                return fetch(url, { cache: 'no-store' })
+                    .then(function (res) { return res.ok ? res.json() : null; })
+                    .catch(function () { return null; })
+                    .then(function (json) { return json || tryNext(index + 1); });
+            }
+
+            return tryNext(0);
+        }
+
+        fetchRedirects().then(function (mapping) {
+            if (!mapping || typeof mapping !== 'object') return;
+
+            var target = null;
+
+            // Exact path match first
+            if (mapping.hasOwnProperty(requestedPath)) {
+                target = mapping[requestedPath];
+            }
+
+            // Then try by last segment (e.g., "/meet" or "/r/meet")
+            if (!target && lastSegment && mapping.hasOwnProperty(lastSegment)) {
+                target = mapping[lastSegment];
+            }
+
+            if (typeof target === 'string' && target.trim().length > 0) {
+                var url = toNavigableUrl(target.trim());
+                window.location.replace(url);
+            }
+        });
+    })();
+    </script>
+</body>
+</html>
+
+

@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Auto-Decline Events Outside of Working Hours in Google Calendar • Gabe Fennema</title>
+  <meta name="description" content="Automatically respond to meetings outside your working hours in Google Calendar using a simple Google Apps Script."/>
+  <meta name="post:date" content="2023-01-30"/>
+  <link rel="stylesheet" href="../styles.css"/>
+  <link rel="icon" href="../assets/favicon.png" type="image/png"/>
+  <style>
+  html[data-theme="dark"] { color-scheme: dark; }
+  html[data-theme="light"] { color-scheme: light; }
+  </style>
+  <meta name="robots" content="index,follow"/>
+  <meta name="author" content="Gabe Fennema"/>
+  <meta property="og:title" content="Auto-Decline Events Outside of Working Hours in Google Calendar"/>
+  <meta property="og:description" content="Automatically respond to meetings outside your working hours in Google Calendar using a simple Google Apps Script."/>
+  <meta property="og:type" content="article"/>
+  <meta property="article:published_time" content="2023-01-30"/>
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="Auto-Decline Events Outside of Working Hours in Google Calendar"/>
+  <meta name="twitter:description" content="Automatically respond to meetings outside your working hours in Google Calendar using a simple Google Apps Script."/>
+</head>
+<body>
+  <div class="post-container">
+    <header class="site">
+      <div class="brand"><a href="../index.html">GabeFen.com</a></div>
+      <nav class="nav">
+        <a href="../writing.html">WRITING</a>
+        <a href="../recommendations.html">RECOMMENDATIONS</a>
+        <a href="../projects.html">PROJECTS</a>
+        <a href="../about.html">ABOUT</a>
+      </nav>
+      <div class="toggle">
+        <span>AUTO</span>
+        <div class="switch" data-mode="auto" aria-label="Theme toggle"><span class="knob"></span></div>
+      </div>
+    </header>
+    <hr class="rule"/>
+
+    <div class="post-hero">
+      <h1 class="post-title">Auto-Decline Events Outside of Working Hours in Google Calendar</h1>
+    </div>
+
+    <div class="post-grid">
+      <aside class="post-meta">
+        <div class="card">
+          <div><strong>Post</strong><br/>Auto-Decline Events Outside of Working Hours in Google Calendar</div>
+        </div>
+        <div class="card">
+          <div><strong>Published</strong><br/>January 30, 2023</div>
+        </div>
+      </aside>
+      <article class="post-content">
+        <h2>The Problem</h2>
+        <p>Remote work and time zone differences can lead to accidental 6am or 7pm meetings. While Google offers a working hours feature, it can be overlooked by organizers—especially when they book via non‑Google tools.</p>
+
+        <h2>The Solution</h2>
+        <p>This Google Apps Script automatically responds to non‑working hour meetings on your calendar. You can either decline them or mark your attendance as “Maybe” for a gentler approach.</p>
+
+        <h2>Setup Instructions</h2>
+        <ul>
+          <li>Create a new Google Apps Script project (<a href="https://script.google.com/" target="_blank" rel="noopener">open Apps Script</a>).
+          </li>
+          <li>Copy and paste the code below into the project editor.</li>
+          <li>Update the variables in the <em>User Inputs</em> section.</li>
+          <li>Run <code>createMeetingResponerTrigger</code> to create a recurring trigger.</li>
+          <li>To remove it later, run <code>deleteMeetingResponerTrigger</code>.</li>
+        </ul>
+
+        <h2>The Code</h2>
+        <pre><code>// ----------- USER INPUTS ----------------//
+var myEmail = 'YourEmail@example.com';
+
+// Days of the week you want to decline events for
+// 0 for Sunday, 1 for Monday, 2 for Tuesday, and so on.
+var declineDays = [6,0];
+
+// Your working hours
+var startTime = 7.5; // 7:30am
+var endTime = 17; // 5:30pm
+
+// Event Autoresponse [MAYBE, NO, YES]
+var autoResponse = CalendarApp.GuestStatus.MAYBE
+// -------- END OF YOUR INPUTS -------------//
+
+
+function autoMeetingResponer() {
+  var calendar = CalendarApp.getCalendarById(myEmail);
+  var startDate = new Date();
+  var endDate = new Date();
+  endDate.setDate(endDate.getDate() + 14);
+  
+  // Get all events between the start and end dates
+  var events = calendar.getEvents(startDate, endDate);
+  
+  for (var i = 0; i &lt; events.length; i++) {
+    // Get the event time in hours
+    var eventStart = events[i].getStartTime().getHours() + (events[i].getStartTime().getMinutes() / 60);
+    var eventEnd = events[i].getEndTime().getHours() + (events[i].getEndTime().getMinutes() / 60);
+    var eventStatus = events[i].getMyStatus(); // Get the status of the event for the current user
+    var eventDay = events[i].getStartTime().getDay(); // get the day of the week for the event
+    
+    // Check if the event is outside working hours OR if you are the creator of the event
+    if (eventStart &lt; startTime || eventEnd &gt; endTime) {
+            if(eventStatus == CalendarApp.GuestStatus.INVITED) {
+            events[i].setMyStatus(autoResponse)
+            Logger.log("Set due to time")
+      }
+    }
+
+    // Check if the event is on a non-working day OR if you are the creator of the event
+    if(declineDays.indexOf(eventDay) != -1){   
+      if(eventStatus == CalendarApp.GuestStatus.INVITED) {
+        events[i].setMyStatus(autoResponse)
+        Logger.log("Set due to day")
+      }
+    }
+  }
+}
+
+
+function createMeetingResponerTrigger() {
+  // Create a trigger to run the autoMeetingResponer() function when a new event is added to the calendar
+  ScriptApp.newTrigger('autoMeetingResponer').forUserCalendar(myEmail).onEventUpdated().create();
+}
+
+function deleteMeetingResponerTrigger() {
+  // Get all existing triggers
+  var triggers = ScriptApp.getProjectTriggers();
+  
+  // Iterate through the triggers
+  for (var i = 0; i &lt; triggers.length; i++) {
+    // Check if the trigger is for the autoMeetingResponer() function
+    if (triggers[i].getHandlerFunction() == "autoMeetingResponer") {
+      // Delete the trigger
+      ScriptApp.deleteTrigger(triggers[i]);
+    }
+  }
+}
+</code></pre>
+      </article>
+    </div>
+
+    <footer>
+      <p>© <span id="y"></span> Gabe Fennema</p>
+    </footer>
+  </div>
+  <script>
+    document.getElementById('y').textContent = new Date().getFullYear();
+  </script>
+  <script src="../scripts.js"></script>
+</body>
+</html>
+

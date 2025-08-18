@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Sheets to Slack • Project • Gabe Fennema</title>
+  <meta name="description" content="Send Google Sheets data to Slack with scheduled messages, slash commands, and a visual post builder."/>
+  <link rel="stylesheet" href="../styles.css"/>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml"/>
+  <style>
+  html[data-theme="dark"] { color-scheme: dark; }
+  html[data-theme="light"] { color-scheme: light; }
+  </style>
+  <meta property="og:title" content="Sheets to Slack • Project • Gabe Fennema"/>
+  <meta property="og:description" content="Send Google Sheets data to Slack with scheduled messages, slash commands, and a visual post builder."/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:url" content="sheets-to-slack.html"/>
+  <meta name="twitter:card" content="summary"/>
+  <meta name="twitter:title" content="Sheets to Slack • Project • Gabe Fennema"/>
+  <meta name="twitter:description" content="Send Google Sheets data to Slack with scheduled messages, slash commands, and a visual post builder."/>
+  <link rel="canonical" href="sheets-to-slack.html"/>
+  <link rel="prefetch" href="../projects.html"/>
+  <link rel="prefetch" href="../index.html"/>
+  <link rel="prefetch" href="../writing.html"/>
+</head>
+<body>
+  <div class="post-container">
+    <header class="site">
+      <div class="brand"><a href="../index.html">gabe.dev</a></div>
+      <nav class="nav">
+        <a href="../writing.html">WRITING</a>
+        <a href="../recommendations.html">RECOMMENDATIONS</a>
+        <a href="../projects.html">PROJECTS</a>
+        <a href="../about.html">ABOUT</a>
+      </nav>
+      <div class="toggle">
+        <span>AUTO</span>
+        <div class="switch" data-mode="auto" aria-label="Theme toggle"><span class="knob"></span></div>
+      </div>
+    </header>
+    <hr class="rule"/>
+
+    <div class="project-detail-hero">
+      <h1 class="post-title">Sheets to Slack</h1>
+    </div>
+
+    <div class="post-grid">
+      <aside class="post-meta project-meta">
+        <div class="card">
+          <div><strong>Project</strong><br/>Sheets to Slack</div>
+        </div>
+        <div class="card">
+          <div><strong>Stack</strong><br/>Google Apps Script · Google Sheets · Slack API</div>
+        </div>
+        <div class="card">
+          <div><strong>Links</strong></div>
+          <div class="links">
+            <a class="badge" href="https://gabefen.com/sheets-to-slack/" target="_blank" rel="noopener">Get Add-on</a>
+            <a class="badge" href="https://gabefen.com/sheets-to-slack/" target="_blank" rel="noopener">Purchase</a>
+          </div>
+        </div>
+      </aside>
+      <article class="post-content">
+        <div class="project-gallery">
+          <img src="../assets/slack-demo.gif" alt="Slack demo showing scheduled and on-demand updates" loading="lazy"/>
+        </div>
+        <p>Use your Google Sheet to send revenue forecasts, status reports, campaign statistics, sales updates, website traffic — anything — directly to Slack. Schedule messages on a daily or weekly basis or trigger on demand with slash commands. Build beautifully formatted posts without writing code using a visual post builder, and apply custom message styling.</p>
+
+        <h2>Features</h2>
+        <ul>
+          <li><strong>Message scheduling</strong>: Daily or weekly schedules keep channels updated using real-time values from Google Sheets.</li>
+          <li><strong>/Command triggers</strong>: Unlimited custom slash commands to fetch the latest data on demand.</li>
+          <li><strong>Visual post builder</strong>: Compose Slack Block Kit messages from Sheets using simple formulas.</li>
+          <li><strong>Custom message styling</strong>: Create rich, readable summaries for any team.</li>
+        </ul>
+
+        <h2>Message Scheduling</h2>
+        <p>Schedule messages on a <strong>daily or weekly</strong> cadence to be delivered to your Slack channel. With real-time data pulled from Google Sheets, your team stays up-to-date in one convenient place.</p>
+        <div class="project-gallery">
+          <img src="../assets/message-scheduling.jpg" alt="Message scheduling setup in Google Sheets" loading="lazy"/>
+        </div>
+
+        <h2>/Command Triggers</h2>
+        <p>Get custom-built reports <strong>on demand</strong>. Use slash commands to retrieve the most up-to-date data from your Google Sheet whenever you want. With <strong>unlimited commands</strong>, every team can quickly access critical data without leaving Slack.</p>
+        <div class="project-gallery">
+          <img src="../assets/comand-triggers.jpg" alt="Slash command triggers configuration" loading="lazy"/>
+        </div>
+
+        <h2>Visual Post Builder</h2>
+        <p>Set up beautifully customized Slack posts <strong>without code</strong>. Select the block type in Google Sheets and use formulas to link to your outputs, then send polished updates directly to Slack.</p>
+        <div class="project-gallery">
+          <img src="../assets/visual-post-builder.png" alt="Visual post builder for Slack posts in Google Sheets" loading="lazy"/>
+        </div>
+
+        <h2>Custom Message Styling</h2>
+        <p>Create a beautifully styled summary of your Google Sheets data that renders cleanly in Slack for any audience.</p>
+
+        <h2>Approach</h2>
+        <p>The core is a lightweight Apps Script project that reads structured ranges from Google Sheets, assembles Slack Block Kit payloads, and posts to Slack via Web API. Time-driven triggers handle scheduled posts, and a small web app endpoint receives slash-command requests for on-demand updates. Because the logic runs inside Apps Script, teams can deploy without external servers and keep configuration next to their data in Sheets.</p>
+        <ul>
+          <li>Data source: Named ranges and validation-driven inputs in Google Sheets</li>
+          <li>Scheduling: Apps Script time-based triggers (daily/weekly)</li>
+          <li>On-demand: Apps Script web app endpoint for Slack slash commands</li>
+          <li>Formatting: Block Kit payloads composed from cell values and helper formulas</li>
+        </ul>
+
+        <h2>Who it’s for</h2>
+        <p>Teams that live in Google Sheets and want automated reporting in Slack without maintaining a server: sales ops, marketing, finance, support, and leadership.</p>
+
+        <h2>Pricing</h2>
+        <div class="project-gallery" style="max-width: 720px;">
+          <div class="card" style="border:1px solid var(--rule); padding: 14px; border-radius: 8px;">
+            <p><strong>Free — Add-on</strong></p>
+            <ul>
+              <li>Schedule Unlimited Messages</li>
+              <li>Custom Post Styling</li>
+              <li>Use on 1 Google Sheet</li>
+              <li>Slash Command Triggers</li>
+              <li>Full Source Code Access</li>
+              <li>Local Code Execution</li>
+              <li>Custom Post Builder Tool</li>
+              <li>30-Minute Personalized Setup Call</li>
+            </ul>
+            <p><a class="badge" href="https://gabefen.com/sheets-to-slack/" target="_blank" rel="noopener">Get Add-on</a></p>
+          </div>
+          <div class="card" style="border:1px solid var(--rule); padding: 14px; border-radius: 8px;">
+            <p><strong>Lifetime Access — $70 one-time</strong></p>
+            <ul>
+              <li>Schedule Unlimited Messages</li>
+              <li>Custom Post Styling</li>
+              <li>Use Across Unlimited Google Sheets</li>
+              <li>Slash Command Triggers</li>
+              <li>Full Source Code Access</li>
+              <li>Local Code Execution</li>
+              <li>Custom Post Builder Tool</li>
+              <li>30-Minute Personalized Setup Call</li>
+            </ul>
+            <p><a class="badge" href="https://gabefen.com/sheets-to-slack/" target="_blank" rel="noopener">Purchase</a></p>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <footer>
+      <p>© <span id="y"></span> Gabe Fennema</p>
+    </footer>
+  </div>
+  <script>
+    document.getElementById('y').textContent = new Date().getFullYear();
+  </script>
+  <script src="../scripts.js"></script>
+</body>
+</html>
+
+

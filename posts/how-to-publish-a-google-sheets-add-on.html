@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>How to Publish a Google Sheets Add-on • Gabe Fennema</title>
+  <meta name="description" content="A practical, step-by-step guide to shipping a Sheets Add-on: website requirements, promo images, OAuth video, and the application process."/>
+  <meta name="post:date" content="2022-06-04"/>
+  <link rel="stylesheet" href="../styles.css"/>
+  <link rel="icon" href="../assets/favicon.png" type="image/png"/>
+  <style>
+  html[data-theme="dark"] { color-scheme: dark; }
+  html[data-theme="light"] { color-scheme: light; }
+  </style>
+  <meta name="robots" content="index,follow"/>
+  <meta name="author" content="Gabe Fennema"/>
+  <meta property="og:title" content="How to Publish a Google Sheets Add-on"/>
+  <meta property="og:description" content="A practical, step-by-step guide to shipping a Sheets Add-on: website requirements, promo images, OAuth video, and the application process."/>
+  <meta property="og:type" content="article"/>
+  <meta property="article:published_time" content="2022-06-04"/>
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="How to Publish a Google Sheets Add-on"/>
+  <meta name="twitter:description" content="A practical, step-by-step guide to shipping a Sheets Add-on: website requirements, promo images, OAuth video, and the application process."/>
+</head>
+<body>
+  <div class="post-container">
+    <header class="site">
+      <div class="brand"><a href="../index.html">GabeFen.com</a></div>
+      <nav class="nav">
+        <a href="../writing.html">WRITING</a>
+        <a href="../recommendations.html">RECOMMENDATIONS</a>
+        <a href="../projects.html">PROJECTS</a>
+        <a href="../about.html">ABOUT</a>
+      </nav>
+      <div class="toggle">
+        <span>AUTO</span>
+        <div class="switch" data-mode="auto" aria-label="Theme toggle"><span class="knob"></span></div>
+      </div>
+    </header>
+    <hr class="rule"/>
+
+    <div class="post-hero">
+      <h1 class="post-title">How to Publish a Google Sheets Add-on</h1>
+    </div>
+
+    <div class="post-grid">
+      <aside class="post-meta">
+        <div class="card">
+          <div><strong>Post</strong><br/>How to Publish a Google Sheets Add-on</div>
+        </div>
+        <div class="card">
+          <div><strong>Published</strong><br/>June 4, 2022</div>
+        </div>
+      </aside>
+      <article class="post-content">
+        <h2>Preface</h2>
+        <p>I prefer to put the “recipe” first. Here’s what you’re signing up for before you begin the (unnecessarily frustrating) process of publishing a Sheets add‑on.</p>
+        <p><strong>Details</strong></p>
+        <ul>
+          <li><strong>Amount of Work</strong>: 4–8 hours</li>
+          <li><strong>Approval Timeframe</strong>: 1–3 weeks</li>
+          <li><strong>Frustration Level</strong>: High</li>
+        </ul>
+        <p><strong>Ingredients</strong></p>
+        <ul>
+          <li>Website with custom domain</li>
+          <li>Apps Script project</li>
+          <li>Promotional images</li>
+          <li>Google Cloud Platform account (free tier)</li>
+        </ul>
+
+        <h2>Part 1 – Website Shenanigans</h2>
+        <h3>Google Search Console</h3>
+        <p>Register your site in Google Search Console. Depending on your host this can be a bit tricky, but it shouldn’t take long.</p>
+        <h3>Create a Product Page</h3>
+        <p>Make a clear, accessible product page describing what your add‑on does.</p>
+        <ul>
+          <li><strong>Functionality</strong>: Thoroughly describe how your add‑on enhances user workflows. Be accurate and inclusive.</li>
+          <li><strong>User Data Disclaimer</strong>: Explain in plain English what data you collect and why. For most simple add‑ons: only what’s needed for core functionality plus basic analytics.</li>
+          <li><strong>Privacy Policy</strong>: Link to a policy that clearly describes how you access, use, store, and share user data (see Google’s Limited Use Requirements).</li>
+          <li><strong>Terms of Service</strong>: Keep it simple—just ensure it exists and is linked.</li>
+          <li><strong>Avoid pitfalls</strong>: Don’t use the word “Google” in names; avoid special characters; include any consent‑screen image on your page; don’t require login to view.</li>
+        </ul>
+
+        <h2>Part 2 – Promotional Images</h2>
+        <h3>Canva is Your Friend</h3>
+        <p>You likely don’t need the Adobe suite. Canva’s free tier is more than enough.</p>
+        <h3>Required Sizes</h3>
+        <ul>
+          <li>App icon: 32×32 (required)</li>
+          <li>App icon: 48×48</li>
+          <li>App icon: 96×96</li>
+          <li>App icon: 128×128 (required)</li>
+          <li>Application card banner (required)</li>
+          <li>Screenshots: at least 3</li>
+        </ul>
+
+        <h2>Part 3 – YouTube OAuth Video</h2>
+        <h3>What to Record</h3>
+        <ol>
+          <li>Remove your app’s permissions from your Google account: <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener">myaccount.google.com/permissions</a>.</li>
+          <li>Start a screen recording; install the add‑on and go through the “Unverified” OAuth screen.</li>
+          <li>On the “Choose Account” page, highlight the <em>client ID</em> in the URL so the reviewer can see it.</li>
+          <li>After verifying, briefly demonstrate the core functionality.</li>
+          <li>Upload the video as unlisted and include the URL in your OAuth application.</li>
+        </ol>
+
+        <h2>Part 4 – The Application</h2>
+        <h3>First Things First</h3>
+        <p>In Google Cloud Console, create a project. You can stay within the free tier.</p>
+        <h3>OAuth Consent Screen</h3>
+        <ol>
+          <li>Search for and enable the “Google Sheets API”.</li>
+          <li>Go to <strong>Credentials</strong> → <strong>Create credentials</strong> → <strong>OAuth client ID</strong> → <strong>OAuth consent screen</strong>.</li>
+          <li>Fill out the forms and select the appropriate OAuth scopes.</li>
+          <li>Provide your YouTube video URL in the designated field.</li>
+        </ol>
+        <p>Wait for review. Responses can range from vague rejection to the “OAuth Granted” email. Typical turnaround: 24 hours to 5 days.</p>
+        <h3>Store Listing</h3>
+        <ol>
+          <li>Enable the <strong>Google Workspace Marketplace SDK</strong>.</li>
+          <li>Complete the listing with links and images from Parts 1 &amp; 2.</li>
+          <li>Get your Project ID from the Apps Script editor.</li>
+          <li>Ensure the OAuth scopes match what you submitted for OAuth verification.</li>
+          <li>Submit and wait 2–7 days for review.</li>
+        </ol>
+      </article>
+    </div>
+
+    <footer>
+      <p>© <span id="y"></span> Gabe Fennema</p>
+    </footer>
+  </div>
+  <script>
+    document.getElementById('y').textContent = new Date().getFullYear();
+  </script>
+  <script src="../scripts.js"></script>
+</body>
+</html>
+
