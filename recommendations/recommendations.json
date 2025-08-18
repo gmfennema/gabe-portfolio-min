@@ -1,6 +1,15 @@
 [
   {
     "type": "Book",
+    "title": "The Leftovers",
+    "author": "Season 1",
+    "url": "",
+    "date": "2025-08-16",
+    "rating": 3.5,
+    "note": "I probably had more fun thinking about the show than actually watching it. Enjoyable was similar to reading classic literature. Definitely not for everyone."
+  },
+  {
+    "type": "Book",
     "title": "Golden Son",
     "author": "Pierce Brown",
     "url": "",
