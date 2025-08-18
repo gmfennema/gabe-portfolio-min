@@ -1,7 +1,7 @@
 [
   {
     "title": "Sheets to Slack",
-    "date": "2025-05-12",
+    "date": "2024-05-12",
     "path": "projects/sheets-to-slack.html",
     "summary": "Send Google Sheets data to Slack with scheduled messages, slash-command triggers, and a visual post builder.",
     "links": [
@@ -18,6 +18,18 @@
       {
         "label": "View on Marketplace",
         "url": "https://workspace.google.com/marketplace/app/gabes_theme_generator/407160235109?hl=en&pann=sheets_addon_widget"
+      }
+    ]
+  },
+  {
+    "title": "Daily Wisdom Chrome Extension",
+    "date": "2023-06-29",
+    "path": "https://chromewebstore.google.com/detail/daily-wisdom/mnnifpoepkebdonijhhmfcmfmndmajde",
+    "summary": "A Chrome extension that displays a random quote from a curated list of authors every day.",
+    "links": [
+      {
+        "label": "View in Chrome Store",
+        "url": "https://chromewebstore.google.com/detail/daily-wisdom/mnnifpoepkebdonijhhmfcmfmndmajde"
       }
     ]
   }
