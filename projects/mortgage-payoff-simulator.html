@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Advanced Mortgage Payoff Simulator • Project • Gabe Fennema</title>
+  <meta name="description" content="Visualize standard vs accelerated mortgage payoff with a clean dashboard UI."/>
+  <link rel="stylesheet" href="../styles.css"/>
+  <link rel="icon" href="../assets/favicon.png" type="image/png"/>
+  <style>
+  html[data-theme="dark"] { color-scheme: dark; }
+  html[data-theme="light"] { color-scheme: light; }
+  /* Page-local styles for dashboard layout */
+  .dash{
+    margin-top: 24px;
+    display: grid;
+    grid-template-columns: 1.4fr .6fr;
+    gap: 18px;
+    align-items: start;
+  }
+  .panel{
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    background: var(--bg);
+    padding: 14px;
+  }
+  .panel h3{ margin: 4px 0 10px 0; font-size: 18px; }
+  .chart-wrap{ position: relative; width: 100%; height: 380px; }
+  @media (max-width: 720px){ .chart-wrap{ height: 300px; } }
+  .metrics{
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .metric{
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    background: var(--bg);
+    padding: 12px 14px;
+  }
+  .metric .label{ color: var(--muted); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+  .metric .value{ font-size: 22px; font-weight: 700; margin-top: 2px; }
+  .legend{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; color: var(--muted); font-size: 13px; margin-top: 8px; }
+  .legend .swatch{ width: 10px; height: 10px; border-radius: 999px; display:inline-block; }
+  .params{ display:grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 8px; }
+  .params .field{ display:flex; flex-direction:column; gap:4px; }
+  .params label{ display:flex; align-items:center; gap:6px; color: var(--muted); font-size: 12px; }
+  .params input, .params select{ border:1px solid var(--rule); border-radius:8px; padding:8px 10px; background: var(--bg); color: var(--text); transition: border-color .15s ease, box-shadow .15s ease; }
+  .params input:focus, .params select:focus{ outline:none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 24%, transparent); }
+  .one-time{ margin-top: 14px; }
+  .one-time h4{ margin: 8px 0 8px; font-size: 16px; }
+  .ot-actions{ display:flex; gap:8px; align-items:center; margin-bottom: 8px; }
+  .ot-list{ display:grid; grid-template-columns: 1fr; gap:8px; }
+  .ot-row{ display:grid; grid-template-columns: 140px 110px 1fr 110px; gap:8px; align-items:center; border:1px solid var(--rule); border-radius:8px; padding:8px 10px; background: var(--bg); transition: opacity .2s ease, transform .2s ease; }
+  .ot-row.anim-enter{ opacity: 0; transform: translateY(-6px); }
+  .ot-row.anim-exit{ opacity: 0; transform: translateY(6px); }
+  .ot-row input, .ot-row select{ border:1px solid var(--rule); border-radius:8px; padding:8px 10px; background: var(--bg); color: var(--text); }
+  .btn{ border:1px solid var(--rule); background: var(--bg); color: var(--muted); padding:6px 10px; border-radius:999px; cursor:pointer; transition: color .15s ease, border-color .15s ease, transform .05s ease; }
+  .btn:hover{ color: var(--accent-strong); border-color: var(--accent); }
+  .btn:active{ transform: translateY(1px); }
+  .info{ display:inline-block; width:16px; height:16px; border:1px solid var(--rule); border-radius:999px; font-size:11px; line-height:16px; text-align:center; color: var(--muted); cursor: help; position: relative; }
+  .info::before{ content:'?'; font-weight:700; }
+  .info:hover, .info:focus{ color: var(--accent-strong); border-color: var(--accent); outline: none; }
+  .info::after{ content: attr(data-tip); position:absolute; top: 22px; left: 50%; transform: translateX(-50%); width: min(300px, 80vw); background: var(--bg); color: var(--text); border:1px solid var(--rule); border-radius:8px; padding:8px 10px; box-shadow: 0 2px 10px rgba(0,0,0,.06); white-space: normal; line-height:1.4; opacity: 0; pointer-events: none; transition: opacity .15s ease; z-index: 10; }
+  .info:hover::after, .info:focus::after{ opacity: 1; }
+  /* Subtle page animations */
+  @keyframes fade-up{ from{ opacity:0; transform: translateY(6px); } to{ opacity:1; transform: translateY(0); } }
+  .panel{ animation: fade-up .35s ease both; }
+  .metrics .metric{ animation: fade-up .35s ease both; }
+  .metrics .metric:nth-child(1){ animation-delay: .02s; }
+  .metrics .metric:nth-child(2){ animation-delay: .05s; }
+  .metrics .metric:nth-child(3){ animation-delay: .08s; }
+  .metrics .metric:nth-child(4){ animation-delay: .11s; }
+  .metrics .metric:nth-child(5){ animation-delay: .14s; }
+  .metrics .metric:nth-child(6){ animation-delay: .17s; }
+  .metrics .metric{ transition: transform .15s ease, box-shadow .2s ease; }
+  .metrics .metric:hover{ transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,.06); }
+  @media (prefers-reduced-motion: reduce){
+    .panel, .metrics .metric, .ot-row{ animation: none !important; }
+    .metrics .metric{ transition: none; }
+  }
+  @media (max-width: 960px){ .dash{ grid-template-columns: 1fr; } }
+  @media (max-width: 720px){ .params{ grid-template-columns: 1fr; } .legend{ font-size: 12px; } }
+  @media (max-width: 720px){ .ot-row{ grid-template-columns: 1fr 1fr; } .ot-row .col-actions{ grid-column: 1 / -1; } }
+  </style>
+  <meta property="og:title" content="Advanced Mortgage Payoff Simulator • Project • Gabe Fennema"/>
+  <meta property="og:description" content="Visualize standard vs accelerated mortgage payoff with a clean dashboard UI."/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:url" content="mortgage-payoff-simulator.html"/>
+  <meta name="twitter:card" content="summary"/>
+  <meta name="twitter:title" content="Advanced Mortgage Payoff Simulator • Project • Gabe Fennema"/>
+  <meta name="twitter:description" content="Visualize standard vs accelerated mortgage payoff with a clean dashboard UI."/>
+  <link rel="canonical" href="mortgage-payoff-simulator.html"/>
+  <link rel="prefetch" href="../projects.html"/>
+  <link rel="prefetch" href="../index.html"/>
+  <link rel="prefetch" href="../writing.html"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+  /* Increase the max width just for this page */
+  .page-max{ max-width: 1200px; }
+  </style>
+  <script>
+  // Helpers to read CSS variables for theming
+  function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  </script>
+  </head>
+<body>
+  <div class="container page-max">
+    <header class="site">
+      <div class="brand"><a href="../index.html">GabeFen.com</a></div>
+      <nav class="nav">
+        <a href="../writing.html">WRITING</a>
+        <a href="../recommendations.html">RECOMMENDATIONS</a>
+        <a href="../projects.html">PROJECTS</a>
+        <a href="../about.html">ABOUT</a>
+      </nav>
+      <div class="toggle">
+        <span>AUTO</span>
+        <div class="switch" data-mode="auto" aria-label="Theme toggle"><span class="knob"></span></div>
+      </div>
+    </header>
+    <hr class="rule"/>
+
+    <div class="project-detail-hero">
+      <h1 class="post-title">Advanced Mortgage Payoff Simulator</h1>
+      <p class="center-sub">Model your mortgage payoff with detailed control over your own cadence, one‑time boosts, and a live projection from today.</p>
+    </div>
+
+    <section class="dash">
+      <div class="panel">
+        <h3>Paydown Chart</h3>
+        <div class="chart-wrap"><canvas id="payoffChart"></canvas></div>
+        <div class="legend" id="legend"></div>
+
+        <div class="params">
+          <div class="field">
+            <label>Home Price</label>
+            <input type="text" id="home-price" value="$500,000">
+          </div>
+          <div class="field">
+            <label>Rate (APR)</label>
+            <input type="text" id="rate" value="6.00%">
+          </div>
+          <div class="field">
+            <label>Down Payment</label>
+            <input type="text" id="down-payment" value="$100,000">
+          </div>
+          <div class="field">
+            <label>Start Date</label>
+            <input type="text" id="start-date" value="Aug 2025">
+          </div>
+          <div class="field">
+            <label>Birthdate</label>
+            <input type="text" id="birthdate" placeholder="e.g., 1993-04-18 or Apr 1993">
+          </div>
+          <div class="field">
+            <label>Schedule</label>
+            <select id="schedule">
+              <option>Monthly</option>
+              <option>Bimonthly</option>
+              <option>Every two weeks</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Current Balance</label>
+            <input type="text" id="current-balance" value="$400,000">
+          </div>
+          <div class="field">
+            <label>Payment Amount <span class="info" tabindex="0" data-tip="This is the total amount you choose to pay each time. It includes interest + principal + escrow/taxes/insurance (if any) + any extra principal you add. It is not the bank's required minimum—it's your chosen payment."></span></label>
+            <input type="text" id="payment-amount" value="$2,800">
+          </div>
+        </div>
+
+        <div class="one-time">
+          <h4>One-time Payments</h4>
+          <div class="ot-actions">
+            <button class="btn" id="add-ot">Add payment</button>
+            <span class="muted" style="color:var(--muted); font-size:12px;">Add any extra principal payments (date and amount).</span>
+          </div>
+          <div class="ot-list" id="ot-list">
+            <div class="ot-row">
+              <select class="ot-month">
+                <option>Jan</option><option>Feb</option><option>Mar</option><option>Apr</option><option>May</option><option>Jun</option>
+                <option>Jul</option><option>Aug</option><option>Sep</option><option>Oct</option><option>Nov</option><option>Dec</option>
+              </select>
+              <input type="text" class="ot-year" placeholder="Year (e.g., 2026)">
+              <input type="text" class="ot-amount" placeholder="Amount (e.g., $5,000)">
+              <div class="col-actions" style="text-align:right;"><button class="btn btn-remove">Remove</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="metrics">
+        <div class="metric">
+          <div class="label">Starting Principal</div>
+          <div class="value" id="principal-start">—</div>
+        </div>
+        <div class="metric">
+          <div class="label">Percentage Complete</div>
+          <div class="value" id="percent-complete">—</div>
+        </div>
+        <div class="metric">
+          <div class="label">Payments Remaining</div>
+          <div class="value" id="payments-remaining">—</div>
+        </div>
+        <div class="metric">
+          <div class="label">Payoff Date</div>
+          <div class="value" id="payoff-date">—</div>
+        </div>
+        <div class="metric">
+          <div class="label">Time to Payoff</div>
+          <div class="value" id="payoff-time">—</div>
+        </div>
+        <div class="metric">
+          <div class="label">Total Interest</div>
+          <div class="value" id="total-interest">—</div>
+        </div>
+        <div class="metric">
+          <div class="label">Estimated Interest Saved</div>
+          <div class="value" id="interest-saved">—</div>
+        </div>
+        <div class="metric">
+          <div class="label">Age at Payoff</div>
+          <div class="value" id="age-at-payoff">—</div>
+        </div>
+        <div class="metric">
+          <div class="label">Time Saved vs 30-yr Monthly</div>
+          <div class="value" id="time-saved">—</div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p>© <span id="y"></span> Gabe Fennema</p>
+    </footer>
+  </div>
+
+  <script>
+    document.getElementById('y').textContent = new Date().getFullYear();
+
+    // Helpers
+    function addMonths(date, n){
+      const d = new Date(date.getTime());
+      d.setMonth(d.getMonth()+n);
+      return d;
+    }
+    function formatMonthYear(date){
+      return date.toLocaleDateString(undefined, {month:'short', year:'numeric'});
+    }
+    function formatLabel(date, schedule){
+      const s = (schedule||'').toLowerCase();
+      if(s.includes('two weeks')){
+        return date.toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'});
+      }
+      if(s.includes('bi')){
+        return date.toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'});
+      }
+      return formatMonthYear(date);
+    }
+    function addDays(date, n){ const d=new Date(date.getTime()); d.setDate(d.getDate()+n); return d; }
+    function keyMonth(date){ return date.getFullYear()+"-"+String(date.getMonth()+1).padStart(2,'0'); }
+    function periodsPerYear(schedule){ const s=(schedule||'').toLowerCase(); if(s.includes('two weeks')) return 26; if(s.includes('bi')) return 24; return 12; }
+    function nextPeriodDate(date, schedule){ const s=(schedule||'').toLowerCase(); if(s.includes('two weeks')) return addDays(date,14); if(s.includes('bi')) return addDays(date,15); return addMonths(date,1); }
+
+    // Parsing helpers
+    function parseMoney(str){
+      if(typeof str !== 'string') return NaN;
+      const n = Number(str.replace(/[^0-9.-]/g, ''));
+      return isNaN(n) ? NaN : n;
+    }
+    function parsePercent(str){
+      if(typeof str !== 'string') return NaN;
+      const n = Number(str.replace(/[^0-9.-]/g, ''));
+      return isNaN(n) ? NaN : n;
+    }
+    function parseMonthYear(str){
+      // Accept forms like "Aug 2025" or ISO dates
+      try{
+        if(!str) return null;
+        const d = new Date(str.includes('-') || str.includes('/') ? str : (str + ' 1'));
+        if(isNaN(d.getTime())) return null;
+        d.setDate(1);
+        return d;
+      }catch(e){ return null; }
+    }
+
+    // Amortization with optional lump-sum extras
+    function amortizationSchedule(principal, annualRatePct, termMonths, extraMonthly, lumpExtras){
+      const r = (annualRatePct/100) / 12;
+      const n = termMonths;
+      const basePayment = (principal * r * Math.pow(1+r, n)) / (Math.pow(1+r, n) - 1);
+      const payment = basePayment + (extraMonthly||0);
+      const extraMap = (lumpExtras||[]).reduce((acc, e)=>{ acc[e.month] = (acc[e.month]||0) + Math.max(0, e.amount||0); return acc; }, {});
+      const balances = [];
+      const months = [];
+      let bal = principal;
+      let totalInterest = 0;
+      let m = 0;
+      while(bal > 0 && m < 1000){
+        months.push(m);
+        balances.push(Math.max(0, bal));
+        const interest = bal * r;
+        let principalPaid = Math.min(bal, payment - interest);
+        // apply lump-sum extra principal if present this month
+        const extraNow = extraMap[m] || 0;
+        principalPaid = Math.min(bal, principalPaid + extraNow);
+        totalInterest += interest;
+        bal = bal - principalPaid;
+        m++;
+      }
+      // push final
+      months.push(m);
+      balances.push(0);
+      return { months, balances, monthsToZero: m, totalInterest, basePayment, payment };
+    }
+
+    // Forward simulation from a starting balance using a payment schedule
+    function simulateForward(startBalance, annualRatePct, schedule, paymentPerPeriod, lumpList, startDate){
+      const perYear = periodsPerYear(schedule);
+      const r = (annualRatePct/100) / perYear;
+      const lumpsMap = (lumpList||[]).reduce((acc, it)=>{
+        if(!it || !it.date || isNaN(it.amount)) return acc;
+        const k = keyMonth(it.date);
+        acc[k] = (acc[k]||0) + Math.max(0, it.amount||0);
+        return acc;
+      }, {});
+      const labels = [];
+      const balances = [];
+      let bal = startBalance;
+      let d = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+      let totalInterest = 0;
+      let totalPaid = 0;
+      let periods = 0;
+      while(bal > 0 && periods < 5000){
+        const interest = bal * r;
+        const extra = lumpsMap[keyMonth(d)] || 0;
+        // Compute principal paid; ensure progress and cap last payment to exact payoff
+        const scheduled = Math.max(0, paymentPerPeriod||0);
+        const principalFromScheduled = Math.max(0, scheduled - interest);
+        let principalPaid = principalFromScheduled + extra;
+        if(principalPaid <= 0){ // no progress
+          principalPaid = extra; // interest-only period + extra
+          if(principalPaid <= 0) break; // prevent infinite loop
+        }
+        // Cap principal to remaining balance
+        if(principalPaid > bal){ principalPaid = bal; }
+        // Actual cash out this period: scheduled (capped to interest+principalPaid) + extra actually applied
+        const actualScheduled = Math.min(scheduled, interest + Math.max(0, principalPaid - extra));
+        const paidThisPeriod = actualScheduled + extra;
+        totalPaid += paidThisPeriod;
+        totalInterest += interest;
+        bal = Math.max(0, bal - principalPaid);
+        balances.push(bal);
+        labels.push(formatLabel(d, schedule));
+        d = nextPeriodDate(d, schedule);
+        periods++;
+      }
+      return { labels, balances, periodsToZero: periods, totalInterest, totalPaid, lastDate: new Date(d.getFullYear(), d.getMonth(), 1) };
+    }
+
+    // Initial demo values (will be re-read from inputs on change)
+    let HOME_PRICE = 500000;
+    let DOWN_PAYMENT = 100000;
+    let P = HOME_PRICE - DOWN_PAYMENT;
+    let APR = 6.0;
+    const TERM_MONTHS = 360;
+    let EXTRA = 500;
+    let START = new Date(2025,7,1); // Aug 1, 2025
+    let LUMPS = [ {month:24, amount:5000}, {month:60, amount:10000} ]; // demo only
+
+    let sim = amortizationSchedule(P, APR, TERM_MONTHS, EXTRA, LUMPS);
+
+    function fmtMoney(x){ return x.toLocaleString(undefined, {style:'currency', currency:'USD', maximumFractionDigits:0}); }
+    function fmtYears(m){ return (m/12).toFixed(1) + ' years'; }
+    function fmtYearsMonths(m){ const y=Math.floor(m/12); const mo=m%12; return (y? y+'y ':'') + (mo? mo+'m':'' || '0m'); }
+
+    // Progress metrics at current pace
+    function monthsBetween(a, b){
+      let months = (b.getFullYear()-a.getFullYear())*12 + (b.getMonth()-a.getMonth());
+      if(b.getDate() < a.getDate()) months -= 1; // incomplete month not yet paid
+      return Math.max(0, months);
+    }
+    // Initial metrics will be computed in recalcFromInputs()
+
+    const ctx = document.getElementById('payoffChart').getContext('2d');
+    const accent = cssVar('--accent') || '#5d86b6';
+    const accentStrong = cssVar('--accent-strong') || '#3d6a9a';
+    const text = cssVar('--text') || '#23262b';
+    const muted = cssVar('--muted') || '#5b6472';
+    const rule = cssVar('--rule') || '#e9ecf2';
+    const bg = cssVar('--bg') || '#fffdfb';
+
+    let labels = [];
+    let dataSeries = [];
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Simulation',
+            data: dataSeries,
+            borderColor: accentStrong,
+            backgroundColor: 'transparent',
+            tension: 0,
+            stepped: true,
+            borderWidth: 1.5,
+            pointRadius: 0,
+            pointHoverRadius: 3,
+            pointHitRadius: 8,
+            pointBackgroundColor: accentStrong,
+            pointBorderColor: bg,
+            pointBorderWidth: 1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            intersect: false,
+            mode: 'index',
+            padding: 10,
+            displayColors: false,
+            callbacks: {
+              title: (items) => {
+                if(!items || !items.length) return '';
+                const idx = items[0].dataIndex;
+                return labels[idx] || '';
+              },
+              label: (ctx) => ctx.dataset.label + ': ' + fmtMoney(ctx.parsed.y)
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: 'category',
+            offset: false,
+            ticks: {
+              color: muted,
+              autoSkip: true,
+              maxTicksLimit: (window.innerWidth < 480 ? 6 : window.innerWidth < 768 ? 8 : 12),
+              maxRotation: 0,
+              minRotation: 0,
+              callback: (value, idx) => labels[idx]
+            },
+            grid: { color: rule },
+            border: { display: true, color: rule }
+          },
+          y: {
+            beginAtZero: true,
+            suggestedMax: P,
+            ticks: { color: muted, callback: (v)=> '$'+(v/1000)+'k' },
+            grid: { color: rule }
+          }
+        },
+        animation: false
+      }
+    });
+
+    // Build simple legend using current colors
+    const legend = document.getElementById('legend');
+    legend.innerHTML = '';
+    const items = [ { label: 'Simulation', color: accentStrong } ];
+    items.forEach(it=>{
+      const row = document.createElement('div');
+      row.style.display = 'inline-flex';
+      row.style.alignItems = 'center';
+      row.style.gap = '6px';
+      const sw = document.createElement('span'); sw.className = 'swatch'; sw.style.background = it.color; sw.style.transition = 'transform .2s ease';
+      const txt = document.createElement('span'); txt.textContent = it.label;
+      row.appendChild(sw); row.appendChild(txt);
+      row.addEventListener('mouseenter', ()=>{ sw.style.transform = 'scale(1.3)'; });
+      row.addEventListener('mouseleave', ()=>{ sw.style.transform = 'scale(1)'; });
+      legend.appendChild(row);
+    });
+
+    // Re-render on theme toggle for better contrast
+    const toggle = document.querySelector('.switch');
+    if(toggle){
+      toggle.addEventListener('click', ()=>{
+        setTimeout(()=>{
+          const muted2 = cssVar('--muted');
+          const rule2 = cssVar('--rule');
+          chart.options.scales.x.ticks.color = muted2;
+          chart.options.scales.y.ticks.color = muted2;
+          chart.options.scales.x.grid.color = rule2;
+          chart.options.scales.y.grid.color = rule2;
+          chart.options.scales.x.ticks.maxTicksLimit = (window.innerWidth < 480 ? 6 : window.innerWidth < 768 ? 8 : 12);
+          chart.update();
+          legend.querySelectorAll('.swatch')[0].style.background = muted2;
+        }, 0);
+      });
+    }
+
+    // Adjust tick density on resize
+    window.addEventListener('resize', ()=>{
+      const limit = (window.innerWidth < 480 ? 6 : window.innerWidth < 768 ? 8 : 12);
+      chart.options.scales.x.ticks.maxTicksLimit = limit;
+      chart.update('none');
+    });
+
+    // Make inputs interactive with forward simulation and interpolated past
+    function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
+    function recalcFromInputs(){
+      const hp = parseMoney(document.getElementById('home-price').value);
+      const dp = parseMoney(document.getElementById('down-payment').value);
+      const rate = parsePercent(document.getElementById('rate').value);
+      const startStr = document.getElementById('start-date').value;
+      const pay = parseMoney(document.getElementById('payment-amount').value);
+      const sched = document.getElementById('schedule').value || 'Monthly';
+      const balNow = parseMoney(document.getElementById('current-balance').value);
+
+      HOME_PRICE = isNaN(hp) ? HOME_PRICE : hp;
+      DOWN_PAYMENT = isNaN(dp) ? DOWN_PAYMENT : dp;
+      APR = isNaN(rate) ? APR : rate;
+      START = parseMonthYear(startStr) || START;
+      const paymentPerPeriod = isNaN(pay) ? 0 : pay;
+      const schedule = sched;
+      P = clamp(HOME_PRICE - DOWN_PAYMENT, 0, 1000000000);
+
+      // Read one-time rows (month dropdown + year + amount); month offset calc TBD
+      const rows = Array.from(document.querySelectorAll('#ot-list .ot-row'));
+      LUMPS = rows.map((row)=>{
+        const monthIdx = row.querySelector('.ot-month') ? row.querySelector('.ot-month').selectedIndex : 0;
+        const yearStr = row.querySelector('.ot-year') ? row.querySelector('.ot-year').value : '';
+        const amtVal = parseMoney(row.querySelector('.ot-amount') ? row.querySelector('.ot-amount').value : '');
+        const yr = Number(yearStr);
+        const d = (!isNaN(yr) ? new Date(yr, monthIdx, 1) : null);
+        return { date: d, amount: isNaN(amtVal)?0:amtVal };
+      }).filter(x=> x.amount>0 && x.date);
+
+      // Build interpolated past series from Start to Today
+      const today = new Date();
+      const totalMonthsElapsed = Math.max(0, monthsBetween(START, today));
+      const startPrincipal = P;
+      const currentPrincipal = isNaN(balNow) ? Math.max(0, startPrincipal - 1) : balNow;
+      const pastLabels = ['Start'];
+      const pastBalances = [HOME_PRICE];
+      if(totalMonthsElapsed >= 0){
+        pastLabels.push(formatMonthYear(START));
+        pastBalances.push(startPrincipal);
+      }
+      for(let i=1;i<=totalMonthsElapsed;i++){
+        const d = addMonths(START, i);
+        const bal = startPrincipal + (currentPrincipal - startPrincipal) * (i/totalMonthsElapsed || 0);
+        pastLabels.push(formatMonthYear(d));
+        pastBalances.push(Math.max(0, bal));
+      }
+
+      // Forward simulate from currentPrincipal
+      const forwardStart = addMonths(START, totalMonthsElapsed);
+      const forward = simulateForward(Math.max(0,currentPrincipal), APR, schedule, paymentPerPeriod, LUMPS, forwardStart);
+
+      labels = [...pastLabels, ...forward.labels];
+      dataSeries = [...pastBalances, ...forward.balances];
+
+      // metrics
+      document.getElementById('principal-start').textContent = fmtMoney(P);
+      const payoffMonths = monthsBetween(new Date(forwardStart.getFullYear(), forwardStart.getMonth(), 1), forward.lastDate||forwardStart);
+      document.getElementById('payoff-time').textContent = fmtYearsMonths(payoffMonths);
+      document.getElementById('total-interest').textContent = fmtMoney(forward.totalInterest);
+      document.getElementById('payoff-date').textContent = (forward.lastDate||today).toLocaleDateString(undefined, {year:'numeric', month:'short'});
+      // Percentage complete based on dollars paid so far vs total dollars (including projected interest)
+      const paidPrincipalSoFar = Math.max(0, startPrincipal - currentPrincipal);
+      const projectedTotalCost = currentPrincipal + forward.totalInterest; // remaining principal + projected interest
+      const percentDollars = Math.max(0, Math.min(100, (paidPrincipalSoFar / (paidPrincipalSoFar + projectedTotalCost)) * 100));
+      document.getElementById('percent-complete').textContent = percentDollars.toFixed(1) + '%';
+      const remaining2 = Math.max(0, forward.periodsToZero);
+      document.getElementById('payments-remaining').textContent = remaining2 + ' payments';
+
+      // Baseline 30-yr monthly schedule (principal-only perspective)
+      const monthlyR = (APR/100)/12;
+      const basePaymentMonthly = (startPrincipal * monthlyR * Math.pow(1+monthlyR, 360)) / (Math.pow(1+monthlyR, 360) - 1);
+      const baseline = simulateForward(Math.max(0,currentPrincipal), APR, 'Monthly', basePaymentMonthly, [], forwardStart);
+      const interestSaved = Math.max(0, (baseline.totalInterest - forward.totalInterest));
+      document.getElementById('interest-saved').textContent = fmtMoney(interestSaved);
+
+      // Time saved (baseline months minus forward months)
+      const baselineMonths = monthsBetween(new Date(forwardStart.getFullYear(), forwardStart.getMonth(), 1), baseline.lastDate||forwardStart);
+      const timeSavedMonths = Math.max(0, baselineMonths - payoffMonths);
+      document.getElementById('time-saved').textContent = fmtYearsMonths(timeSavedMonths);
+
+      // Age at payoff (if birthdate is provided)
+      const birthStr = document.getElementById('birthdate').value;
+      const birth = parseMonthYear(birthStr) || new Date(birthStr);
+      let ageTxt = '—';
+      if(birth && !isNaN(birth.getTime())){
+        const yrs = (forward.lastDate||today).getFullYear() - birth.getFullYear();
+        const hasHadBirthday = ((forward.lastDate||today).getMonth() > birth.getMonth()) || (((forward.lastDate||today).getMonth() === birth.getMonth()) && (forward.lastDate||today).getDate() >= birth.getDate());
+        const age = yrs - (hasHadBirthday ? 0 : 1);
+        ageTxt = age + ' yrs';
+      }
+      document.getElementById('age-at-payoff').textContent = ageTxt;
+
+      // Add baseline age in parentheses to Time Saved if birthdate provided
+      if(birth && !isNaN(birth.getTime())){
+        const baseDate = baseline.lastDate || today;
+        const yrsB = baseDate.getFullYear() - birth.getFullYear();
+        const hadB = (baseDate.getMonth() > birth.getMonth()) || (baseDate.getMonth() === birth.getMonth() && baseDate.getDate() >= birth.getDate());
+        const baseAge = yrsB - (hadB ? 0 : 1);
+        const tsStr = fmtYearsMonths(timeSavedMonths) + ' (' + baseAge + ' yrs)';
+        document.getElementById('time-saved').textContent = tsStr;
+      }
+
+      // chart
+      chart.data.labels = labels;
+      chart.data.datasets[0].data = dataSeries;
+      chart.update('none');
+    }
+
+    // Add/remove one-time rows
+    function addOneTimeRow(monthIdx=0, yearVal='', amtVal=''){
+      const list = document.getElementById('ot-list');
+      const row = document.createElement('div');
+      row.className = 'ot-row anim-enter';
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const opts = months.map((m,i)=> '<option '+(i===monthIdx?'selected':'')+'>'+m+'</option>').join('');
+      row.innerHTML = '<select class="ot-month">'+opts+'</select>'+
+                      '<input type="text" class="ot-year" placeholder="Year (e.g., 2026)" value="'+yearVal+'">'+
+                      '<input type="text" class="ot-amount" placeholder="Amount (e.g., $5,000)" value="'+amtVal+'">'+
+                      '<div class="col-actions" style="text-align:right;"><button class="btn btn-remove">Remove</button></div>';
+      list.appendChild(row);
+      // Trigger entry animation end
+      requestAnimationFrame(()=>{ row.classList.remove('anim-enter'); });
+    }
+    function removeRow(el){
+      const row = el.closest('.ot-row');
+      if(!row) return;
+      row.classList.add('anim-exit');
+      setTimeout(()=>{ row.remove(); recalcFromInputs(); }, 180);
+    }
+
+    document.getElementById('add-ot').addEventListener('click', (e)=>{ e.preventDefault(); addOneTimeRow(); });
+    document.getElementById('ot-list').addEventListener('click', (e)=>{
+      const t = e.target;
+      if(t && t.classList.contains('btn-remove')){ e.preventDefault(); removeRow(t); }
+    });
+    document.getElementById('ot-list').addEventListener('input', (e)=>{ if(e.target && (e.target.tagName==='INPUT' || e.target.tagName==='SELECT')){ recalcFromInputs(); } });
+
+    // Recalc on parameter changes
+    ['home-price','down-payment','rate','start-date','birthdate','payment-amount','schedule','current-balance'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(!el) return;
+      el.addEventListener('input', recalcFromInputs);
+      if(el.tagName==='SELECT') el.addEventListener('change', recalcFromInputs);
+    });
+
+    // Initial compute
+    recalcFromInputs();
+  </script>
+  <script src="../scripts.js"></script>
+</body>
+</html>
+
+
