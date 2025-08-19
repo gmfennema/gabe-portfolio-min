@@ -3,7 +3,7 @@
     "title": "Advanced Mortgage Payoff Simulator",
     "date": "2025-08-15",
     "path": "projects/mortgage-payoff-simulator.html",
-    "summary": "Dashboard UI to compare standard vs accelerated mortgage payoff with a paydown chart and metrics.",
+    "summary": "An advanced mortgage payoff simulator with a clean dashboard UI and a paydown chart.",
     "links": [
       { "label": "Open Simulator", "url": "projects/mortgage-payoff-simulator.html" }
     ]
