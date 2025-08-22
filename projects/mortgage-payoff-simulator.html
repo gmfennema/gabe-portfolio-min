@@ -334,7 +334,13 @@
       let periods = 0;
       while(bal > 0 && periods < 5000){
         const interest = bal * r;
-        const extra = lumpsMap[keyMonth(d)] || 0;
+        // Apply any one-time payment for this month only once
+        const monthKey = keyMonth(d);
+        const extra = lumpsMap[monthKey] || 0;
+        if(extra > 0){
+          // zero it out so additional periods in the same month don't re-apply it
+          lumpsMap[monthKey] = 0;
+        }
         // Compute principal paid; ensure progress and cap last payment to exact payoff
         const scheduled = Math.max(0, paymentPerPeriod||0);
         const principalFromScheduled = Math.max(0, scheduled - interest);
