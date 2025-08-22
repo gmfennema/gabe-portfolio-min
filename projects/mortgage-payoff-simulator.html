@@ -135,11 +135,11 @@
         <div class="params">
           <div class="field">
             <label>Home Price</label>
-            <input type="text" id="home-price" value="$500,000">
+            <input type="text" id="home-price" value="$480,000">
           </div>
           <div class="field">
             <label>Rate (APR)</label>
-            <input type="text" id="rate" value="6.00%">
+            <input type="text" id="rate" value="6.80%">
           </div>
           <div class="field">
             <label>Down Payment</label>
@@ -147,11 +147,11 @@
           </div>
           <div class="field">
             <label>Start Date</label>
-            <input type="text" id="start-date" value="Aug 2025">
+            <input type="text" id="start-date" value="Aug 2024">
           </div>
           <div class="field">
             <label>Birthdate</label>
-            <input type="text" id="birthdate" placeholder="e.g., 1993-04-18 or Apr 1993">
+            <input type="text" id="birthdate" value="Jan 1995" placeholder="e.g., 1993-04-18 or Apr 1993">
           </div>
           <div class="field">
             <label>Schedule</label>
@@ -163,11 +163,11 @@
           </div>
           <div class="field">
             <label>Current Balance</label>
-            <input type="text" id="current-balance" value="$400,000">
+            <input type="text" id="current-balance" value="$350,000">
           </div>
           <div class="field">
             <label>Payment Amount <span class="info" tabindex="0" data-tip="This is the total amount you choose to pay each time. It includes interest + principal + escrow/taxes/insurance (if any) + any extra principal you add. It is not the bank's required minimum—it's your chosen payment."></span></label>
-            <input type="text" id="payment-amount" value="$2,800">
+            <input type="text" id="payment-amount" value="$3,000">
           </div>
         </div>
 
@@ -593,7 +593,7 @@
         const yrs = (forward.lastDate||today).getFullYear() - birth.getFullYear();
         const hasHadBirthday = ((forward.lastDate||today).getMonth() > birth.getMonth()) || (((forward.lastDate||today).getMonth() === birth.getMonth()) && (forward.lastDate||today).getDate() >= birth.getDate());
         const age = yrs - (hasHadBirthday ? 0 : 1);
-        ageTxt = age + ' yrs';
+        ageTxt = age + ' yrs old';
       }
       document.getElementById('age-at-payoff').textContent = ageTxt;
 
@@ -603,7 +603,7 @@
         const yrsB = baseDate.getFullYear() - birth.getFullYear();
         const hadB = (baseDate.getMonth() > birth.getMonth()) || (baseDate.getMonth() === birth.getMonth() && baseDate.getDate() >= birth.getDate());
         const baseAge = yrsB - (hadB ? 0 : 1);
-        const tsStr = fmtYearsMonths(timeSavedMonths) + ' (' + baseAge + ' yrs)';
+        const tsStr = fmtYearsMonths(timeSavedMonths) + ' (' + baseAge + ' yrs old)';
         document.getElementById('time-saved').textContent = tsStr;
       }
 
