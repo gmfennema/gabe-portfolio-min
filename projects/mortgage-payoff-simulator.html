@@ -27,6 +27,8 @@
   .panel h3{ margin: 4px 0 10px 0; font-size: 18px; }
   .chart-wrap{ position: relative; width: 100%; height: 380px; }
   @media (max-width: 720px){ .chart-wrap{ height: 300px; } }
+  @media (max-width: 480px){ .chart-wrap{ height: 250px; } }
+  @media (max-width: 390px){ .chart-wrap{ height: 200px; } }
   .metrics{
     display: grid;
     grid-template-columns: 1fr;
@@ -81,12 +83,16 @@
   }
   @media (max-width: 960px){ .dash{ grid-template-columns: 1fr; } }
   @media (max-width: 720px){ .params{ grid-template-columns: 1fr; } .legend{ font-size: 12px; } }
+  @media (max-width: 480px){ .dash{ gap: 12px; } .panel{ padding: 10px; } .panel h3{ font-size: 16px; margin-bottom: 8px; } }
+  @media (max-width: 390px){ .dash{ gap: 10px; } .panel{ padding: 8px; } .activity-chart{ padding: 8px 0; } }
   @media (max-width: 720px){ .ot-row{ grid-template-columns: 1fr 1fr; } .ot-row .col-actions{ grid-column: 1 / -1; } }
+  @media (max-width: 390px){ .ot-row{ grid-template-columns: 1fr; gap: 6px; } .activity-legend{ font-size: 11px; gap: 12px; } .metric{ padding: 10px 12px; } .btn{ padding: 5px 8px; font-size: 12px; } }
 
   /* Activity Chart Styles */
   .activity-chart{ margin-top: 16px; padding: 12px 0; }
   .activity-chart h3{ margin: 0 0 8px 0; font-size: 16px; color: var(--text); }
   .activity-grid{ display: grid; grid-template-rows: repeat(3, 1fr); gap: 2px; margin-bottom: 8px; width: 100%; }
+  @media (max-width: 720px){ .activity-grid{ grid-template-rows: repeat(5, 1fr); gap: 1px; } }
   .activity-row{ display: flex; gap: 2px; width: 100%; justify-content: flex-start; }
   .activity-square{ aspect-ratio: 1; border: 1px solid var(--rule); border-radius: 2px; transition: background-color 0.2s ease; flex-shrink: 0; }
   .activity-square.completed{ background-color: var(--accent); }
@@ -480,7 +486,7 @@
             ticks: {
               color: muted,
               autoSkip: true,
-              maxTicksLimit: (window.innerWidth < 480 ? 6 : window.innerWidth < 768 ? 8 : 12),
+              maxTicksLimit: (window.innerWidth < 390 ? 4 : window.innerWidth < 480 ? 5 : window.innerWidth < 768 ? 8 : 12),
               maxRotation: 0,
               minRotation: 0,
               callback: (value, idx) => labels[idx]
@@ -527,7 +533,7 @@
           chart.options.scales.y.ticks.color = muted2;
           chart.options.scales.x.grid.color = rule2;
           chart.options.scales.y.grid.color = rule2;
-          chart.options.scales.x.ticks.maxTicksLimit = (window.innerWidth < 480 ? 6 : window.innerWidth < 768 ? 8 : 12);
+          chart.options.scales.x.ticks.maxTicksLimit = (window.innerWidth < 390 ? 4 : window.innerWidth < 480 ? 5 : window.innerWidth < 768 ? 8 : 12);
           chart.update();
           legend.querySelectorAll('.swatch')[0].style.background = muted2;
 
@@ -556,7 +562,7 @@
     // Adjust tick density on resize
     let resizeTimeout;
     window.addEventListener('resize', ()=>{
-      const limit = (window.innerWidth < 480 ? 6 : window.innerWidth < 768 ? 8 : 12);
+      const limit = (window.innerWidth < 390 ? 4 : window.innerWidth < 480 ? 5 : window.innerWidth < 768 ? 8 : 12);
       chart.options.scales.x.ticks.maxTicksLimit = limit;
       chart.update('none');
 
@@ -710,15 +716,17 @@
 
       // Get container width to calculate dynamic square sizes
       const containerWidth = grid.offsetWidth;
-      const maxRows = 3;
+      const isMobile = window.innerWidth <= 720;
+      const maxRows = isMobile ? 5 : 3;
       const totalSquares = totalPayments;
       const columns = Math.ceil(totalSquares / maxRows);
 
       // Calculate optimal square size to fill container width
-      const gapSize = 2; // px gap between squares
+      const gapSize = isMobile ? 1 : 2; // px gap between squares
       const totalGapSpace = gapSize * (columns - 1);
       const availableWidth = containerWidth - totalGapSpace;
-      const squareSize = Math.max(8, Math.floor(availableWidth / columns)); // Minimum 8px
+      const minSquareSize = isMobile ? 6 : 8;
+      const squareSize = Math.max(minSquareSize, Math.floor(availableWidth / columns));
 
       // Create the grid
       for (let row = 0; row < maxRows; row++) {
