@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://gabefen.com/</loc>
+  </url>
+  <url>
+    <loc>https://gabefen.com/about.html</loc>
+  </url>
+  <url>
+    <loc>https://gabefen.com/writing.html</loc>
+  </url>
+  <url>
+    <loc>https://gabefen.com/recommendations.html</loc>
+  </url>
+  <url>
+    <loc>https://gabefen.com/projects.html</loc>
+  </url>
+
+  <!-- Posts -->
+  <url>
+    <loc>https://gabefen.com/posts/collapsing-your-magic-circles.html</loc>
+    <lastmod>2025-08-13</lastmod>
+  </url>
+  <url>
+    <loc>https://gabefen.com/posts/the-need-for-episodic-epics.html</loc>
+    <lastmod>2024-01-14</lastmod>
+  </url>
+  <url>
+    <loc>https://gabefen.com/posts/small-talk-big-mistakes.html</loc>
+    <lastmod>2023-07-08</lastmod>
+  </url>
+  <url>
+    <loc>https://gabefen.com/posts/career-advice-for-20-year-old-me.html</loc>
+    <lastmod>2023-06-20</lastmod>
+  </url>
+  <url>
+    <loc>https://gabefen.com/posts/auto-decline-events.html</loc>
+    <lastmod>2023-01-30</lastmod>
+  </url>
+  <url>
+    <loc>https://gabefen.com/posts/how-to-publish-a-google-sheets-add-on.html</loc>
+    <lastmod>2022-06-04</lastmod>
+  </url>
+  <url>
+    <loc>https://gabefen.com/posts/how-i-approach-content-marketing.html</loc>
+    <lastmod>2022-07-27</lastmod>
+  </url>
+
+  <!-- Projects (local pages only) -->
+  <url>
+    <loc>https://gabefen.com/projects/mortgage-payoff-simulator.html</loc>
+    <lastmod>2025-08-15</lastmod>
+  </url>
+  <url>
+    <loc>https://gabefen.com/projects/sheets-to-slack.html</loc>
+    <lastmod>2024-05-12</lastmod>
+  </url>
+</urlset>
+
+
