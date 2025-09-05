@@ -389,7 +389,7 @@ footer{ color: var(--muted); font-size: 14px; margin-top: 40px; padding: 40px 0 
   animation: logos-marquee 28s linear infinite;
 }
 .logo-item{
-  height: 80px; width: auto;
+  height: 86px; width: auto;
   opacity: .85;
   filter: grayscale(100%);
   transition: opacity .2s ease, filter .2s ease;
@@ -407,6 +407,9 @@ html[data-theme="dark"] .logo-item{ filter: grayscale(100%) brightness(2); opaci
   /* Only apply when not explicitly forced to light */
   html:not([data-theme="light"]) .logo-item{ filter: grayscale(100%) brightness(2); opacity: .92; }
 }
+
+/* Projects page: slightly larger logos and extra spacing below slider */
+.logos-projects{ margin-bottom: 28px; }
 
 /* Services section */
 .services{ margin: 28px 0 6px; }
