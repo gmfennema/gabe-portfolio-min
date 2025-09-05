@@ -1,5 +1,14 @@
 [
   {
+    "type": "TV",
+    "title": "Paradise",
+    "author": "Season 1",
+    "url": "",
+    "date": "2025-09-02",
+    "rating": 4.5,
+    "note": "Excellent. Perfect balance of sci-fi and mystery. The storytelling is excellent ant it is incredibly easy to binge."
+  },
+  {
     "type": "Movie",
     "title": "M3GAN 2",
     "author": "",
