@@ -3,16 +3,16 @@
     "type": "TV",
     "title": "Paradise",
     "author": "Season 1",
-    "url": "",
+    "url": "https://www.imdb.com/title/tt27444205/",
     "date": "2025-09-02",
     "rating": 4.5,
-    "note": "Excellent. Perfect balance of sci-fi and mystery. The storytelling is excellent ant it is incredibly easy to binge."
+    "note": "Excellent. Perfect balance of sci-fi and mystery. The storytelling is excellent and it is incredibly easy to binge."
   },
   {
     "type": "Movie",
-    "title": "M3GAN 2",
+    "title": "M3GAN 2.0",
     "author": "",
-    "url": "",
+    "url": "https://www.imdb.com/title/tt26342662/",
     "date": "2025-08-22",
     "rating": 4,
     "note": "A humorously self-aware sci-fi romp that stays light and entertaining without tipping into cringe."
@@ -21,7 +21,7 @@
     "type": "TV",
     "title": "The Leftovers",
     "author": "Season 2",
-    "url": "",
+    "url": "https://www.imdb.com/title/tt2699128/episodes/?season=2",
     "date": "2025-08-21",
     "rating": 3.5,
     "note": "If you liked Season 1, you'll definitely like Season 2. The storyline is more unified and watchable. I'm still not sure it's quite for me, but I'm definitely going to watch Season 3."
@@ -30,7 +30,7 @@
     "type": "TV",
     "title": "The Leftovers",
     "author": "Season 1",
-    "url": "",
+    "url": "https://www.imdb.com/title/tt2699128/episodes/?season=1",
     "date": "2025-08-16",
     "rating": 3.5,
     "note": "I probably had more fun thinking about the show than actually watching it. Enjoyable was similar to reading classic literature. Definitely not for everyone."
@@ -39,25 +39,25 @@
     "type": "Book",
     "title": "Golden Son",
     "author": "Pierce Brown",
-    "url": "",
+    "url": "https://www.amazon.com/Golden-Son-Book-Rising-Saga/dp/0345539834",
     "date": "2025-08-12",
     "rating": 4,
-    "note": " I enjoyed this book almost as much as the first, but overall the story moved a little bit slower and there weren't as many interesting mini-arcs as compared to the first."
+    "note": "I enjoyed this book almost as much as the first, but overall the story moved a little bit slower and there weren't as many interesting mini-arcs as compared to the first."
   },
   {
     "type": "TV",
     "title": "The Day of the Jackal",
-    "author": "Seasons 1",
-    "url": "",
+    "author": "Season 1",
+    "url": "https://www.imdb.com/title/tt24053860/",
     "date": "2025-08-10",
     "rating": 3.5,
-    "note": "Overall enertaining, but a little slow moving between the 2-3 climactic scenes of the show."
+    "note": "Overall entertaining, but a little slow moving between the 2-3 climactic scenes of the show."
   },
   {
     "type": "Book",
     "title": "Red Rising",
     "author": "Pierce Brown",
-    "url": "",
+    "url": "https://www.amazon.com/Red-Rising-Pierce-Brown/dp/034553980X",
     "date": "2025-08-07",
     "rating": 4.5,
     "note": "Extremely easy read and fast paced. Super easy to get through the whole book very quickly."
@@ -65,8 +65,8 @@
   {
     "type": "TV",
     "title": "Squid Game",
-    "author": "Seasons 3",
-    "url": "",
+    "author": "Season 3",
+    "url": "https://www.imdb.com/title/tt10919420/episodes/?season=3",
     "date": "2024-07-15",
     "rating": 3.5,
     "note": "Overall pretty good, but I still enjoyed the shock and awe of Seasons 1 and 2 better. Season 3 was perfectly adequate to wrap up the series."
@@ -75,12 +75,9 @@
     "type": "TV",
     "title": "From",
     "author": "Seasons 1–3",
-    "url": "",
+    "url": "https://www.imdb.com/title/tt9813792/",
     "date": "2024-06-01",
     "rating": 4,
-    "note": " I genuinely did not think I would like this show as much as I did. It's extremely reminiscent of Lost with a somewhat creepy twist, but as a non-horror fan I was able to stomach it and still really enjoy it."
+    "note": "I genuinely did not think I would like this show as much as I did. It's extremely reminiscent of Lost with a somewhat creepy twist, but as a non-horror fan I was able to stomach it and still really enjoy it."
   }
-
 ]
-
-
