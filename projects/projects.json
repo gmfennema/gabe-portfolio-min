@@ -14,8 +14,8 @@
     "path": "projects/sheets-to-slack.html",
     "summary": "Send Google Sheets data to Slack with scheduled messages, slash-command triggers, and a visual post builder.",
     "links": [
-      { "label": "Get Add-on", "url": "https://gabefen.com/sheets-to-slack/" },
-      { "label": "Purchase", "url": "https://gabefen.com/sheets-to-slack/" }
+      { "label": "Get Add-on", "url": "https://workspace.google.com/marketplace/app/gabes_sheets_to_slack_app/450312054899?flow_type=2&hl=en&pann=sheets_addon_widget" },
+      { "label": "Purchase", "url": "https://gabefen.gumroad.com/l/sheets-to-slack?layout=discover&recommended_by=search" }
     ]
   },
   {
