@@ -1,5 +1,14 @@
 [
   {
+    "title": "Habits Dashboard",
+    "date": "2025-09-13",
+    "path": "projects/habit-tracking.html",
+    "summary": "My major habits visualized with a dashboard pulled from Google Calendar.",
+    "links": [
+      { "label": "Open Dashboard", "url": "projects/habit-tracking.html" }
+    ]
+  },
+  {
     "title": "Advanced Mortgage Payoff Simulator",
     "date": "2025-08-15",
     "path": "projects/mortgage-payoff-simulator.html",
