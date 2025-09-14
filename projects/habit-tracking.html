@@ -193,7 +193,7 @@
     document.getElementById('y').textContent = new Date().getFullYear();
 
     /* ================== CONFIG: paste your Apps Script Web App URL here ================== */
-    const APPSCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwt6TNXetojC1XvHD4nS7cFGKw0q1FVXRBTmXAE5XG8njwuTsmR1_iFX7NZhqqO9e_2/exec';
+    const APPSCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzms6Y6ZkrZV2TpAMmUyWC7bad0F9KceaGtZt_jYbjUWryFYdbtKPEg3k3E3gPmBsV8vA/exec';
     /* ==================================================================================== */
 
     // Render helpers
@@ -233,6 +233,14 @@
       endSaturday.setDate(endSaturday.getDate() + (6 - endSaturday.getDay()));
       endSaturday.setHours(0,0,0,0);
 
+      // Precompute current week range for hiding outlines on future days of this week
+      const todayLocal = new Date();
+      todayLocal.setHours(0,0,0,0);
+      const currentWeekStart = new Date(todayLocal);
+      currentWeekStart.setDate(todayLocal.getDate() - todayLocal.getDay());
+      const currentWeekEnd = new Date(currentWeekStart);
+      currentWeekEnd.setDate(currentWeekStart.getDate() + 6);
+
       // Iterate weeks left→right, days top→bottom (Sun=0 .. Sat=6)
       for(let weekStart = new Date(startSunday); weekStart <= endSaturday; weekStart.setDate(weekStart.getDate()+7)){
         for(let dow = 0; dow < 7; dow++){
@@ -247,6 +255,10 @@
           const v = valueSelector(rec) || 0;
           const a = computeAlpha(v, minVal, maxVal);
           if(a > 0){ sq.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${a})`; }
+          // Remove outline for future dates in the current week
+          if(d > todayLocal && d >= currentWeekStart && d <= currentWeekEnd){
+            sq.style.borderColor = 'transparent';
+          }
           el.appendChild(sq);
         }
       }
