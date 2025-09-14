@@ -224,7 +224,12 @@
       startSunday.setDate(startSunday.getDate() - startSunday.getDay());
       startSunday.setHours(0,0,0,0);
 
-      const endSaturday = new Date(lastDate);
+      // Ensure the grid extends through the current week, even if today's data hasn't arrived yet
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const endRef = (lastDate < today) ? today : lastDate;
+
+      const endSaturday = new Date(endRef);
       endSaturday.setDate(endSaturday.getDate() + (6 - endSaturday.getDay()));
       endSaturday.setHours(0,0,0,0);
 
