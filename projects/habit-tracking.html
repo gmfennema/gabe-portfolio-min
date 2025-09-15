@@ -97,6 +97,61 @@
     /* Subtle page motion */
     @keyframes fade-up{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;} }
     .panel{ animation: fade-up .35s ease both; }
+    
+    /* Loading overlay */
+    .loader-overlay{
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: grid;
+      place-items: center;
+      z-index: 2000;
+      transition: opacity .25s ease, visibility .25s ease;
+    }
+    .loader-overlay.hidden{ opacity: 0; visibility: hidden; }
+    .loader-box{ display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .spinner{
+      width: 52px; height: 52px;
+      border-radius: 999px;
+      border: 3px solid var(--rule);
+      border-top-color: var(--accent);
+      animation: spin .9s linear infinite;
+    }
+    @keyframes spin{ to{ transform: rotate(360deg); } }
+    .loader-message{ color: var(--muted); font-size: 14px; text-align: center; max-width: 90%; }
+    @media (prefers-reduced-motion: reduce){ .spinner{ animation: none; border-top-color: var(--accent-strong); } }
+
+    /* Pipeline loader: calendar → website with moving packets */
+    .loader-pipeline{ display:flex; flex-direction:column; align-items:center; gap: 12px; }
+    .pipeline{ display:flex; align-items:center; gap:12px; width: clamp(220px, 50vw, 420px); }
+    .pipeline .icon{ line-height: 1; color: var(--muted); }
+    .material-symbols-outlined{ font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 250; font-size: 60px!important; }
+    .pipeline .flow{
+      position: relative;
+      flex: 1; height: 2px; border-radius: 999px; overflow: hidden;
+      background: var(--muted);
+      opacity: .45;
+    }
+    .pipeline .packet{
+      position: absolute; top: 50%; left: 0;
+      width: 14px; height: 14px; margin-top: -7px; border-radius: 999px;
+      background: var(--accent);
+      border: 2px solid var(--text);
+      animation: packet-move 1.3s linear infinite;
+      will-change: left;
+    }
+    .pipeline .packet:nth-child(2){ animation-delay: .16s; }
+    .pipeline .packet:nth-child(3){ animation-delay: .32s; }
+    .pipeline .packet:nth-child(4){ animation-delay: .48s; }
+    .pipeline .packet:nth-child(5){ animation-delay: .64s; }
+    .pipeline .packet:nth-child(6){ animation-delay: .8s; }
+    @keyframes packet-move{
+      0%{ left: 0; }
+      100%{ left: calc(100% - 14px); }
+    }
+    @media (prefers-reduced-motion: reduce){
+      .pipeline .packet{ animation: none; }
+    }
   </style>
 
   <meta property="og:title" content="Habits Dashboard • Project • Gabe Fennema"/>
@@ -110,6 +165,8 @@
   <link rel="prefetch" href="../projects.html"/>
   <link rel="prefetch" href="../index.html"/>
   <link rel="prefetch" href="../writing.html"/>
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@400"/>
 
   <style>.page-max{ max-width: 1000px; }</style>
 
@@ -134,6 +191,25 @@
   </script>
 </head>
 <body>
+  <div id="loader" class="loader-overlay" aria-live="polite">
+    <div class="loader-box">
+      <div class="loader-pipeline" aria-hidden="true">
+        <div class="pipeline">
+          <div class="icon material-symbols-outlined" aria-hidden="true">calendar_month</div>
+          <div class="flow">
+            <span class="packet"></span>
+            <span class="packet"></span>
+            <span class="packet"></span>
+            <span class="packet"></span>
+            <span class="packet"></span>
+            <span class="packet"></span>
+          </div>
+          <div class="icon material-symbols-outlined" aria-hidden="true">monitor</div>
+        </div>
+      </div>
+      <div class="loader-message">Loading habits… pulling data from Google Calendar</div>
+    </div>
+  </div>
   <div class="container page-max">
     <header class="site">
       <div class="brand"><a href="../index.html">GabeFen.com</a></div>
@@ -386,6 +462,9 @@
         ['grid-lift','grid-coffee','grid-alcohol'].forEach(id => {
           document.getElementById(id).innerHTML = '<div class="muted" style="color:var(--muted); font-size:13px;">Could not load data.</div>';
         });
+      } finally {
+        const loader = document.getElementById('loader');
+        if(loader) loader.classList.add('hidden');
       }
     }
 
