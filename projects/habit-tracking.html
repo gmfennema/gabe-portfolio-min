@@ -34,7 +34,7 @@
     /* Section rows (grid of tiny squares + metric card on the right like the mock) */
     .section-row{
       display: grid;
-      grid-template-columns: 1fr 230px;
+      grid-template-columns: 1fr 340px;
       gap: 16px;
       align-items: center;
     }
@@ -48,11 +48,12 @@
       background: var(--bg);
       padding: 18px 16px;
       text-align: center;
-      min-height: 120px;
+      min-height: 100px;
       display: grid;
       align-content: center;
       gap: 6px;
     }
+    .metrics{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
     .metric-card .label{
       color: var(--muted);
       font-size: 12px;
@@ -60,10 +61,11 @@
       text-transform: uppercase;
     }
     .metric-card .value{
-      font-size: 38px;
+      font-size: 34px;
       font-weight: 800;
       line-height: 1;
     }
+    .metrics .metric-card .value{ font-size: 28px; }
 
     /* Activity grids oriented as: rows = Sun..Sat, columns = weeks (old → new) */
     .micro-grid{
@@ -150,7 +152,7 @@
 
     <div class="project-detail-hero">
       <h1 class="post-title">Habits Dashboard</h1>
-      <p class="post-meta">A few key habits I've been tracking visualized with a dashboard using data pulled from Google Calendar refreshed hourly.</p>
+      <p>A few key habits I've been tracking visualized with a dashboard using data pulled from Google Calendar refreshed hourly.</p>
     </div>
 
     <section class="dash">
@@ -158,27 +160,45 @@
         <div class="row-title">Weight Lifting</div>
         <div class="section-row">
           <div id="grid-lift" class="micro-grid" aria-label="Lifting days"></div>
-          <div class="metric-card">
-            <div class="label">Avg Lifts Per Week</div>
-            <div id="avg-lifts" class="value">—</div>
+          <div class="metrics">
+            <div class="metric-card">
+              <div class="label">Per Week</div>
+              <div id="avg-lifts-week" class="value">—</div>
+            </div>
+            <div class="metric-card">
+              <div class="label">Per Month</div>
+              <div id="avg-lifts-month" class="value">—</div>
+            </div>
           </div>
         </div>
 
         <div class="row-title">Coffee Consumption</div>
         <div class="section-row">
           <div id="grid-coffee" class="micro-grid" aria-label="Coffee days"></div>
-          <div class="metric-card">
-            <div class="label">Avg Coffee Drinks Per Day</div>
-            <div id="avg-coffee" class="value">—</div>
+          <div class="metrics">
+            <div class="metric-card">
+              <div class="label">Per Day</div>
+              <div id="avg-coffee-day" class="value">—</div>
+            </div>
+            <div class="metric-card">
+              <div class="label">Per Month</div>
+              <div id="avg-coffee-month" class="value">—</div>
+            </div>
           </div>
         </div>
 
         <div class="row-title">Alcohol Consumption</div>
         <div class="section-row">
           <div id="grid-alcohol" class="micro-grid" aria-label="Alcohol days"></div>
-          <div class="metric-card">
-            <div class="label">Avg Drinks Per Week</div>
-            <div id="avg-alcohol" class="value">—</div>
+          <div class="metrics">
+            <div class="metric-card">
+              <div class="label">Per Week</div>
+              <div id="avg-alcohol-week" class="value">—</div>
+            </div>
+            <div class="metric-card">
+              <div class="label">Per Month</div>
+              <div id="avg-alcohol-month" class="value">—</div>
+            </div>
           </div>
         </div>
       </div>
@@ -285,16 +305,33 @@
       return out;
     }
 
-    function computeFallbackSummary(days){
-      const totals = days.reduce((a,d)=>{
-        a.c += d.coffee; a.a += d.alcohol; a.lh += d.liftHours; a.ls += d.liftSessions; return a;
-      },{c:0,a:0,lh:0,ls:0});
-      const dayCount = days.length || 1;
-      const weeks = dayCount/7;
+    function computeAverages(days){
+      if(!Array.isArray(days) || days.length===0){
+        return {
+          liftsWeek: NaN, liftsMonth: NaN,
+          coffeeDay: NaN, coffeeWeek: NaN, coffeeMonth: NaN,
+          alcoholWeek: NaN, alcoholMonth: NaN
+        };
+      }
+      const totals = days.reduce((acc, d)=>{
+        acc.coffee += Number(d.coffee||0);
+        acc.alcohol += Number(d.alcohol||0);
+        acc.lifts += Number(d.liftSessions||0);
+        return acc;
+      }, {coffee:0, alcohol:0, lifts:0});
+      const dayCount = days.length;
+      const weeks = dayCount / 7;
+      const monthsSet = new Set(days.map(d => d.date.slice(0,7))); // YYYY-MM
+      const months = Math.max(1, monthsSet.size);
+
       return {
-        avgCoffeePerDay: totals.c / dayCount,
-        avgDrinksPerWeek: totals.a / weeks,
-        avgLiftsPerWeek: totals.ls / weeks
+        liftsWeek: totals.lifts / (weeks || 1),
+        liftsMonth: totals.lifts / (months || 1),
+        coffeeDay: totals.coffee / (dayCount || 1),
+        coffeeWeek: totals.coffee / (weeks || 1),
+        coffeeMonth: totals.coffee / (months || 1),
+        alcoholWeek: totals.alcohol / (weeks || 1),
+        alcoholMonth: totals.alcohol / (months || 1)
       };
     }
 
@@ -314,11 +351,14 @@
         renderGrid(document.getElementById('grid-coffee'), days, d => (d.coffee||0));
         renderGrid(document.getElementById('grid-alcohol'), days, d => (d.alcohol||0));
 
-        // Metrics (prefer server-side summary; fall back to client calc)
-        const summary = data.summary || computeFallbackSummary(days);
-        setMetric('avg-lifts', summary.avgLiftsPerWeek);
-        setMetric('avg-coffee', summary.avgCoffeePerDay);
-        setMetric('avg-alcohol', summary.avgDrinksPerWeek);
+        // Metrics: compute weekly and monthly averages for each
+        const avgs = computeAverages(days);
+        setMetric('avg-lifts-week', avgs.liftsWeek);
+        setMetric('avg-lifts-month', avgs.liftsMonth);
+        setMetric('avg-coffee-day', avgs.coffeeDay);
+        setMetric('avg-coffee-month', avgs.coffeeMonth);
+        setMetric('avg-alcohol-week', avgs.alcoholWeek);
+        setMetric('avg-alcohol-month', avgs.alcoholMonth);
 
         // Re-render grids on resize for good density
         let t;
@@ -338,7 +378,11 @@
         },0)); }
       }catch(err){
         console.error(err);
-        ['avg-lifts','avg-coffee','avg-alcohol'].forEach(id => document.getElementById(id).textContent = '—');
+        [
+          'avg-lifts-week','avg-lifts-month',
+          'avg-coffee-day','avg-coffee-month',
+          'avg-alcohol-week','avg-alcohol-month'
+        ].forEach(id => { const el = document.getElementById(id); if(el) el.textContent = '—'; });
         ['grid-lift','grid-coffee','grid-alcohol'].forEach(id => {
           document.getElementById(id).innerHTML = '<div class="muted" style="color:var(--muted); font-size:13px;">Could not load data.</div>';
         });
