@@ -195,7 +195,7 @@
     <div class="loader-box">
       <div class="loader-pipeline" aria-hidden="true">
         <div class="pipeline">
-          <div class="icon material-symbols-outlined" aria-hidden="true">calendar_month</div>
+          <div class="icon material-symbols-outlined" aria-hidden="true">language</div>
           <div class="flow">
             <span class="packet"></span>
             <span class="packet"></span>
@@ -207,7 +207,7 @@
           <div class="icon material-symbols-outlined" aria-hidden="true">monitor</div>
         </div>
       </div>
-      <div class="loader-message">Loading stats… pulling data from Google Calendar</div>
+      <div class="loader-message">Retrieving and Aggregating Gabe's Statistics</div>
     </div>
   </div>
   <div class="container page-max">
@@ -274,6 +274,32 @@
             <div class="metric-card">
               <div class="label">Per Month</div>
               <div id="avg-alcohol-month" class="value">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="row-title">Typing Speed (Monkeytype)</div>
+        <div class="section-row" style="grid-template-columns: 1fr;">
+          <div id="typing-speed-panel" style="width:100%">
+            <div id="typing-chart" aria-label="Typing speed over time"></div>
+            <div id="typing-best-metrics" class="metrics" style="grid-template-columns: repeat(4, 1fr); margin-top: 10px;">
+              <div class="metric-card">
+                <div class="label">Best 15s</div>
+                <div id="best-15" class="value">—</div>
+              </div>
+              <div class="metric-card">
+                <div class="label">Best 30s</div>
+                <div id="best-30" class="value">—</div>
+              </div>
+              <div class="metric-card">
+                <div class="label">Best 60s</div>
+                <div id="best-60" class="value">—</div>
+              </div>
+              <div class="metric-card">
+                <div class="label">Best 120s</div>
+                <div id="best-120" class="value">—</div>
+              </div>
             </div>
           </div>
         </div>
@@ -411,6 +437,215 @@
       };
     }
 
+    // ===== Monkeytype Typing Speed Chart =====
+    const MONKEYTYPE_USERNAME = 'the_delusionist';
+
+    // Read env-based key if present on window; fallback to localStorage for dev
+    function getMonkeytypeKey(){
+      const k = (window && (window.env?.monkeytype_api_key || window._env_?.monkeytype_api_key)) || localStorage.getItem('monkeytype_apekey');
+      return (k||'').trim();
+    }
+
+    function movingAverage(values, windowSize){
+      const out = new Array(values.length).fill(null);
+      let sum = 0;
+      for(let i=0;i<values.length;i++){
+        sum += values[i];
+        if(i>=windowSize) sum -= values[i-windowSize];
+        if(i>=windowSize-1) out[i] = sum / windowSize;
+      }
+      return out;
+    }
+
+    function renderTypingChart(rootEl, attempts){
+      if(!rootEl) return;
+      rootEl.innerHTML = '';
+      if(!attempts || attempts.length===0){
+        rootEl.innerHTML = '<div class="muted" style="color:var(--muted); font-size:13px;">No typing results found.</div>';
+        return;
+      }
+
+      // Prepare data (oldest on left → newest on right)
+      attempts.sort((a,b)=> a.ts - b.ts);
+      const wpms = attempts.map(a=> Number(a.wpm||0));
+      const ma10 = movingAverage(wpms, 10);
+      // Only show 10-average per request
+
+      const n = attempts.length;
+      const padL = 30, padR = 8, padT = 10, padB = 30;
+      const width = rootEl.clientWidth || 640;
+      const height = 260;
+      const innerW = Math.max(1, width - padL - padR);
+      const innerH = Math.max(1, height - padT - padB);
+
+      const allVals = wpms.concat(ma10.filter(Boolean));
+      const yMin = Math.max(0, Math.floor(Math.min(...allVals) / 5) * 5);
+      const yMax = Math.ceil(Math.max(...allVals) / 5) * 5;
+      const x = i => padL + (n===1 ? innerW/2 : (i * (innerW/(n-1))));
+      const y = v => padT + innerH - ((v - yMin) / Math.max(1, yMax - yMin)) * innerH;
+
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('width', String(width));
+      svg.setAttribute('height', String(height));
+      svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+      // Grid lines
+      const grid = document.createElementNS(svg.namespaceURI, 'g');
+      grid.setAttribute('stroke', getComputedStyle(document.documentElement).getPropertyValue('--rule').trim());
+      grid.setAttribute('stroke-opacity', '0.7');
+      grid.setAttribute('stroke-width', '1');
+      const steps = 5;
+      for(let i=0;i<=steps;i++){
+        const ty = padT + (innerH/steps)*i;
+        const ln = document.createElementNS(svg.namespaceURI, 'line');
+        ln.setAttribute('x1', String(padL)); ln.setAttribute('y1', String(ty));
+        ln.setAttribute('x2', String(width - padR)); ln.setAttribute('y2', String(ty));
+        grid.appendChild(ln);
+      }
+      svg.appendChild(grid);
+
+      // Helper to build path from series (may contain nulls)
+      function seriesPath(series){
+        let d = '';
+        for(let i=0;i<series.length;i++){
+          const v = series[i];
+          if(v==null) continue;
+          const cx = x(i), cy = y(v);
+          d += (d ? ' L' : 'M') + cx + ' ' + cy;
+        }
+        return d;
+      }
+
+      const [r,g,b] = hexToRgb(getComputedStyle(document.documentElement).getPropertyValue('--accent').trim());
+
+      // Avg of 10 line
+      const path10 = document.createElementNS(svg.namespaceURI, 'path');
+      path10.setAttribute('d', seriesPath(ma10));
+      path10.setAttribute('fill', 'none');
+      path10.setAttribute('stroke', `rgb(${r},${g},${b})`);
+      path10.setAttribute('stroke-width', '3');
+      path10.setAttribute('stroke-linecap', 'round');
+      svg.appendChild(path10);
+
+      // Individual attempts (dots)
+      const dots = document.createElementNS(svg.namespaceURI, 'g');
+      dots.setAttribute('fill', `rgba(${r},${g},${b},0.35)`);
+      for(let i=0;i<n;i++){
+        const c = document.createElementNS(svg.namespaceURI, 'circle');
+        c.setAttribute('cx', String(x(i)));
+        c.setAttribute('cy', String(y(wpms[i])));
+        c.setAttribute('r', '2.5');
+        c.setAttribute('tabindex', '0');
+        const date = new Date(attempts[i].ts);
+        const label = date.toLocaleDateString()+` — ${wpms[i].toFixed(1)} wpm`;
+        c.setAttribute('aria-label', label);
+        c.setAttribute('title', label);
+        dots.appendChild(c);
+      }
+      svg.appendChild(dots);
+
+      // Y-axis labels (top = max, bottom = min)
+      const yLabels = document.createElementNS(svg.namespaceURI, 'g');
+      const textColor = getComputedStyle(document.documentElement).getPropertyValue('--muted').trim();
+      for(let i=0;i<=steps;i++){
+        const v = yMax - ((yMax - yMin)/steps)*i;
+        const ty = padT + (innerH/steps)*i;
+        const t = document.createElementNS(svg.namespaceURI, 'text');
+        t.setAttribute('x', String(6));
+        t.setAttribute('y', String(ty+4));
+        t.setAttribute('font-size', '10');
+        t.setAttribute('fill', textColor);
+        t.textContent = String(Math.round(v));
+        yLabels.appendChild(t);
+      }
+      svg.appendChild(yLabels);
+
+      rootEl.appendChild(svg);
+
+      // Resize handler
+      let rt;
+      window.addEventListener('resize', ()=>{ clearTimeout(rt); rt = setTimeout(()=>renderTypingChart(rootEl, attempts), 150); });
+
+      // X-axis labels (evenly spaced indices → dates)
+      const xLabels = document.createElementNS(svg.namespaceURI, 'g');
+      const spanDays = Math.max(1, (attempts[n-1].ts - attempts[0].ts) / 86400000);
+      let dateFmt;
+      if(spanDays > 365){ dateFmt = {year:'2-digit', month:'short'}; }
+      else if(spanDays > 60){ dateFmt = {month:'short', day:'numeric'}; }
+      else { dateFmt = {month:'numeric', day:'numeric'}; }
+      const xSteps = 6;
+      for(let i=0;i<=xSteps;i++){
+        const idx = Math.round((n-1) * (i/xSteps));
+        let cx = x(idx);
+        const dt = new Date(attempts[idx].ts);
+        const tx = document.createElementNS(svg.namespaceURI, 'text');
+        let anchor = 'middle';
+        if(i===0){ anchor='start'; cx = Math.max(padL, cx) + 2; }
+        else if(i===xSteps){ anchor='end'; cx = Math.min(width - padR, cx) - 2; }
+        tx.setAttribute('x', String(cx));
+        tx.setAttribute('y', String(height - 6));
+        tx.setAttribute('font-size', '10');
+        tx.setAttribute('fill', textColor);
+        tx.setAttribute('text-anchor', anchor);
+        tx.textContent = dt.toLocaleDateString(undefined, dateFmt);
+        xLabels.appendChild(tx);
+      }
+      svg.appendChild(xLabels);
+    }
+
+    async function fetchMonkeytypeAttempts(){
+      const apeKey = getMonkeytypeKey();
+      if(!apeKey){ return { attempts: [], source: 'none' }; }
+      try{
+        const url = 'https://api.monkeytype.com/results?limit=500';
+        const res = await fetch(url, { headers: { 'Authorization': 'ApeKey '+apeKey }, cache:'no-store' });
+        if(!res.ok) throw new Error('HTTP '+res.status);
+        const payload = await res.json();
+        const arr = Array.isArray(payload?.data) ? payload.data : (Array.isArray(payload?.results) ? payload.results : []);
+        const attempts = arr.map(r=>({
+          wpm: Number(r.wpm||r.raw||0),
+          acc: Number(r.acc||0),
+          ts: Number(r.timestamp||r.date||0) * (String(r.timestamp||'').length<13?1000:1),
+          mode: r.mode,
+          mode2: r.mode2
+        }));
+        return { attempts: attempts.filter(a=>a.ts && a.wpm), source: 'results' };
+      }catch(err){
+        console.warn('Monkeytype fetch failed', err);
+        return { attempts: [], source: 'error' };
+      }
+    }
+
+    async function loadTypingChart(){
+      const chartRoot = document.getElementById('typing-chart');
+      if(!chartRoot) return;
+
+      const { attempts } = await fetchMonkeytypeAttempts();
+      if(attempts.length){
+        renderTypingChart(chartRoot, attempts);
+        // Compute personal bests by mode2 duration
+        const best = {15: null, 30: null, 60: null, 120: null};
+        attempts.forEach(a=>{
+          // We only consider standard time tests
+          if(a.mode === 'time'){
+            const dur = Number(a.mode2);
+            if(best.hasOwnProperty(dur)){
+              best[dur] = Math.max(best[dur]||0, a.wpm||0);
+            }
+          }
+        });
+        const fmt = v => (isFinite(v) && v>0) ? Math.round(v) : '—';
+        const set = (id,val)=>{ const el=document.getElementById(id); if(el) el.textContent = fmt(val); };
+        set('best-15', best[15]);
+        set('best-30', best[30]);
+        set('best-60', best[60]);
+        set('best-120', best[120]);
+      }
+      else{
+        chartRoot.innerHTML = '<div class="muted" style="color:var(--muted); font-size:13px;">Monkeytype data unavailable.</div>';
+      }
+    }
+
     async function loadData(){
       try{
         const res = await fetch(APPSCRIPT_URL, {cache:'no-store'});
@@ -469,6 +704,7 @@
     }
 
     loadData();
+    loadTypingChart();
   </script>
 
   <script src="../scripts.js"></script>
