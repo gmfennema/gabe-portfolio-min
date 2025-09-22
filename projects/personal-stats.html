@@ -315,7 +315,7 @@
     document.getElementById('y').textContent = new Date().getFullYear();
 
     /* ================== CONFIG: paste your Apps Script Web App URL here ================== */
-    const APPSCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzms6Y6ZkrZV2TpAMmUyWC7bad0F9KceaGtZt_jYbjUWryFYdbtKPEg3k3E3gPmBsV8vA/exec';
+    const APPSCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyh0FaGpuMKIIe5PQJAv7UUuTH1X5rYZ53cxAOBLlzSohhx5jDZcD0AFFPcSaL2mw_2Rw/exec';
     /* ==================================================================================== */
 
     // Render helpers
@@ -438,13 +438,6 @@
     }
 
     // ===== Monkeytype Typing Speed Chart =====
-    const MONKEYTYPE_USERNAME = 'the_delusionist';
-
-    // Read env-based key if present on window; fallback to localStorage for dev
-    function getMonkeytypeKey(){
-      const k = (window && (window.env?.monkeytype_api_key || window._env_?.monkeytype_api_key)) || localStorage.getItem('monkeytype_apekey');
-      return (k||'').trim();
-    }
 
     function movingAverage(values, windowSize){
       const out = new Array(values.length).fill(null);
@@ -593,57 +586,13 @@
       svg.appendChild(xLabels);
     }
 
-    async function fetchMonkeytypeAttempts(){
-      const apeKey = getMonkeytypeKey();
-      if(!apeKey){ return { attempts: [], source: 'none' }; }
-      try{
-        const url = 'https://api.monkeytype.com/results?limit=500';
-        const res = await fetch(url, { headers: { 'Authorization': 'ApeKey '+apeKey }, cache:'no-store' });
-        if(!res.ok) throw new Error('HTTP '+res.status);
-        const payload = await res.json();
-        const arr = Array.isArray(payload?.data) ? payload.data : (Array.isArray(payload?.results) ? payload.results : []);
-        const attempts = arr.map(r=>({
-          wpm: Number(r.wpm||r.raw||0),
-          acc: Number(r.acc||0),
-          ts: Number(r.timestamp||r.date||0) * (String(r.timestamp||'').length<13?1000:1),
-          mode: r.mode,
-          mode2: r.mode2
-        }));
-        return { attempts: attempts.filter(a=>a.ts && a.wpm), source: 'results' };
-      }catch(err){
-        console.warn('Monkeytype fetch failed', err);
-        return { attempts: [], source: 'error' };
-      }
-    }
-
-    async function loadTypingChart(){
-      const chartRoot = document.getElementById('typing-chart');
-      if(!chartRoot) return;
-
-      const { attempts } = await fetchMonkeytypeAttempts();
-      if(attempts.length){
-        renderTypingChart(chartRoot, attempts);
-        // Compute personal bests by mode2 duration
-        const best = {15: null, 30: null, 60: null, 120: null};
-        attempts.forEach(a=>{
-          // We only consider standard time tests
-          if(a.mode === 'time'){
-            const dur = Number(a.mode2);
-            if(best.hasOwnProperty(dur)){
-              best[dur] = Math.max(best[dur]||0, a.wpm||0);
-            }
-          }
-        });
-        const fmt = v => (isFinite(v) && v>0) ? Math.round(v) : '—';
-        const set = (id,val)=>{ const el=document.getElementById(id); if(el) el.textContent = fmt(val); };
-        set('best-15', best[15]);
-        set('best-30', best[30]);
-        set('best-60', best[60]);
-        set('best-120', best[120]);
-      }
-      else{
-        chartRoot.innerHTML = '<div class="muted" style="color:var(--muted); font-size:13px;">Monkeytype data unavailable.</div>';
-      }
+    function setTypingBests(best){
+      const fmt = v => (isFinite(v) && v>0) ? Math.round(v) : '—';
+      const set = (id,val)=>{ const el=document.getElementById(id); if(el) el.textContent = fmt(val); };
+      set('best-15', best && best[15]);
+      set('best-30', best && best[30]);
+      set('best-60', best && best[60]);
+      set('best-120', best && best[120]);
     }
 
     async function loadData(){
@@ -671,6 +620,19 @@
         setMetric('avg-alcohol-week', avgs.alcoholWeek);
         setMetric('avg-alcohol-month', avgs.alcoholMonth);
 
+        // Typing: render from server-provided data
+        const chartRoot = document.getElementById('typing-chart');
+        if(chartRoot){
+          const typing = data.typing || {};
+          if(Array.isArray(typing.attempts) && typing.attempts.length){
+            renderTypingChart(chartRoot, typing.attempts);
+            setTypingBests(typing.best || {});
+          } else {
+            chartRoot.innerHTML = '<div class="muted" style="color:var(--muted); font-size:13px;">Monkeytype data unavailable.</div>';
+            setTypingBests({15:null,30:null,60:null,120:null});
+          }
+        }
+
         // Re-render grids on resize for good density
         let t;
         window.addEventListener('resize', ()=>{ clearTimeout(t); t = setTimeout(()=>{
@@ -697,6 +659,9 @@
         ['grid-lift','grid-coffee','grid-alcohol'].forEach(id => {
           document.getElementById(id).innerHTML = '<div class="muted" style="color:var(--muted); font-size:13px;">Could not load data.</div>';
         });
+        const chartRoot = document.getElementById('typing-chart');
+        if(chartRoot){ chartRoot.innerHTML = '<div class="muted" style="color:var(--muted); font-size:13px;">Monkeytype data unavailable.</div>'; }
+        setTypingBests({15:null,30:null,60:null,120:null});
       } finally {
         const loader = document.getElementById('loader');
         if(loader) loader.classList.add('hidden');
@@ -704,7 +669,6 @@
     }
 
     loadData();
-    loadTypingChart();
   </script>
 
   <script src="../scripts.js"></script>
