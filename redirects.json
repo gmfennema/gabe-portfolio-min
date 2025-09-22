@@ -2,7 +2,8 @@
   "meet": "https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ0oo19vmav_9Q9HrVwMJ1syhBdSzibzjhxqR8tj-MrgZm-440HbA8elPfC2Y1iyAaw62Ep2R9VE",
   "/meet": "https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ0oo19vmav_9Q9HrVwMJ1syhBdSzibzjhxqR8tj-MrgZm-440HbA8elPfC2Y1iyAaw62Ep2R9VE",
   "reading": "recommendations.html",
-  "/reading": "recommendations.html"
+  "/reading": "recommendations.html",
+  "/projects/habit-tracking.html": "/projects/personal-stats.html"
 }
 
 

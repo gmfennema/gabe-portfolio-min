@@ -1,11 +1,11 @@
 [
   {
-    "title": "Habits Dashboard",
-    "date": "2025-09-13",
-    "path": "projects/habit-tracking.html",
-    "summary": "A few key habits I've been tracking visualized with a dashboard pulled from Google Calendar.",
+    "title": "Personal Stats",
+    "date": "2025-09-22",
+    "path": "projects/personal-stats.html",
+    "summary": "A live dashboard of my lifting, coffee, and alcohol stats auto‑updated from Google Calendar.",
     "links": [
-      { "label": "Open Dashboard", "url": "projects/habit-tracking.html" }
+      { "label": "Open Stats", "url": "projects/personal-stats.html" }
     ]
   },
   {
