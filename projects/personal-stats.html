@@ -152,6 +152,12 @@
     @media (prefers-reduced-motion: reduce){
       .pipeline .packet{ animation: none; }
     }
+    
+    /* Mobile overrides for typing best metrics and chess charts */
+    @media (max-width: 720px){
+      #typing-best-metrics{ grid-template-columns: repeat(2, 1fr) !important; }
+      #lichess-charts{ grid-template-columns: 1fr !important; }
+    }
   </style>
 
   <meta property="og:title" content="Personal Stats • Project • Gabe Fennema"/>
