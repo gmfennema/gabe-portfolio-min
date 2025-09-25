@@ -304,6 +304,30 @@
           </div>
         </div>
       </div>
+
+      <div class="panel">
+        <div class="row-title">Chess Ratings (Lichess)</div>
+        <div class="section-row" style="grid-template-columns: 1fr;">
+          <div id="lichess-charts" style="width:100%; display:grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 12px; align-items:start;">
+            <div>
+              <div class="label" style="margin: 0 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing:.06em; font-size: 12px;">Bullet — Last 50 Games</div>
+              <div id="lichess-bullet-chart" aria-label="Bullet rating progression"></div>
+              <div class="metric-card" style="margin-top: 10px;">
+                <div class="label">Bullet</div>
+                <div id="lichess-bullet" class="value">—</div>
+              </div>
+            </div>
+            <div>
+              <div class="label" style="margin: 0 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing:.06em; font-size: 12px;">Blitz — Last 50 Games</div>
+              <div id="lichess-blitz-chart" aria-label="Blitz rating progression"></div>
+              <div class="metric-card" style="margin-top: 10px;">
+                <div class="label">Blitz</div>
+                <div id="lichess-blitz" class="value">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <footer>
@@ -595,6 +619,188 @@
       set('best-120', best && best[120]);
     }
 
+    // ===== Lichess Ratings =====
+    async function loadLichess(){
+      try{
+        const res = await fetch('https://lichess.org/api/user/father_gabraham', { headers: { 'Accept': 'application/json' }, cache: 'no-store' });
+        if(!res.ok) throw new Error('Lichess fetch failed: ' + res.status);
+        const data = await res.json();
+        const blitz = data && data.perfs && data.perfs.blitz ? data.perfs.blitz.rating : NaN;
+        const bullet = data && data.perfs && data.perfs.bullet ? data.perfs.bullet.rating : NaN;
+        const set = (id,val)=>{ const el=document.getElementById(id); if(el) el.textContent = (isFinite(val) ? String(Math.round(val)) : '—'); };
+        set('lichess-blitz', blitz);
+        set('lichess-bullet', bullet);
+      }catch(err){
+        console.error(err);
+        ['lichess-blitz','lichess-bullet'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent='—'; });
+      }
+    }
+
+    async function fetchLichessGames(user, perfType){
+      const url = `https://lichess.org/api/games/user/${encodeURIComponent(user)}?max=50&perfType=${encodeURIComponent(perfType)}&pgnInJson=true&clocks=false&moves=false`;
+      const res = await fetch(url, { headers: { 'Accept': 'application/x-ndjson' }, cache: 'no-store' });
+      if(!res.ok) throw new Error('Lichess games fetch failed: ' + res.status);
+      const text = await res.text();
+      const lines = text.trim().split('\n').filter(Boolean);
+      const games = lines.map(line=>{ try{ return JSON.parse(line); }catch{ return null; } }).filter(Boolean);
+      return games;
+    }
+
+    function renderRatingChart(rootEl, ratings, bounds){
+      if(!rootEl) return;
+      rootEl.innerHTML = '';
+      if(!ratings || ratings.length===0){
+        rootEl.innerHTML = '<div class="muted" style="color:var(--muted); font-size:13px;">No recent games.</div>';
+        return;
+      }
+
+      const width = rootEl.clientWidth || 640;
+      const height = 220;
+      const padL = 36, padR = 8, padT = 10, padB = 28;
+      const innerW = Math.max(1, width - padL - padR);
+      const innerH = Math.max(1, height - padT - padB);
+
+      const n = ratings.length;
+      const localMin = Math.min(...ratings);
+      const localMax = Math.max(...ratings);
+      const yMin = (bounds && isFinite(bounds.yMin)) ? bounds.yMin : Math.floor(localMin / 10) * 10;
+      const yMax = (bounds && isFinite(bounds.yMax)) ? bounds.yMax : Math.ceil(localMax / 10) * 10;
+      const x = i => padL + (n===1 ? innerW/2 : i * (innerW/(n-1)));
+      const y = v => padT + innerH - ((v - yMin) / Math.max(1, yMax - yMin)) * innerH;
+
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('width', String(width));
+      svg.setAttribute('height', String(height));
+      svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+      // Grid
+      const grid = document.createElementNS(svg.namespaceURI, 'g');
+      grid.setAttribute('stroke', getComputedStyle(document.documentElement).getPropertyValue('--rule').trim());
+      grid.setAttribute('stroke-opacity', '0.7');
+      grid.setAttribute('stroke-width', '1');
+      const steps = 5;
+      for(let i=0;i<=steps;i++){
+        const ty = padT + (innerH/steps)*i;
+        const ln = document.createElementNS(svg.namespaceURI, 'line');
+        ln.setAttribute('x1', String(padL)); ln.setAttribute('y1', String(ty));
+        ln.setAttribute('x2', String(width - padR)); ln.setAttribute('y2', String(ty));
+        grid.appendChild(ln);
+      }
+      svg.appendChild(grid);
+
+      // Smooth path (Catmull-Rom to cubic Bezier)
+      const [r,g,b] = hexToRgb(getComputedStyle(document.documentElement).getPropertyValue('--accent').trim());
+      function catmullRom2bezier(points){
+        if(points.length<2){ return ''; }
+        if(points.length===2){ return `M${points[0][0]} ${points[0][1]} L${points[1][0]} ${points[1][1]}`; }
+        let d = `M${points[0][0]} ${points[0][1]}`;
+        const s = 0.25; // smoothing factor (>1/6 for rounder curves)
+        for(let i=0;i<points.length-1;i++){
+          const p0 = points[i-1] || points[i];
+          const p1 = points[i];
+          const p2 = points[i+1];
+          const p3 = points[i+2] || p2;
+          const c1x = p1[0] + (p2[0]-p0[0]) * s;
+          const c1y = p1[1] + (p2[1]-p0[1]) * s;
+          const c2x = p2[0] - (p3[0]-p1[0]) * s;
+          const c2y = p2[1] - (p3[1]-p1[1]) * s;
+          d += ` C${c1x} ${c1y}, ${c2x} ${c2y}, ${p2[0]} ${p2[1]}`;
+        }
+        return d;
+      }
+      const points = ratings.map((v,i)=>[x(i), y(v)]);
+      const d = catmullRom2bezier(points);
+      const path = document.createElementNS(svg.namespaceURI, 'path');
+      path.setAttribute('d', d);
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', `rgb(${r},${g},${b})`);
+      path.setAttribute('stroke-width', '3');
+      path.setAttribute('stroke-linecap', 'round');
+      svg.appendChild(path);
+
+      // Dots with tooltips showing delta
+      const dots = document.createElementNS(svg.namespaceURI, 'g');
+      dots.setAttribute('fill', `rgba(${r},${g},${b},0.4)`);
+      for(let i=0;i<n;i++){
+        const c = document.createElementNS(svg.namespaceURI, 'circle');
+        c.setAttribute('cx', String(x(i)));
+        c.setAttribute('cy', String(y(ratings[i])));
+        c.setAttribute('r', '2.5');
+        const prev = i>0 ? ratings[i]-ratings[i-1] : 0;
+        const label = `Game ${i+1} — ${ratings[i]} (${prev>=0?'+':''}${prev})`;
+        c.setAttribute('aria-label', label);
+        c.setAttribute('title', label);
+        dots.appendChild(c);
+      }
+      svg.appendChild(dots);
+
+      // Y axis labels
+      const yLabels = document.createElementNS(svg.namespaceURI, 'g');
+      const textColor = getComputedStyle(document.documentElement).getPropertyValue('--muted').trim();
+      for(let i=0;i<=steps;i++){
+        const v = yMax - ((yMax - yMin)/steps)*i;
+        const ty = padT + (innerH/steps)*i;
+        const t = document.createElementNS(svg.namespaceURI, 'text');
+        t.setAttribute('x', String(6));
+        t.setAttribute('y', String(ty+4));
+        t.setAttribute('font-size', '10');
+        t.setAttribute('fill', textColor);
+        t.textContent = String(Math.round(v));
+        yLabels.appendChild(t);
+      }
+      svg.appendChild(yLabels);
+
+      // X axis labels removed for cleaner look
+
+      rootEl.appendChild(svg);
+
+      // Responsive
+      let rt; window.addEventListener('resize', ()=>{ clearTimeout(rt); rt=setTimeout(()=>renderRatingChart(rootEl, ratings, bounds), 150); });
+    }
+
+    async function loadLichessCharts(){
+      try{
+        const [bulletGames, blitzGames] = await Promise.all([
+          fetchLichessGames('father_gabraham', 'bullet'),
+          fetchLichessGames('father_gabraham', 'blitz')
+        ]);
+        // Build rating series oldest→newest; use white or black rating after game
+        function extractRatings(games){
+          const list = (games||[]).slice().reverse(); // API returns newest first → reverse
+          const out = [];
+          for(const g of list){
+            const you = (g.players && (g.players.white?.user?.name?.toLowerCase()==='father_gabraham')) ? g.players.white : g.players.black;
+            const rating = you && (you.rating || you.ratingDiff!=null)
+              ? (you.rating ?? (out.length? out[out.length-1] + Number(you.ratingDiff||0) : NaN))
+              : NaN;
+            out.push(Number(rating));
+          }
+          return out.filter(v=>isFinite(v));
+        }
+        const bulletRatings = extractRatings(bulletGames).slice(-50);
+        const blitzRatings = extractRatings(blitzGames).slice(-50);
+
+        const combined = bulletRatings.concat(blitzRatings);
+        if(combined.length){
+          const minCombined = Math.min(...combined);
+          const maxCombined = Math.max(...combined);
+          const yMin = Math.floor((minCombined - 25) / 10) * 10;
+          const yMax = Math.ceil((maxCombined + 25) / 10) * 10;
+          const bounds = { yMin, yMax };
+          renderRatingChart(document.getElementById('lichess-bullet-chart'), bulletRatings, bounds);
+          renderRatingChart(document.getElementById('lichess-blitz-chart'), blitzRatings, bounds);
+        } else {
+          renderRatingChart(document.getElementById('lichess-bullet-chart'), bulletRatings);
+          renderRatingChart(document.getElementById('lichess-blitz-chart'), blitzRatings);
+        }
+      }catch(err){
+        console.error(err);
+        const msg = '<div class="muted" style="color:var(--muted); font-size:13px;">Could not load games.</div>';
+        const bc = document.getElementById('lichess-bullet-chart'); if(bc) bc.innerHTML = msg;
+        const bz = document.getElementById('lichess-blitz-chart'); if(bz) bz.innerHTML = msg;
+      }
+    }
+
     async function loadData(){
       try{
         const res = await fetch(APPSCRIPT_URL, {cache:'no-store'});
@@ -669,6 +875,8 @@
     }
 
     loadData();
+    loadLichess();
+    loadLichessCharts();
   </script>
 
   <script src="../scripts.js"></script>
