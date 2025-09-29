@@ -127,6 +127,7 @@ document.querySelectorAll('.nav a').forEach(a=>{
 // Auto-populate Projects page from projects manifest
 (async function(){
   const root = document.getElementById('projects-root');
+  const featRoot = document.getElementById('featured-projects-root');
   if(!root) return;
   try{
     const res = await fetch('projects/projects.json', {cache:'no-store'});
@@ -134,7 +135,51 @@ document.querySelectorAll('.nav a').forEach(a=>{
     const projects = await res.json();
     // sort by date desc if provided
     projects.sort((a,b)=> new Date(b.date||0) - new Date(a.date||0));
+    if(featRoot) featRoot.innerHTML = '';
     root.innerHTML = '';
+
+    // Render featured first (but keep them in the main list too)
+    if(featRoot){
+      const featured = projects.filter(p=> !!p.featured);
+      featured.slice(0, 4).forEach(p=>{
+        const card = document.createElement('div');
+        card.className = 'featured-card';
+
+        const content = document.createElement('div');
+        content.className = 'featured-content';
+        const badge = document.createElement('div');
+        badge.className = 'featured-badge';
+        badge.textContent = 'Featured';
+        const title = document.createElement('a');
+        title.className = 'featured-title';
+        title.href = p.path;
+        title.textContent = p.title;
+        const summary = document.createElement('p');
+        summary.className = 'featured-summary';
+        summary.textContent = p.summary || '';
+
+        content.appendChild(badge);
+        content.appendChild(title);
+        content.appendChild(summary);
+
+        if(p.links && Array.isArray(p.links) && p.links.length){
+          const links = document.createElement('div');
+          links.className = 'featured-links';
+          p.links.forEach(l=>{
+            const a = document.createElement('a');
+            a.className = 'badge';
+            a.href = l.url;
+            a.target = '_blank';
+            a.rel = 'noopener';
+            a.textContent = l.label || 'Link';
+            links.appendChild(a);
+          });
+          content.appendChild(links);
+        }
+        card.appendChild(content);
+        featRoot.appendChild(card);
+      });
+    }
     projects.forEach(p=>{
       const card = document.createElement('div');
       card.className = 'project-card';

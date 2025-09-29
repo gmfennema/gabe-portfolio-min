@@ -21,6 +21,7 @@
     "title": "Sheets to Slack",
     "date": "2024-05-12",
     "path": "projects/sheets-to-slack.html",
+    "featured": true,
     "summary": "Send Google Sheets data to Slack with scheduled messages, slash-command triggers, and a visual post builder.",
     "links": [
       { "label": "Get Add-on", "url": "https://workspace.google.com/marketplace/app/gabes_sheets_to_slack_app/450312054899?flow_type=2&hl=en&pann=sheets_addon_widget" },
@@ -31,6 +32,7 @@
     "title": "Google Sheets Theme Generator",
     "date": "2023-09-11",
     "path": "https://workspace.google.com/marketplace/app/gabes_theme_generator/407160235109?hl=en&pann=sheets_addon_widget",
+    "featured": true,
     "summary": "Generate and apply cohesive color themes to Google Sheets with dark mode, saved themes, and font selection.",
     "links": [
       {

@@ -411,6 +411,41 @@ html[data-theme="dark"] .logo-item{ filter: grayscale(100%) brightness(2); opaci
 /* Projects page: slightly larger logos and extra spacing below slider */
 .logos-projects{ margin-bottom: 28px; }
 
+/* Featured projects */
+.featured-projects-section{ margin: 24px 0 18px; }
+.featured-projects{
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.featured-card{
+  position: relative;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(157,192,234,0.18), rgba(157,192,234,0.06));
+  padding: 14px 16px 16px;
+}
+.featured-badge{
+  display:inline-block;
+  font-size:11px; letter-spacing:.06em; text-transform:uppercase;
+  color: var(--accent-strong);
+  background: rgba(157,192,234,0.18);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 4px 8px;
+  margin: 0 10px 8px 0; /* add spacing to the right of the pill */
+  vertical-align: middle;
+}
+.featured-title{ font-weight: 800; color: var(--text); text-decoration: none; display:inline-block; }
+.featured-title:hover{ color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.featured-summary{ color: var(--muted); margin: 8px 0 10px; }
+.featured-links{ display:flex; flex-wrap:wrap; gap:8px; }
+
+@media (max-width: 720px){
+  .featured-projects{ grid-template-columns: 1fr; }
+}
+
 /* Services section */
 .services{ margin: 28px 0 6px; }
 .services-grid{
