@@ -219,29 +219,51 @@ document.querySelectorAll('.nav a').forEach(a=>{
   }
 })();
 
-// Home: latest posts (from posts manifest)
-// Home: three-column highlight (latest writing, recommendation, project)
+// Home: Bento grid with latest writing, recommendation, and project
 (async function(){
   const grid = document.getElementById('home-cards');
   if(!grid) return;
 
-  function createCard({eyebrow, titleText, href, summary, actions}){
+  function createBentoCard({category, titleText, href, summary, actions}){
     const card = document.createElement('div');
-    card.className = 'home-card';
-    const eye = document.createElement('div'); eye.className = 'eyebrow'; eye.textContent = eyebrow;
-    const h3 = document.createElement('h3');
-    const a = document.createElement('a'); a.href = href || '#'; a.textContent = titleText || 'Untitled';
-    h3.appendChild(a);
-    const p = document.createElement('p'); p.textContent = summary || '';
-    card.appendChild(eye); card.appendChild(h3); card.appendChild(p);
+    card.className = 'bento-card';
+    
+    const cat = document.createElement('div');
+    cat.className = 'bento-category';
+    cat.textContent = category;
+    
+    const title = document.createElement('h3');
+    title.className = 'bento-title';
+    const a = document.createElement('a');
+    a.href = href || '#';
+    a.textContent = titleText || 'Untitled';
+    title.appendChild(a);
+    
+    const sum = document.createElement('p');
+    sum.className = 'bento-summary';
+    sum.textContent = summary || '';
+    
+    card.appendChild(cat);
+    card.appendChild(title);
+    card.appendChild(sum);
+    
     if(actions && actions.length){
-      const row = document.createElement('div'); row.className = 'actions';
+      const actionsDiv = document.createElement('div');
+      actionsDiv.className = 'bento-actions';
       actions.forEach(act=>{
-        const b = document.createElement('a'); b.className = 'badge'; b.href = act.href; b.textContent = act.label; if(act.newTab){ b.target = '_blank'; b.rel = 'noopener'; }
-        row.appendChild(b);
+        const link = document.createElement('a');
+        link.className = 'bento-link';
+        link.href = act.href;
+        link.textContent = act.label;
+        if(act.newTab){
+          link.target = '_blank';
+          link.rel = 'noopener';
+        }
+        actionsDiv.appendChild(link);
       });
-      card.appendChild(row);
+      card.appendChild(actionsDiv);
     }
+    
     return card;
   }
 
@@ -258,42 +280,44 @@ document.querySelectorAll('.nav a').forEach(a=>{
       projRes.ok ? projRes.json() : []
     ]);
 
-    // latest post
+    // latest post (first card - large)
     if(Array.isArray(posts) && posts.length){
       posts.sort((a,b)=> new Date(b.date) - new Date(a.date));
       const p = posts[0];
-      grid.appendChild(createCard({
-        eyebrow: 'Latest Writing',
+      grid.appendChild(createBentoCard({
+        category: 'LATEST WRITING',
         titleText: p.title,
         href: p.path,
         summary: p.summary,
-        actions: [{label:'All writing', href:'writing.html'}]
+        actions: [{label:'Read article', href: p.path}, {label:'All writing', href:'writing.html'}]
       }));
     }
 
-    // latest recommendation
+    // latest recommendation (second card - medium)
     if(Array.isArray(recs) && recs.length){
       recs.sort((a,b)=> new Date(b.date||0) - new Date(a.date||0));
       const r = recs[0];
-      const title = r.title + (r.author ? ` — ${r.author}` : '');
-      const summary = r.note || '';
-      grid.appendChild(createCard({
-        eyebrow: 'Latest Recommendation',
+      const title = r.title + (r.author ? ` by ${r.author}` : '');
+      const summary = r.note || 'A recommendation worth checking out.';
+      grid.appendChild(createBentoCard({
+        category: 'LATEST RECOMMENDATION',
         titleText: title,
         href: r.url || 'recommendations.html',
         summary,
-        actions: [{label:'All recs', href:'recommendations.html'}]
+        actions: [{label:'View recommendation', href: r.url || 'recommendations.html', newTab: !!r.url}, {label:'All recommendations', href:'recommendations.html'}]
       }));
     }
 
-    // latest project
+    // latest project (third card - full width)
     if(Array.isArray(projects) && projects.length){
       projects.sort((a,b)=> new Date(b.date||0) - new Date(a.date||0));
       const pr = projects[0];
-      const actions = [{label:'All projects', href:'projects.html'}];
-      if(pr.links && pr.links[0]) actions.unshift({label: pr.links[0].label || 'View', href: pr.links[0].url, newTab: true});
-      grid.appendChild(createCard({
-        eyebrow: 'Latest Project',
+      const actions = [{label:'View project', href: pr.path}];
+      if(pr.links && pr.links[0]) actions.push({label: pr.links[0].label || 'Live demo', href: pr.links[0].url, newTab: true});
+      actions.push({label:'All projects', href:'projects.html'});
+      
+      grid.appendChild(createBentoCard({
+        category: 'LATEST PROJECT',
         titleText: pr.title,
         href: pr.path,
         summary: pr.summary,
