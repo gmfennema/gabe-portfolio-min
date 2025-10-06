@@ -419,10 +419,17 @@ footer{ color: var(--muted); font-size: 14px; margin-top: 40px; padding: 40px 0 
 .logos{ margin: 26px 0 0; }
 .logos h3{ margin: 26px 0 10px; }
 .logos-scroller{
+  position: relative;
   overflow: hidden;
   border-top: 1px solid var(--rule);
   border-bottom: 1px solid var(--rule);
   padding: 12px 0;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
 }
 .logos-track{
   display: inline-flex;
