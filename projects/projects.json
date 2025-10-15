@@ -52,6 +52,18 @@
         "url": "https://chromewebstore.google.com/detail/daily-wisdom/mnnifpoepkebdonijhhmfcmfmndmajde"
       }
     ]
+  },
+  {
+    "title": "PowerPoint Stylizer for Tableau Exports",
+    "date": "2025-10-15",
+    "path": "https://github.com/gmfennema/tableau-power-point-stylizer",
+    "summary": "Automatically transforms bland Tableau PowerPoint exports into polished, branded presentations with batch styling, OCR title extraction, and customizable themes.",
+    "links": [
+      {
+        "label": "View on GitHub",
+        "url": "https://github.com/gmfennema/tableau-power-point-stylizer"
+      }
+    ]
   }
 ]
 
