@@ -1,5 +1,16 @@
 [
   {
+    "title": "CYOLLMA - Choose Your Own LLM Adventure",
+    "date": "2025-10-30",
+    "path": "projects/cyollma.html",
+    "featured": false,
+    "summary": "A macOS SwiftUI app that runs choose-your-own-adventure sessions against local Ollama models or Groq\u2019s hosted LLMs with optional text-to-speech narration.",
+    "links": [
+      { "label": "Download DMG", "url": "https://github.com/gmfennema/CYOLLMA/raw/main/CYOLLMA-app.dmg" },
+      { "label": "View on GitHub", "url": "https://github.com/gmfennema/CYOLLMA" }
+    ]
+  },
+  {
     "title": "Personal Stats",
     "date": "2025-09-22",
     "path": "projects/personal-stats.html",
@@ -66,5 +77,4 @@
     ]
   }
 ]
-
 

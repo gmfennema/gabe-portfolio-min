@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>CYOLLMA • Project • Gabe Fennema</title>
+  <meta name="description" content="A macOS SwiftUI app that lets you run choose-your-own-adventure sessions against local Ollama models or Groq's hosted LLMs."/>
+  <link rel="stylesheet" href="../styles.css"/>
+  <link rel="icon" href="../assets/favicon.png" type="image/png"/>
+  <style>
+    html[data-theme="dark"] { color-scheme: dark; }
+    html[data-theme="light"] { color-scheme: light; }
+    .project-detail-hero p{
+      margin-top: 16px;
+      color: var(--muted);
+      max-width: 640px;
+    }
+    .project-detail-hero .badge{
+      margin-top: 20px;
+    }
+    .project-gallery img{
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      background: var(--bg);
+      box-shadow: 0 10px 28px rgba(0,0,0,0.12);
+    }
+    .callouts{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+    .callout{
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      background: color-mix(in srgb, var(--bg) 92%, var(--accent) 8%);
+      padding: 18px;
+    }
+    .callout h3{
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+    .callout p{
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+  </style>
+  <meta property="og:title" content="CYOLLMA • Project • Gabe Fennema"/>
+  <meta property="og:description" content="macOS SwiftUI app that runs choose-your-own-adventure sessions against local Ollama or Groq-hosted LLMs."/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:url" content="cyollma.html"/>
+  <meta name="twitter:card" content="summary"/>
+  <meta name="twitter:title" content="CYOLLMA • Project • Gabe Fennema"/>
+  <meta name="twitter:description" content="macOS SwiftUI app that runs choose-your-own-adventure sessions against local Ollama or Groq-hosted LLMs."/>
+  <link rel="canonical" href="cyollma.html"/>
+  <link rel="prefetch" href="../projects.html"/>
+  <link rel="prefetch" href="../index.html"/>
+  <link rel="prefetch" href="../writing.html"/>
+</head>
+<body>
+  <div class="post-container">
+    <header class="site">
+      <div class="brand"><a href="../index.html">GabeFen.com</a></div>
+      <nav class="nav">
+        <a href="../writing.html">WRITING</a>
+        <a href="../recommendations.html">RECOMMENDATIONS</a>
+        <a href="../projects.html">PROJECTS</a>
+        <a href="../about.html">ABOUT</a>
+      </nav>
+      <div class="toggle">
+        <span>AUTO</span>
+        <div class="switch" data-mode="auto" aria-label="Theme toggle"><span class="knob"></span></div>
+      </div>
+    </header>
+    <hr class="rule"/>
+
+    <div class="project-detail-hero">
+      <h1 class="post-title">Choose Your Own LLM Adventure</h1>
+      <p style="text-align:center; max-width: 900px; margin: 0 auto;">
+        A native macOS SwiftUI app that guides large language models through structured choose-your-own-adventure stories. Plug into your local Ollama models for offline play or hop over to Groq for real-time hosted generation and narration.
+      </p>
+      <a class="badge" href="https://github.com/gmfennema/CYOLLMA/raw/main/CYOLLMA-app.dmg" target="_blank" rel="noopener">Download for macOS</a>
+    </div>
+
+    <div class="post-grid">
+      <aside class="post-meta project-meta">
+        <div class="card">
+          <div><strong>Project</strong><br/>CYOLLMA - Choose Your Own LLM Adventure</div>
+        </div>
+        <div class="card">
+          <div><strong>Role</strong><br/>Product design · SwiftUI engineering · Prompt design</div>
+        </div>
+        <div class="card">
+          <div><strong>Stack</strong><br/>SwiftUI · Observation · Ollama · Groq API · AVFoundation</div>
+        </div>
+        <div class="card">
+          <div><strong>Links</strong></div>
+          <div class="links">
+            <a class="badge" href="https://github.com/gmfennema/CYOLLMA/raw/main/CYOLLMA-app.dmg" target="_blank" rel="noopener">Download DMG</a>
+            <a class="badge" href="https://github.com/gmfennema/CYOLLMA" target="_blank" rel="noopener">View on GitHub</a>
+          </div>
+        </div>
+      </aside>
+
+      <article class="post-content">
+        <div class="project-gallery">
+          <img src="../assets/cyollma/cyollma-demo.gif" alt="Animated walkthrough of CYOLLMA generating a new adventure" loading="lazy"/>
+        </div>
+
+        <h2>Why I built it</h2>
+        <p>Large language models are fantastic story collaborators, but they rarely stay on the rails once a narrative branches out. CYOLLMA wraps a structured storytelling loop around Ollama and Groq models so every chapter stays fresh, remembers past choices, and keeps players in control without babysitting the prompt each time.</p>
+
+        <div class="callouts" aria-label="Feature highlights">
+          <div class="callout">
+            <h3>Guided adventures</h3>
+            <p>Each chapter prompt is templated with the active scenario, past choices, and any creative direction you queued up.</p>
+          </div>
+          <div class="callout">
+            <h3>Instant model swap</h3>
+            <p>Toggle between your local Ollama models and Groq&rsquo;s hosted mix without leaving the story.</p>
+          </div>
+          <div class="callout">
+            <h3>Built-in narration</h3>
+            <p>Groq&rsquo;s `playai-tts` voice pack turns any chapter into audio with a single tap.</p>
+          </div>
+        </div>
+
+        <h2>How the story loop works</h2>
+        <p>CYOLLMA stores the entire playthrough locally - chapters, summaries, and every decision the player has made. When you request a new chapter, the app:</p>
+        <ol>
+          <li>Bundles the previous summary, player choices, and queued creative direction into a prompt template.</li>
+          <li>Sends the request through whichever provider is active (Ollama or Groq).</li>
+          <li>Parses the model's structured JSON response, surfacing a new chapter body plus up to four choices.</li>
+          <li>Lets you pin a choice, write your own direction, or regenerate just the options while keeping the narrative.</li>
+        </ol>
+        <p>The result is a tight loop that keeps the pace of a choose-your-own-adventure book while giving players the freedom to improvise.</p>
+
+        <div class="project-gallery">
+          <img src="../assets/cyollma/homescreen.png" alt="CYOLLMA home screen showing recent adventures and quick start templates" loading="lazy"/>
+        </div>
+
+        <h2>Model flexibility</h2>
+        <p>I wanted the app to feel equally at home online or offline. Provider switching happens in a single modal:</p>
+        <ul>
+          <li><strong>Local play:</strong> Talk directly to any Ollama model you have installed. CYOLLMA handles the streaming interface and decodes JSON as the response arrives.</li>
+          <li><strong>Groq cloud:</strong> Choose from hosted models for faster generation or tap into the narration service for an instant audio companion track.</li>
+        </ul>
+
+        <div class="project-gallery">
+          <img src="../assets/cyollma/local-or-cloud.png" alt="Settings picker showing a toggle between local Ollama models and Groq models" loading="lazy"/>
+        </div>
+
+        <h2>Creative direction on demand</h2>
+        <p>Sometimes you want the model to veer off script. CYOLLMA keeps a queue of creative nudges. Add a sentence like “introduce a mysterious stranger with useful information” and the next chapter weaves it in while respecting the ongoing plot. If the choices aren’t landing, regenerate just the options and keep the narrative intact.</p>
+
+        <div class="project-gallery">
+          <img src="../assets/cyollma/story-view.png" alt="Story view with narration controls and chapter history" loading="lazy"/>
+        </div>
+
+        <h2>Narration pipeline</h2>
+        <p>For Groq-backed sessions, each chapter can be handed to <code>playai-tts</code> and surfaced as an in-app audio player. Playback speed controls, scrubbing, and chapter bookmarks make it easy to follow along without staring at the screen.</p>
+
+        <h2>Implementation notes</h2>
+        <ul>
+          <li>SwiftUI + Observation for state management keeps the entire story tree reactive without boilerplate.</li>
+          <li>Provider services expose a common protocol so the UI doesn’t care if the payload streams in from Ollama or Groq.</li>
+          <li>The prompt templates and JSON decoder are shared across providers, enforcing consistency in chapter structure.</li>
+          <li>Audio playback uses AVFoundation with cached files so narration can replay offline after the first request.</li>
+        </ul>
+
+      </article>
+    </div>
+
+    <footer>
+      <p>© <span id="y"></span> Gabe Fennema</p>
+    </footer>
+  </div>
+  <script>
+    document.getElementById('y').textContent = new Date().getFullYear();
+  </script>
+  <script src="../scripts.js"></script>
+</body>
+</html>
