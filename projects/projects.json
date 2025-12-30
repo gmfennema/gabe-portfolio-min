@@ -6,17 +6,27 @@
     "featured": false,
     "summary": "A macOS SwiftUI app that runs choose-your-own-adventure sessions against local Ollama models or Groq\u2019s hosted LLMs with optional text-to-speech narration.",
     "links": [
-      { "label": "Download DMG", "url": "https://github.com/gmfennema/CYOLLMA/raw/main/CYOLLMA-app.dmg" },
-      { "label": "View on GitHub", "url": "https://github.com/gmfennema/CYOLLMA" }
+      {
+        "label": "Download DMG",
+        "url": "https://github.com/gmfennema/CYOLLMA/raw/main/CYOLLMA-app.dmg"
+      },
+      {
+        "label": "View on GitHub",
+        "url": "https://github.com/gmfennema/CYOLLMA"
+      }
     ]
   },
   {
     "title": "Personal Stats",
     "date": "2025-09-22",
     "path": "projects/personal-stats.html",
+    "featured": true,
     "summary": "A live dashboard of my lifting, coffee, and alcohol stats auto‑updated from Google Calendar.",
     "links": [
-      { "label": "Open Stats", "url": "projects/personal-stats.html" }
+      {
+        "label": "Open Stats",
+        "url": "projects/personal-stats.html"
+      }
     ]
   },
   {
@@ -25,7 +35,10 @@
     "path": "projects/mortgage-payoff-simulator.html",
     "summary": "An advanced mortgage payoff simulator with a clean dashboard UI and a paydown chart.",
     "links": [
-      { "label": "Open Simulator", "url": "projects/mortgage-payoff-simulator.html" }
+      {
+        "label": "Open Simulator",
+        "url": "projects/mortgage-payoff-simulator.html"
+      }
     ]
   },
   {
@@ -35,15 +48,20 @@
     "featured": true,
     "summary": "Send Google Sheets data to Slack with scheduled messages, slash-command triggers, and a visual post builder.",
     "links": [
-      { "label": "Get Add-on", "url": "https://workspace.google.com/marketplace/app/gabes_sheets_to_slack_app/450312054899?flow_type=2&hl=en&pann=sheets_addon_widget" },
-      { "label": "Purchase", "url": "https://gabefen.gumroad.com/l/sheets-to-slack?layout=discover&recommended_by=search" }
+      {
+        "label": "Get Add-on",
+        "url": "https://workspace.google.com/marketplace/app/gabes_sheets_to_slack_app/450312054899?flow_type=2&hl=en&pann=sheets_addon_widget"
+      },
+      {
+        "label": "Purchase",
+        "url": "https://gabefen.gumroad.com/l/sheets-to-slack?layout=discover&recommended_by=search"
+      }
     ]
   },
   {
     "title": "Google Sheets Theme Generator",
     "date": "2023-09-11",
     "path": "https://workspace.google.com/marketplace/app/gabes_theme_generator/407160235109?hl=en&pann=sheets_addon_widget",
-    "featured": true,
     "summary": "Generate and apply cohesive color themes to Google Sheets with dark mode, saved themes, and font selection.",
     "links": [
       {
@@ -77,4 +95,3 @@
     ]
   }
 ]
-
