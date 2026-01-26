@@ -80,39 +80,41 @@
       <article class="post-content">
         <h2>Why I built it</h2>
         <p>
-          Most relationship tools feel either too clinical, too fluffy, or too complicated. I wanted something fast, private, and useful
-          immediately — a tool that turns “vibes and friction” into concrete language you can actually talk about.
+          I tried a bunch of relationship tools and bounced off most of them. They either felt like therapy homework, a fluffy quiz, or a
+          spreadsheet pretending to be an app. I wanted something I could run in a few minutes, on my phone, that would turn "vibes and
+          friction" into words we could actually use in a real conversation.
         </p>
 
         <h2>What it does</h2>
         <ul>
-          <li><strong>Mobile-first questionnaire</strong>: one question at a time with fast tap answers and progress tracking.</li>
-          <li><strong>Trait vectors (0–100)</strong>: scores map to readable dimensions like attachment, conflict style, regulation, and personality traits.</li>
-          <li><strong>Radar chart (top signals)</strong>: shows the strongest deviations from neutral to keep the result digestible.</li>
-          <li><strong>Copy/paste coach prompt</strong>: exports one block (vectors + instructions) to generate a narrative interpretation in ChatGPT/Gemini.</li>
-          <li><strong>Two-person flow</strong>: run a partner session and compare results without accounts/logins.</li>
+          <li>Mobile-first questionnaire: one question at a time, quick tap answers, clear progress.</li>
+          <li>Scores (0–100) across a set of dimensions (attachment, conflict style, regulation, personality traits).</li>
+          <li>Radar chart that highlights the biggest signals so you don't have to read a wall of numbers.</li>
+          <li>One-click export that generates a "coach prompt" you can paste into ChatGPT/Gemini for a plain-English readout.</li>
+          <li>Optional partner run so you can compare results without creating accounts or sharing logins.</li>
         </ul>
 
         <h2>Approach</h2>
         <p>
-          The architecture is intentionally simple. Questions live in a local JSON question bank. Answers are stored <strong>locally in your browser</strong>
-          unless you export/share them. Scoring is deterministic (question sets per vector, optional reverse-scoring, averaged and normalized to 0–100).
+          I kept the architecture boring on purpose. Questions live in a local JSON question bank. Answers stay <strong>in your browser</strong>
+          unless you choose to export them. Scoring is deterministic: each question contributes to one or more vectors (with optional reverse scoring),
+          then everything gets averaged and normalized to 0–100.
         </p>
         <ul>
           <li>Question bank: versioned JSON</li>
           <li>Privacy: localStorage by default (export/share is explicit)</li>
           <li>Scoring: deterministic mapping from question IDs → vectors</li>
-          <li>Output: readable UI + shareable results + structured “coach” prompt</li>
+          <li>Output: readable UI + shareable results + structured "coach" prompt</li>
         </ul>
 
-        <h2>Who it’s for</h2>
+        <h2>Who it's for</h2>
         <p>
-          People who want a structured mirror and better conversations: couples who keep circling the same pattern, individuals trying to understand
-          their default mode under stress, or anyone who wants something more actionable than “I don’t know, I just felt weird.”
+          This is for people who keep having the same conversation (or the same fight) and want a clearer starting point. It works for couples,
+          but it's also useful solo if you're trying to see your own patterns when you're stressed.
         </p>
 
         <p class="muted" style="color:var(--muted); font-size: 13px; margin-top: 26px;">
-          Built for fast insight — not diagnosis.
+          For reflection and better conversations, not diagnosis.
         </p>
       </article>
     </div>
