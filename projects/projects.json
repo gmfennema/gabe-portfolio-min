@@ -1,10 +1,20 @@
 [
   {
+    "title": "Relationship Eval",
+    "date": "2026-01-25",
+    "path": "projects/relationship-eval.html",
+    "featured": true,
+    "summary": "A private-by-default relationship questionnaire that turns answers into trait vectors (0–100), a radar chart, and a copy/paste coach prompt.",
+    "links": [
+      { "label": "View on GitHub", "url": "https://github.com/gmfennema/relationship-eval" }
+    ]
+  },
+  {
     "title": "CYOLLMA - Choose Your Own LLM Adventure",
     "date": "2025-10-30",
     "path": "projects/cyollma.html",
     "featured": false,
-    "summary": "A macOS SwiftUI app that runs choose-your-own-adventure sessions against local Ollama models or Groq\u2019s hosted LLMs with optional text-to-speech narration.",
+    "summary": "A macOS SwiftUI app that runs choose-your-own-adventure sessions against local Ollama models or Groq’s hosted LLMs with optional text-to-speech narration.",
     "links": [
       {
         "label": "Download DMG",
@@ -45,7 +55,7 @@
     "title": "Sheets to Slack",
     "date": "2024-05-12",
     "path": "projects/sheets-to-slack.html",
-    "featured": true,
+    "featured": false,
     "summary": "Send Google Sheets data to Slack with scheduled messages, slash-command triggers, and a visual post builder.",
     "links": [
       {
@@ -62,6 +72,7 @@
     "title": "Google Sheets Theme Generator",
     "date": "2023-09-11",
     "path": "https://workspace.google.com/marketplace/app/gabes_theme_generator/407160235109?hl=en&pann=sheets_addon_widget",
+    "featured": true,
     "summary": "Generate and apply cohesive color themes to Google Sheets with dark mode, saved themes, and font selection.",
     "links": [
       {

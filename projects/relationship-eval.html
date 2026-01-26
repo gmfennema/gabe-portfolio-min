@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Relationship Eval • Project • Gabe Fennema</title>
+  <meta name="description" content="A private-by-default relationship questionnaire that turns answers into trait vectors, a radar chart, and a copy/paste coach prompt."/>
+  <link rel="stylesheet" href="../styles.css"/>
+  <link rel="icon" href="../assets/favicon.png" type="image/png"/>
+  <style>
+    html[data-theme="dark"] { color-scheme: dark; }
+    html[data-theme="light"] { color-scheme: light; }
+    .project-detail-hero p{
+      margin-top: 16px;
+      color: var(--muted);
+      max-width: 720px;
+    }
+  </style>
+  <meta property="og:title" content="Relationship Eval • Project • Gabe Fennema"/>
+  <meta property="og:description" content="Private-by-default questionnaire → trait vectors (0–100), radar chart, and copy/paste coach prompt."/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:url" content="relationship-eval.html"/>
+  <meta name="twitter:card" content="summary"/>
+  <meta name="twitter:title" content="Relationship Eval • Project • Gabe Fennema"/>
+  <meta name="twitter:description" content="Private-by-default questionnaire → trait vectors (0–100), radar chart, and copy/paste coach prompt."/>
+  <link rel="canonical" href="relationship-eval.html"/>
+  <link rel="prefetch" href="../projects.html"/>
+  <link rel="prefetch" href="../index.html"/>
+  <link rel="prefetch" href="../writing.html"/>
+</head>
+<body>
+  <div class="post-container">
+    <header class="site">
+      <div class="brand"><a href="../index.html">GabeFen.com</a></div>
+      <nav class="nav">
+        <a href="../writing.html">WRITING</a>
+        <a href="../recommendations.html">RECOMMENDATIONS</a>
+        <a href="../projects.html">PROJECTS</a>
+        <a href="../about.html">ABOUT</a>
+      </nav>
+      <div class="toggle">
+        <span>AUTO</span>
+        <div class="switch" data-mode="auto" aria-label="Theme toggle"><span class="knob"></span></div>
+      </div>
+    </header>
+    <hr class="rule"/>
+
+    <div class="project-detail-hero">
+      <h1 class="post-title">Relationship Eval</h1>
+      <p style="text-align:center; margin-left:auto; margin-right:auto;">
+        A private-by-default relationship questionnaire that turns answers into trait vectors (0–100), a radar chart, and a copy/paste
+        coach prompt you can run through ChatGPT/Gemini for a narrative, practical readout.
+      </p>
+    </div>
+
+    <div class="post-grid">
+      <aside class="post-meta project-meta">
+        <div class="card">
+          <div><strong>Project</strong><br/>Relationship Eval</div>
+        </div>
+        <div class="card">
+          <div><strong>Role</strong><br/>Product design · UI engineering · Scoring model</div>
+        </div>
+        <div class="card">
+          <div><strong>Stack</strong><br/>Next.js · React · TypeScript · Tailwind</div>
+        </div>
+        <div class="card">
+          <div><strong>Links</strong></div>
+          <div class="links">
+            <a class="badge" href="https://github.com/gmfennema/relationship-eval" target="_blank" rel="noopener">View on GitHub</a>
+          </div>
+        </div>
+      </aside>
+
+      <article class="post-content">
+        <h2>Why I built it</h2>
+        <p>
+          Most relationship tools feel either too clinical, too fluffy, or too complicated. I wanted something fast, private, and useful
+          immediately — a tool that turns “vibes and friction” into concrete language you can actually talk about.
+        </p>
+
+        <h2>What it does</h2>
+        <ul>
+          <li><strong>Mobile-first questionnaire</strong>: one question at a time with fast tap answers and progress tracking.</li>
+          <li><strong>Trait vectors (0–100)</strong>: scores map to readable dimensions like attachment, conflict style, regulation, and personality traits.</li>
+          <li><strong>Radar chart (top signals)</strong>: shows the strongest deviations from neutral to keep the result digestible.</li>
+          <li><strong>Copy/paste coach prompt</strong>: exports one block (vectors + instructions) to generate a narrative interpretation in ChatGPT/Gemini.</li>
+          <li><strong>Two-person flow</strong>: run a partner session and compare results without accounts/logins.</li>
+        </ul>
+
+        <h2>Approach</h2>
+        <p>
+          The architecture is intentionally simple. Questions live in a local JSON question bank. Answers are stored <strong>locally in your browser</strong>
+          unless you export/share them. Scoring is deterministic (question sets per vector, optional reverse-scoring, averaged and normalized to 0–100).
+        </p>
+        <ul>
+          <li>Question bank: versioned JSON</li>
+          <li>Privacy: localStorage by default (export/share is explicit)</li>
+          <li>Scoring: deterministic mapping from question IDs → vectors</li>
+          <li>Output: readable UI + shareable results + structured “coach” prompt</li>
+        </ul>
+
+        <h2>Who it’s for</h2>
+        <p>
+          People who want a structured mirror and better conversations: couples who keep circling the same pattern, individuals trying to understand
+          their default mode under stress, or anyone who wants something more actionable than “I don’t know, I just felt weird.”
+        </p>
+
+        <p class="muted" style="color:var(--muted); font-size: 13px; margin-top: 26px;">
+          Built for fast insight — not diagnosis.
+        </p>
+      </article>
+    </div>
+
+    <footer>
+      <p>© <span id="y"></span> Gabe Fennema</p>
+    </footer>
+  </div>
+  <script>
+    document.getElementById('y').textContent = new Date().getFullYear();
+  </script>
+  <script src="../scripts.js"></script>
+</body>
+</html>
