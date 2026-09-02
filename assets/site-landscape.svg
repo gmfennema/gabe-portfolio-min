@@ -1,66 +1,355 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 620" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2400 720" preserveAspectRatio="xMidYMax slice" role="img" aria-labelledby="title desc">
   <title id="title">A hand-drawn high-country landscape</title>
-  <desc id="desc">Layered blue mountains, dark evergreens, pale clouds, rocks, and field grass.</desc>
+  <desc id="desc">Layered blue mountains under a soft sky, a dense evergreen treeline, and a meadow with a winding trail, boulders, and wildflowers.</desc>
   <defs>
     <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#f7f1e5" stop-opacity="0"/>
-      <stop offset=".55" stop-color="#dbe5e4" stop-opacity=".6"/>
-      <stop offset="1" stop-color="#c7d3d2" stop-opacity=".88"/>
+      <stop offset=".42" stop-color="#e3eae8" stop-opacity=".35"/>
+      <stop offset=".7" stop-color="#cfdad9" stop-opacity=".75"/>
+      <stop offset="1" stop-color="#c3d0cf" stop-opacity=".9"/>
+    </linearGradient>
+    <linearGradient id="far" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#cbd7d8"/>
+      <stop offset="1" stop-color="#a9bcbf"/>
     </linearGradient>
     <linearGradient id="ridge" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#9fb4bb"/>
-      <stop offset="1" stop-color="#687f81"/>
+      <stop offset="0" stop-color="#9db3b9"/>
+      <stop offset="1" stop-color="#65807f"/>
+    </linearGradient>
+    <linearGradient id="hills" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7f8f7d"/>
+      <stop offset="1" stop-color="#586853"/>
     </linearGradient>
     <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#85907b"/>
-      <stop offset="1" stop-color="#5d674f"/>
+      <stop offset="0" stop-color="#8c977c"/>
+      <stop offset="1" stop-color="#5a664e"/>
     </linearGradient>
-    <filter id="paper" x="-10%" y="-10%" width="120%" height="120%">
-      <feTurbulence type="fractalNoise" baseFrequency=".75" numOctaves="3" seed="13" result="noise"/>
+    <linearGradient id="fadeGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+      <stop offset=".16" stop-color="#fff" stop-opacity=".35"/>
+      <stop offset=".4" stop-color="#fff" stop-opacity="1"/>
+    </linearGradient>
+    <mask id="fade"><rect width="2400" height="720" fill="url(#fadeGrad)"/></mask>
+    <filter id="paper" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3" seed="13" result="noise"/>
       <feColorMatrix in="noise" type="saturate" values="0" result="gray"/>
-      <feComponentTransfer in="gray" result="fade"><feFuncA type="table" tableValues="0 .12"/></feComponentTransfer>
+      <feComponentTransfer in="gray" result="fade"><feFuncA type="table" tableValues="0 .11"/></feComponentTransfer>
       <feBlend in="SourceGraphic" in2="fade" mode="multiply"/>
     </filter>
+    <g id="fir">
+      <path d="M0-100 14-63 7-66 23-33 13-36 31 0H-30L-12-36-21-33-6-66-13-63Z"/>
+      <path d="M-3 0h6v11h-6z" fill="#183129" stroke="none"/>
+      <path d="M0-92v86M0-72l-8 7M0-54l9 7M0-40l-10 8M0-22l11 8" fill="none" stroke="#8fb0a2" stroke-opacity=".45" stroke-width="1.6" stroke-linecap="round"/>
+    </g>
+    <g id="tuft" fill="none" stroke-linecap="round" stroke-width="2.2">
+      <path d="M0 0c-3-4-6-7-8-13M0 0c-1-5 0-10 1-15M0 0c3-4 6-8 8-12M0 0c4-2 8-4 13-6"/>
+    </g>
+    <g id="flower">
+      <path d="M0 0v-9" fill="none" stroke="#6b7856" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cy="-10.5" r="2.8"/>
+    </g>
   </defs>
-  <rect width="1600" height="620" fill="url(#sky)"/>
-  <g fill="none" stroke="#a8b8ba" stroke-linecap="round" opacity=".34">
-    <path d="M160 120c89-50 180-43 273-3 91 40 176 37 255 5 83-34 164-34 245 1"/>
-    <path d="M744 94c57-24 115-22 174 7 64 32 127 30 189-5 55-31 106-31 154-5"/>
-    <path d="M1045 155c48-23 101-19 158 10 62 32 119 31 171 0"/>
+  <g mask="url(#fade)">
+  <rect width="2400" height="720" fill="url(#sky)"/>
+  <!-- sun -->
+  <g fill="none" stroke="#cfa66b" stroke-linecap="round" opacity=".6">
+    <circle cx="2206" cy="264" r="48" stroke-width="2.6"/>
+    <path d="M2162 254c6-28 26-44 52-46 24-2 44 12 52 36" stroke-width="1.4" opacity=".7"/>
+  </g>
+  <!-- clouds -->
+  <g fill="none" stroke="#a8b8ba" stroke-width="3" stroke-linecap="round" opacity=".36">
+    <path d="M160 150c90-48 180-42 272-2 90 40 176 36 256 4 82-34 164-34 244 2"/>
+    <path d="M330 196c60-24 118-22 174 6 56 26 108 24 160-6"/>
+    <path d="M1180 118c60-26 118-24 176 6 64 32 128 30 190-6 56-30 108-30 158-4"/>
+    <path d="M1420 168c44-20 90-18 138 6 50 26 98 24 142-4"/>
+    <path d="M1760 226c50-24 104-20 162 10 62 32 120 30 172 0"/>
+    <path d="M520 254c40-18 82-16 124 4 46 22 90 20 134-4" opacity=".7"/>
+  </g>
+  <!-- birds -->
+  <g fill="none" stroke="#24382f" stroke-width="2" stroke-linecap="round" opacity=".5">
+    <path d="M1452 176c5-7 9-7 12-1c3-6 7-6 12 1"/>
+    <path d="M1492 158c4-6 8-6 10-1c2-5 6-5 10 1"/>
+    <path d="M1522 184c4-5 7-5 9-1c2-4 5-4 9 1"/>
   </g>
   <g filter="url(#paper)">
-    <path d="M0 455 126 344l88 59 114-125 106 93 126-182 142 160 120-91 127 112 137-201 166 189 113-78 145 136 110-58v262H0Z" fill="#b8c8cb" opacity=".72"/>
-    <path d="m0 483 169-108 115 57 129-105 96 55 132-137 124 131 110-77 128 86 139-146 144 126 116-68 218 141v182H0Z" fill="url(#ridge)" opacity=".72"/>
-    <g fill="none" stroke="#eef1eb" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" opacity=".8">
-      <path d="m438 365 70-115 34 47 39-20 61-74 58 70 54 89"/>
-      <path d="m1002 382 65-105 41 35 34-62 82-92 65 93 59 96"/>
-      <path d="m167 421 42-42 47 34 61-113 62 60"/>
+    <!-- far range -->
+    <path d="M-20 470 60 420 150 350 230 400 320 330 400 380 470 300 560 250 640 330 720 290 800 360 880 320 960 260 1040 330 1120 290 1200 210 1290 300 1360 270 1440 340 1520 280 1600 330 1680 260 1760 320 1850 240 1930 320 2010 290 2090 350 2170 300 2260 360 2340 320 2420 380V470Z" fill="url(#far)" opacity=".8"/>
+    <g fill="none" stroke="#eef1eb" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity=".75">
+      <path d="m1160 250 40-40 30 45 22-20"/>
+      <path d="m522 278 38-28 34 38"/>
+      <path d="m1814 268 36-28 40 44"/>
+      <path d="m930 292 30-32 34 46"/>
+      <path d="m1652 296 28-36 36 44"/>
     </g>
-    <g fill="none" stroke="#536d70" stroke-width="3" opacity=".72">
-      <path d="M0 455 126 344l88 59 114-125 106 93 126-182 142 160 120-91 127 112 137-201 166 189 113-78 145 136"/>
-      <path d="m0 483 169-108 115 57 129-105 96 55 132-137 124 131 110-77 128 86 139-146 144 126 116-68 218 141"/>
-      <path d="m394 345 56-26 43 5 31-38 45 15 73-83 48 70"/>
-      <path d="m1018 335 48-33 40 12 36-58 79-91 70 103"/>
+    <g fill="none" stroke="#6f8a8d" stroke-width="1.6" stroke-linecap="round" opacity=".32">
+      <path d="M-20 470 60 420 150 350 230 400 320 330 400 380 470 300 560 250 640 330 720 290 800 360 880 320 960 260 1040 330 1120 290 1200 210 1290 300 1360 270 1440 340 1520 280 1600 330 1680 260 1760 320 1850 240 1930 320 2010 290 2090 350 2170 300 2260 360 2340 320 2420 380"/>
+      <path d="M1218 236l24 60M1236 252l22 54M578 274l22 56M594 290l20 50M1868 264l22 56M1884 280l20 50M1160 236l-24 60"/>
     </g>
-    <path d="M0 506c161-52 309-53 446-4 145 53 295 48 452-7 159-56 315-54 468 8 86 35 164 42 234 23v94H0Z" fill="url(#ground)" opacity=".96"/>
-    <g fill="#263e35" stroke="#183129" stroke-width="2">
-      <g transform="translate(50 333)"><path d="m38 0 25 66H47l28 58H1l28-58H13Z"/><path d="M36 117h5v39h-5z"/></g>
-      <g transform="translate(112 380) scale(.78)"><path d="m38 0 25 66H47l28 58H1l28-58H13Z"/><path d="M36 117h5v39h-5z"/></g>
-      <g transform="translate(212 367) scale(.9)"><path d="m38 0 25 66H47l28 58H1l28-58H13Z"/><path d="M36 117h5v39h-5z"/></g>
-      <g transform="translate(672 360) scale(.9)"><path d="m38 0 25 66H47l28 58H1l28-58H13Z"/><path d="M36 117h5v39h-5z"/></g>
-      <g transform="translate(752 385) scale(.72)"><path d="m38 0 25 66H47l28 58H1l28-58H13Z"/><path d="M36 117h5v39h-5z"/></g>
-      <g transform="translate(812 362) scale(.92)"><path d="m38 0 25 66H47l28 58H1l28-58H13Z"/><path d="M36 117h5v39h-5z"/></g>
-      <g transform="translate(1300 340)"><path d="m38 0 25 66H47l28 58H1l28-58H13Z"/><path d="M36 117h5v39h-5z"/></g>
-      <g transform="translate(1400 376) scale(.8)"><path d="m38 0 25 66H47l28 58H1l28-58H13Z"/><path d="M36 117h5v39h-5z"/></g>
-      <g transform="translate(1490 350) scale(.94)"><path d="m38 0 25 66H47l28 58H1l28-58H13Z"/><path d="M36 117h5v39h-5z"/></g>
+    <!-- mid range -->
+    <path d="M-20 520 80 470 170 430 260 460 350 390 430 430 520 350 600 410 690 380 780 440 860 400 940 330 1030 400 1110 370 1180 300 1260 360 1330 330 1420 400 1500 370 1580 420 1660 350 1740 410 1820 380 1900 440 1990 380 2070 430 2160 390 2240 450 2320 420 2420 470V520Z" fill="url(#ridge)" opacity=".86"/>
+    <g fill="none" stroke="#eef1eb" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" opacity=".8">
+      <path d="m1140 344 40-42 40 60 30-26"/>
+      <path d="m900 374 40-42 36 52"/>
+      <path d="m478 392 42-40 32 42"/>
+      <path d="m1620 392 40-40 36 46"/>
+      <path d="m1950 422 40-40 30 42"/>
+      <path d="m310 430 40-38 30 40"/>
     </g>
-    <g fill="#b6a27c" stroke="#6d6754" stroke-width="2" opacity=".9">
-      <path d="m16 560 69-36 54 18 33 54H0Z"/><path d="m1460 555 41-36 70 16 29 51v34h-159Z"/>
-      <path d="m100 550 55-19 35 33-26 23-58-4Z"/><path d="m1384 552 53-23 37 39-40 22-63-10Z"/>
+    <g fill="none" stroke="#4f6a6c" stroke-linecap="round" stroke-linejoin="round" opacity=".7">
+      <path d="M-20 520 80 470 170 430 260 460 350 390 430 430 520 350 600 410 690 380 780 440 860 400 940 330 1030 400 1110 370 1180 300 1260 360 1330 330 1420 400 1500 370 1580 420 1660 350 1740 410 1820 380 1900 440 1990 380 2070 430 2160 390 2240 450 2320 420 2420 470" stroke-width="3"/>
+      <path d="M1200 322l22 56M1216 336l20 50M1232 352l18 44M1160 322l-22 56M1144 336l-20 50M958 352l20 52M974 366l18 46M538 372l20 52M554 386l18 46M1678 372l20 52M1694 386l18 46M2008 402l18 46M368 412l18 46" stroke-width="1.8" opacity=".42"/>
     </g>
-    <g fill="none" stroke="#a47445" stroke-width="3" stroke-linecap="round" opacity=".72">
-      <path d="m50 605 8-31m0 18 12-16m-12 16-13-11m67 28 8-35m0 18 11-12m-11 12-13-8"/>
-      <path d="m1511 604 5-34m0 19 13-17m-13 17-11-12m-52 31 7-29m0 14 11-12"/>
+    <!-- near hills -->
+    <path d="M-20 560C100 500 240 480 380 510 480 530 560 520 660 490 760 460 880 470 980 500 1060 525 1140 520 1240 490 1340 460 1460 470 1560 500 1660 530 1760 520 1860 490 1960 460 2080 470 2180 500 2280 525 2360 520 2420 505V600H-20Z" fill="url(#hills)" opacity=".96"/>
+    <path d="M-20 560C100 500 240 480 380 510 480 530 560 520 660 490 760 460 880 470 980 500 1060 525 1140 520 1240 490 1340 460 1460 470 1560 500 1660 530 1760 520 1860 490 1960 460 2080 470 2180 500 2280 525 2360 520 2420 505" fill="none" stroke="#3f5142" stroke-width="2.4" stroke-linecap="round" opacity=".5"/>
+    <g fill="none" stroke="#3f5142" stroke-width="1.6" stroke-linecap="round" opacity=".28">
+      <path d="m300 505 22 18m24-26 22 20m-120-2 20 16m1046-24 22 18m24-26 22 20m-120-4 20 16m600 6 22 18m24-26 22 20m-1290 6 20 16m22-24 20 18"/>
     </g>
+
+    <g fill="#35493f" stroke="#243a31" stroke-width="1.6" stroke-linejoin="round" opacity=".92">
+      <use href="#fir" transform="translate(-10 527) scale(0.47)"/>
+      <use href="#fir" transform="translate(28 526) scale(0.54)"/>
+      <use href="#fir" transform="translate(71 534) scale(0.42)"/>
+      <use href="#fir" transform="translate(98 528) scale(0.6)"/>
+      <use href="#fir" transform="translate(125 531) scale(0.42)"/>
+      <use href="#fir" transform="translate(153 533) scale(0.45)"/>
+      <use href="#fir" transform="translate(192 534) scale(0.41)"/>
+      <use href="#fir" transform="translate(221 535) scale(0.61)"/>
+      <use href="#fir" transform="translate(265 534) scale(0.61)"/>
+      <use href="#fir" transform="translate(309 528) scale(0.49)"/>
+      <use href="#fir" transform="translate(336 527) scale(0.52)"/>
+      <use href="#fir" transform="translate(371 533) scale(0.49)"/>
+      <use href="#fir" transform="translate(400 533) scale(0.53)"/>
+      <use href="#fir" transform="translate(431 534) scale(0.42)"/>
+      <use href="#fir" transform="translate(463 533) scale(0.48)"/>
+      <use href="#fir" transform="translate(491 534) scale(0.52)"/>
+      <use href="#fir" transform="translate(523 533) scale(0.51)"/>
+      <use href="#fir" transform="translate(562 532) scale(0.57)"/>
+      <use href="#fir" transform="translate(606 530) scale(0.6)"/>
+      <use href="#fir" transform="translate(641 527) scale(0.45)"/>
+      <use href="#fir" transform="translate(674 529) scale(0.42)"/>
+      <use href="#fir" transform="translate(716 530) scale(0.51)"/>
+      <use href="#fir" transform="translate(756 526) scale(0.46)"/>
+      <use href="#fir" transform="translate(785 527) scale(0.51)"/>
+      <use href="#fir" transform="translate(821 532) scale(0.43)"/>
+      <use href="#fir" transform="translate(860 535) scale(0.41)"/>
+      <use href="#fir" transform="translate(888 534) scale(0.57)"/>
+      <use href="#fir" transform="translate(924 530) scale(0.47)"/>
+      <use href="#fir" transform="translate(965 532) scale(0.53)"/>
+      <use href="#fir" transform="translate(993 529) scale(0.58)"/>
+      <use href="#fir" transform="translate(1034 526) scale(0.55)"/>
+      <use href="#fir" transform="translate(1061 529) scale(0.56)"/>
+      <use href="#fir" transform="translate(1105 538) scale(0.62)"/>
+      <use href="#fir" transform="translate(1145 531) scale(0.46)"/>
+      <use href="#fir" transform="translate(1182 532) scale(0.4)"/>
+      <use href="#fir" transform="translate(1219 526) scale(0.44)"/>
+      <use href="#fir" transform="translate(1260 537) scale(0.41)"/>
+      <use href="#fir" transform="translate(1295 528) scale(0.43)"/>
+      <use href="#fir" transform="translate(1333 538) scale(0.49)"/>
+      <use href="#fir" transform="translate(1374 532) scale(0.42)"/>
+      <use href="#fir" transform="translate(1412 539) scale(0.52)"/>
+      <use href="#fir" transform="translate(1442 538) scale(0.58)"/>
+      <use href="#fir" transform="translate(1485 531) scale(0.46)"/>
+      <use href="#fir" transform="translate(1522 531) scale(0.55)"/>
+      <use href="#fir" transform="translate(1555 527) scale(0.43)"/>
+      <use href="#fir" transform="translate(1585 528) scale(0.45)"/>
+      <use href="#fir" transform="translate(1611 534) scale(0.51)"/>
+      <use href="#fir" transform="translate(1642 525) scale(0.46)"/>
+      <use href="#fir" transform="translate(1672 530) scale(0.49)"/>
+      <use href="#fir" transform="translate(1716 527) scale(0.47)"/>
+      <use href="#fir" transform="translate(1758 535) scale(0.61)"/>
+      <use href="#fir" transform="translate(1785 538) scale(0.5)"/>
+      <use href="#fir" transform="translate(1828 531) scale(0.49)"/>
+      <use href="#fir" transform="translate(1866 535) scale(0.42)"/>
+      <use href="#fir" transform="translate(1904 526) scale(0.41)"/>
+      <use href="#fir" transform="translate(1936 526) scale(0.5)"/>
+      <use href="#fir" transform="translate(1972 526) scale(0.53)"/>
+      <use href="#fir" transform="translate(1998 533) scale(0.52)"/>
+      <use href="#fir" transform="translate(2027 534) scale(0.61)"/>
+      <use href="#fir" transform="translate(2053 528) scale(0.42)"/>
+      <use href="#fir" transform="translate(2091 529) scale(0.43)"/>
+      <use href="#fir" transform="translate(2128 532) scale(0.53)"/>
+      <use href="#fir" transform="translate(2157 532) scale(0.43)"/>
+      <use href="#fir" transform="translate(2197 529) scale(0.51)"/>
+      <use href="#fir" transform="translate(2225 536) scale(0.43)"/>
+      <use href="#fir" transform="translate(2261 532) scale(0.56)"/>
+      <use href="#fir" transform="translate(2292 528) scale(0.51)"/>
+      <use href="#fir" transform="translate(2334 536) scale(0.48)"/>
+      <use href="#fir" transform="translate(2377 537) scale(0.6)"/>
+      <use href="#fir" transform="translate(2419 535) scale(0.47)"/>
+    </g>
+    <path d="M-20 562C220 546 420 570 640 566 860 562 1000 548 1200 546 1400 544 1560 556 1760 568 1960 580 2200 560 2420 552V720H-20Z" fill="url(#ground)" opacity=".97"/>
+    <path d="M-20 562C220 546 420 570 640 566 860 562 1000 548 1200 546 1400 544 1560 556 1760 568 1960 580 2200 560 2420 552" fill="none" stroke="#3f5142" stroke-width="2" stroke-linecap="round" opacity=".45"/>
+    <path d="M-20 660C200 636 440 646 700 664 960 682 1160 656 1400 646 1640 636 1900 660 2140 652 2300 646 2380 654 2420 660V720H-20Z" fill="#66735a" opacity=".32"/>
+    <g fill="none" stroke="#24382f" stroke-width="1.2" stroke-linecap="round" opacity=".13">
+      <path d="M-20 618c300-24 520 14 820 6s520-30 820-8 500 30 800 6"/>
+      <path d="M-20 686c260-18 480 8 740 2s480-24 760-6 500 26 940 4"/>
+    </g>
+
+    <g fill="#263e35" stroke="#183129" stroke-width="1.8" stroke-linejoin="round">
+      <use href="#fir" transform="translate(-6 578) scale(1.02)"/>
+      <use href="#fir" transform="translate(44 576) scale(0.88)"/>
+      <use href="#fir" transform="translate(89 582) scale(1.05)"/>
+      <use href="#fir" transform="translate(140 579) scale(1.05)"/>
+      <use href="#fir" transform="translate(194 586) scale(0.82)"/>
+      <use href="#fir" transform="translate(253 587) scale(1.14)"/>
+      <use href="#fir" transform="translate(293 587) scale(1.07)"/>
+      <use href="#fir" transform="translate(339 577) scale(1.04)"/>
+      <use href="#fir" transform="translate(379 579) scale(0.94)"/>
+      <use href="#fir" transform="translate(436 574) scale(0.73)"/>
+      <use href="#fir" transform="translate(495 578) scale(0.84)"/>
+      <use href="#fir" transform="translate(535 579) scale(1.02)"/>
+      <use href="#fir" transform="translate(583 585) scale(1.07)"/>
+      <use href="#fir" transform="translate(628 579) scale(1.13)"/>
+      <use href="#fir" transform="translate(664 577) scale(0.81)"/>
+      <use href="#fir" transform="translate(713 577) scale(0.8)"/>
+      <use href="#fir" transform="translate(762 588) scale(0.99)"/>
+      <use href="#fir" transform="translate(815 581) scale(1.08)"/>
+      <use href="#fir" transform="translate(869 584) scale(0.87)"/>
+      <use href="#fir" transform="translate(905 575) scale(1.08)"/>
+      <use href="#fir" transform="translate(951 586) scale(1.06)"/>
+      <use href="#fir" transform="translate(991 576) scale(0.93)"/>
+      <use href="#fir" transform="translate(1038 579) scale(1.06)"/>
+      <use href="#fir" transform="translate(1074 580) scale(0.81)"/>
+      <use href="#fir" transform="translate(1187 576) scale(0.6)"/>
+      <use href="#fir" transform="translate(1310 587) scale(0.59)"/>
+      <use href="#fir" transform="translate(1363 579) scale(0.73)"/>
+      <use href="#fir" transform="translate(1401 576) scale(0.96)"/>
+      <use href="#fir" transform="translate(1435 585) scale(0.73)"/>
+      <use href="#fir" transform="translate(1489 585) scale(0.76)"/>
+      <use href="#fir" transform="translate(1527 587) scale(0.91)"/>
+      <use href="#fir" transform="translate(1567 577) scale(1.08)"/>
+      <use href="#fir" transform="translate(1601 578) scale(0.83)"/>
+      <use href="#fir" transform="translate(1651 583) scale(0.82)"/>
+      <use href="#fir" transform="translate(1695 580) scale(0.83)"/>
+      <use href="#fir" transform="translate(1755 588) scale(0.78)"/>
+      <use href="#fir" transform="translate(1812 581) scale(0.87)"/>
+      <use href="#fir" transform="translate(1867 588) scale(0.97)"/>
+      <use href="#fir" transform="translate(1917 588) scale(0.9)"/>
+      <use href="#fir" transform="translate(1979 582) scale(0.94)"/>
+      <use href="#fir" transform="translate(2017 574) scale(0.95)"/>
+      <use href="#fir" transform="translate(2078 576) scale(0.91)"/>
+      <use href="#fir" transform="translate(2131 586) scale(0.72)"/>
+      <use href="#fir" transform="translate(2169 581) scale(0.79)"/>
+      <use href="#fir" transform="translate(2222 582) scale(1.03)"/>
+      <use href="#fir" transform="translate(2257 582) scale(0.86)"/>
+      <use href="#fir" transform="translate(2307 586) scale(0.96)"/>
+      <use href="#fir" transform="translate(2365 582) scale(0.77)"/>
+      <use href="#fir" transform="translate(2400 578) scale(0.83)"/>
+      <use href="#fir" transform="translate(430 604) scale(1.15)"/>
+      <use href="#fir" transform="translate(500 622) scale(0.9)"/>
+      <use href="#fir" transform="translate(1960 606) scale(1.2)"/>
+      <use href="#fir" transform="translate(2030 626) scale(0.95)"/>
+      <use href="#fir" transform="translate(860 612) scale(0.8)"/>
+      <use href="#fir" transform="translate(1600 618) scale(0.85)"/>
+      <use href="#fir" transform="translate(150 646) scale(1.5)"/>
+      <use href="#fir" transform="translate(70 668) scale(1.95)"/>
+      <use href="#fir" transform="translate(2250 644) scale(1.45)"/>
+      <use href="#fir" transform="translate(2330 664) scale(1.9)"/>
+      <use href="#fir" transform="translate(2405 650) scale(1.55)"/>
+    </g>
+    <path d="M1174 578q30 16 26 34-30 18-36 38 16 22 36 42l14 28h58q-20-20-10-28-32-22-52-42 20-18 24-38-20-16-38-34z" fill="#cdbf9f" opacity=".88" stroke="#8b7d5d" stroke-width="1.4" stroke-linejoin="round"/>
+    <path d="M1180 584q34 20 24 36-30 18-30 42 18 20 36 40l22 18" fill="none" stroke="#8b7d5d" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 10" opacity=".6"/>
+    <!-- signpost -->
+    <g stroke="#26342e" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M1296 606h5v42h-5z" fill="#d7c59f" stroke-width="1.6"/>
+      <path d="M1278 607h34l6 5-6 5h-34z" fill="#efe5d1" stroke-width="1.6"/>
+      <path d="M1284 623h34v10h-34l-6-5z" fill="#e4d5b8" stroke-width="1.6"/>
+      <path d="M1284 612h22M1290 628h22" stroke-width="1.2"/>
+    </g>
+    <!-- boulders -->
+    <g fill="#b6a27c" stroke="#6d6754" stroke-width="2" stroke-linejoin="round" opacity=".92">
+      <path d="m40 664 62-46 62 18 34 46-160 4Z"/><path d="m182 676 40-24 34 30-8 8-66-2Z"/>
+      <path d="m2180 666 50-40 66 14 38 42-158 2Z"/><path d="m2320 676 36-24 48 22-10 10-76 0Z"/>
+      <path d="m1116 694 20-12 24 8-4 8-40 0Z"/><path d="m1330 682 16-10 20 8-4 6-32 0Z"/>
+      <path d="m680 704 26-14 30 10-6 8-50 0Z"/><path d="m1760 700 24-14 28 10-6 8-46 0Z"/>
+    </g>
+    <g fill="none" stroke="#6d6754" stroke-width="1.4" stroke-linecap="round" opacity=".5">
+      <path d="m72 648 20-14m-2 26 24-16m6 20 18-12m2098-10 20-14m-2 26 24-16m6 20 18-12m-2130 44 12-8m1238-8 10-6"/>
+    </g>
+
+    <g>
+      <use href="#tuft" stroke="#6b7856" transform="translate(390 660) scale(1.12)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(249 652) scale(1.03)"/>
+      <use href="#tuft" stroke="#a47445" transform="translate(1125 653) scale(1.16)"/>
+      <use href="#tuft" stroke="#7f8a62" transform="translate(2069 716) scale(0.97)"/>
+      <use href="#tuft" stroke="#a47445" transform="translate(2281 710) scale(1.46)"/>
+      <use href="#tuft" stroke="#a47445" transform="translate(551 649) scale(0.89)"/>
+      <use href="#tuft" stroke="#a47445" transform="translate(1284 605) scale(1.27)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(289 623) scale(1.27)"/>
+      <use href="#tuft" stroke="#7f8a62" transform="translate(622 716) scale(1.3)"/>
+      <use href="#tuft" stroke="#a47445" transform="translate(575 628) scale(1.42)"/>
+      <use href="#tuft" stroke="#a47445" transform="translate(889 691) scale(1.47)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(1985 616) scale(1.49)"/>
+      <use href="#tuft" stroke="#a47445" transform="translate(651 686) scale(1.1)"/>
+      <use href="#tuft" stroke="#7f8a62" transform="translate(1379 649) scale(0.94)"/>
+      <use href="#tuft" stroke="#7f8a62" transform="translate(367 688) scale(1.06)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(2259 654) scale(1.11)"/>
+      <use href="#tuft" stroke="#7f8a62" transform="translate(1564 638) scale(1.16)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(2088 604) scale(0.88)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(419 606) scale(0.99)"/>
+      <use href="#tuft" stroke="#a47445" transform="translate(733 630) scale(1.33)"/>
+      <use href="#tuft" stroke="#a47445" transform="translate(1049 647) scale(0.9)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(1329 607) scale(1.0)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(1732 710) scale(0.85)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(352 698) scale(0.98)"/>
+      <use href="#tuft" stroke="#a47445" transform="translate(262 629) scale(1.4)"/>
+      <use href="#tuft" stroke="#a47445" transform="translate(37 639) scale(1.5)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(1087 675) scale(0.89)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(438 616) scale(0.98)"/>
+      <use href="#tuft" stroke="#7f8a62" transform="translate(816 715) scale(1.02)"/>
+      <use href="#tuft" stroke="#a47445" transform="translate(2165 693) scale(0.94)"/>
+      <use href="#tuft" stroke="#7f8a62" transform="translate(2038 682) scale(0.92)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(64 628) scale(0.83)"/>
+      <use href="#tuft" stroke="#a47445" transform="translate(2061 666) scale(1.48)"/>
+      <use href="#tuft" stroke="#a47445" transform="translate(996 715) scale(1.11)"/>
+      <use href="#tuft" stroke="#a47445" transform="translate(2017 665) scale(1.38)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(2065 635) scale(1.28)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(1393 621) scale(1.38)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(1647 640) scale(1.49)"/>
+      <use href="#tuft" stroke="#7f8a62" transform="translate(48 605) scale(1.24)"/>
+      <use href="#tuft" stroke="#a47445" transform="translate(1754 616) scale(0.84)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(2062 681) scale(1.48)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(1190 601) scale(1.12)"/>
+      <use href="#tuft" stroke="#7f8a62" transform="translate(1091 653) scale(0.8)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(1337 666) scale(1.03)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(1257 623) scale(1.05)"/>
+      <use href="#tuft" stroke="#7f8a62" transform="translate(1363 644) scale(0.86)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(2049 679) scale(0.94)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(362 629) scale(1.37)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(1626 671) scale(0.83)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(1217 634) scale(1.24)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(2388 663) scale(1.4)"/>
+      <use href="#tuft" stroke="#a47445" transform="translate(1585 693) scale(1.03)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(602 632) scale(1.31)"/>
+      <use href="#tuft" stroke="#a47445" transform="translate(169 701) scale(1.38)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(2060 613) scale(1.44)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(2382 698) scale(1.42)"/>
+      <use href="#tuft" stroke="#7f8a62" transform="translate(338 599) scale(0.83)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(419 644) scale(1.39)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(67 676) scale(1.17)"/>
+      <use href="#tuft" stroke="#6b7856" transform="translate(1994 629) scale(0.8)"/>
+    </g>
+    <g>
+      <use href="#flower" fill="#b46635" transform="translate(2080 674)"/>
+      <use href="#flower" fill="#f2e7d2" transform="translate(2174 614)"/>
+      <use href="#flower" fill="#b46635" transform="translate(1052 709)"/>
+      <use href="#flower" fill="#b46635" transform="translate(1107 636)"/>
+      <use href="#flower" fill="#f2e7d2" transform="translate(965 700)"/>
+      <use href="#flower" fill="#f2e7d2" transform="translate(2043 714)"/>
+      <use href="#flower" fill="#c98453" transform="translate(334 667)"/>
+      <use href="#flower" fill="#b46635" transform="translate(211 684)"/>
+      <use href="#flower" fill="#b46635" transform="translate(337 682)"/>
+      <use href="#flower" fill="#c98453" transform="translate(1378 638)"/>
+      <use href="#flower" fill="#b46635" transform="translate(2345 623)"/>
+      <use href="#flower" fill="#f2e7d2" transform="translate(1995 613)"/>
+      <use href="#flower" fill="#b46635" transform="translate(1120 692)"/>
+      <use href="#flower" fill="#f2e7d2" transform="translate(911 692)"/>
+      <use href="#flower" fill="#c98453" transform="translate(1211 696)"/>
+      <use href="#flower" fill="#f2e7d2" transform="translate(1923 665)"/>
+      <use href="#flower" fill="#b46635" transform="translate(505 676)"/>
+      <use href="#flower" fill="#f2e7d2" transform="translate(1296 616)"/>
+    </g>
+  </g>
   </g>
 </svg>

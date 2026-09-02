@@ -205,24 +205,33 @@ header.site {
 
 /* Home */
 .home-hero {
+  --band: clamp(300px, 30vw, 360px);
   position: relative;
-  min-height: 510px;
-  padding: 108px 9% 150px;
-  overflow: visible;
-  background: linear-gradient(180deg, var(--paper-soft) 0%, rgba(246, 240, 228, .55) 74%, rgba(246, 240, 228, 0) 100%);
+  padding: 108px 9% calc(var(--band) * .5);
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--paper-soft) 0%, rgba(246, 240, 228, .55) 60%, rgba(246, 240, 228, 0) 100%);
 }
+/* The landscape is drawn so its ground line always sits on the bottom edge;
+   only the sky is ever cropped. */
 .home-landscape {
   position: absolute;
   right: 0;
-  bottom: -65px;
+  bottom: 0;
   left: 0;
   width: 100%;
-  height: 420px;
+  height: var(--band);
   object-fit: cover;
   object-position: center bottom;
-  opacity: .88;
 }
-.hero-copy { position: relative; z-index: 2; width: 100%; }
+.hero-copy { position: relative; z-index: 2; width: min(100%, 640px); }
+.hero-copy::before {
+  position: absolute;
+  z-index: -1;
+  inset: -48px -140px -40px -90px;
+  content: "";
+  background: radial-gradient(ellipse 62% 64% at 38% 46%, rgba(251, 247, 239, .92) 0%, rgba(251, 247, 239, .5) 50%, rgba(251, 247, 239, 0) 100%);
+  pointer-events: none;
+}
 .hero-copy .display { white-space: nowrap; }
 .hero-copy .lead {
   max-width: 450px;
@@ -237,7 +246,7 @@ header.site {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 18px;
-  margin: -96px 6% 0;
+  margin: -58px 6% 0;
 }
 .portal-card {
   display: flex;
@@ -310,22 +319,34 @@ header.site {
 
 /* Interior mastheads */
 .page-masthead {
+  --band: clamp(200px, 30vw, 354px);
   position: relative;
-  min-height: 300px;
   margin: 0 -54px 48px;
-  padding: 84px 11% 70px;
+  padding: 84px 11% calc(var(--band) * .56);
   overflow: hidden;
   background: linear-gradient(180deg, var(--paper-soft), rgba(246, 240, 228, .46));
 }
 .page-masthead::after {
   position: absolute;
-  right: -5%;
-  left: -5%;
-  top: 92px;
-  height: 330px;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 0;
+  height: var(--band);
   content: "";
-  background: url("assets/site-landscape.svg") center 45% / cover no-repeat;
-  opacity: .52;
+  background: url("assets/site-landscape.svg?v=2") center bottom / cover no-repeat;
+  opacity: .92;
+}
+/* Paper scrim behind the title, plus a soft feather where the meadow meets the page. */
+.page-masthead::before {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  content: "";
+  background:
+    linear-gradient(180deg, rgba(251, 247, 239, .55) 0%, rgba(251, 247, 239, .3) 40%, rgba(251, 247, 239, 0) 60%),
+    linear-gradient(0deg, rgba(251, 247, 239, .85) 0, rgba(251, 247, 239, 0) 100%) bottom / 100% 26px no-repeat;
+  pointer-events: none;
 }
 .page-masthead > * { position: relative; z-index: 2; }
 .page-title { font-size: clamp(3.7rem, 8vw, 6.6rem); }
@@ -578,8 +599,8 @@ header.site {
 .cta-card .btn-secondary { color: #fff; border-color: rgba(255,255,255,.4); background: transparent; }
 
 /* Post and project detail pages */
-.post-hero { position: relative; margin: 0 -54px 50px; padding: 86px 8% 70px; overflow: hidden; background: rgba(233, 223, 204, .32); }
-.post-hero::after { position: absolute; right: -10%; bottom: -180px; left: -10%; height: 300px; content: ""; background: url("assets/site-landscape.svg") center bottom / cover no-repeat; opacity: .24; }
+.post-hero { --band: clamp(160px, 22vw, 260px); position: relative; margin: 0 -54px 50px; padding: 86px 8% calc(var(--band) * .5); overflow: hidden; background: rgba(233, 223, 204, .32); }
+.post-hero::after { position: absolute; right: 0; bottom: 0; left: 0; height: var(--band); content: ""; background: url("assets/site-landscape.svg?v=2") center bottom / cover no-repeat; opacity: .3; }
 .post-title { position: relative; z-index: 2; max-width: 900px; margin: 0 auto; font-size: clamp(3.1rem, 7vw, 5.5rem); text-align: center; }
 .project-detail-hero { margin: 60px 0 50px; text-align: center; }
 .project-detail-hero .post-title { margin-bottom: 18px; }
@@ -657,14 +678,14 @@ footer {
   .menu-open .nav { opacity: 1; pointer-events: auto; transform: translateY(0); }
   .nav a { padding: 10px 4px; font-size: .75rem; }
   .nav a::after { bottom: 7px; right: auto; width: 48px; }
-  .home-hero { min-height: 485px; padding: 104px 26px 148px; }
-  .home-landscape { bottom: -55px; height: 330px; object-position: 54% bottom; }
+  .home-hero { --band: 250px; padding: 92px 26px calc(var(--band) * .62); }
   .hero-copy { width: 100%; }
+  .hero-copy::before { inset: -30px -40px -26px -36px; }
   .display { font-size: clamp(3.35rem, 16vw, 4.7rem); }
   .hero-copy .lead { max-width: 310px; font-size: 1.1rem; }
   .hand-rule { width: 82px; margin: 14px 0 18px; }
   .sketch-arrow { width: 90px; margin-top: 18px; }
-  .home-portals { grid-template-columns: 1fr; gap: 10px; margin: -58px 14px 0; }
+  .home-portals { grid-template-columns: 1fr; gap: 10px; margin: -30px 14px 0; }
   .portal-card { display: grid; grid-template-columns: 92px 1fr; min-height: 135px; padding: 18px; align-items: center; text-align: left; }
   .portal-card img { grid-row: 1 / span 2; width: 80px; height: 78px; margin: 0; }
   .portal-card h2 { margin: 0 0 6px; font-size: 1.6rem; }
@@ -672,8 +693,7 @@ footer {
   .portal-card p { font-size: .9rem; }
   .home-cta { padding: 26px 20px 50px; }
   .trail-button { width: 100%; max-width: 420px; }
-  .page-masthead { min-height: 280px; margin: 0 -20px 36px; padding: 68px 26px 56px; }
-  .page-masthead::after { top: 76px; bottom: auto; height: 260px; background-position: 58% center; background-size: 100% 100%; }
+  .page-masthead { --band: 200px; margin: 0 -20px 36px; padding: 60px 26px calc(var(--band) * .68); }
   .page-title { font-size: clamp(3.5rem, 16vw, 5rem); }
   .page-intro { font-size: 1.03rem; }
   .featured-projects,
@@ -702,7 +722,7 @@ footer {
   .about-portrait-wrap { width: min(330px, 92%); margin: 0 auto; }
   .about-hero .display { font-size: 4rem; }
   .cta-card { padding: 30px 24px; }
-  .post-hero { margin: 0 -20px 38px; padding: 66px 22px 56px; }
+  .post-hero { --band: 150px; margin: 0 -20px 38px; padding: 60px 22px calc(var(--band) * .62); }
   .post-title { font-size: clamp(2.9rem, 14vw, 4.3rem); }
   .post-meta { grid-template-columns: 1fr; }
   .post-content { font-size: 1rem; }
