@@ -1,406 +1,220 @@
-// Theme: auto/light/dark
-const switchEl = document.querySelector('.switch');
-const modes = ['auto','light','dark'];
-function apply(mode){
-  if(mode==='auto'){ document.documentElement.removeAttribute('data-theme'); }
-  else{ document.documentElement.setAttribute('data-theme', mode); }
-  localStorage.setItem('theme-mode', mode);
-  switchEl.dataset.mode = mode;
-}
-function init(){
-  const m = localStorage.getItem('theme-mode') || 'auto';
-  apply(m);
-}
-switchEl.addEventListener('click', ()=>{
-  const m = localStorage.getItem('theme-mode') || 'auto';
-  const next = modes[(modes.indexOf(m)+1)%modes.length];
-  apply(next);
-});
-init();
+(() => {
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 
-// Active nav
-const here = location.pathname.split('/').pop() || 'index.html';
-document.querySelectorAll('.nav a').forEach(a=>{
-  const href = a.getAttribute('href');
-  const isPosts = location.pathname.includes('/posts/');
-  const isProjects = location.pathname.includes('/projects/');
-  const isRecs = here==='reading.html' || here==='recommendations.html';
-  const hrefFile = href.split('/').pop();
-  if(
-    (isPosts && hrefFile==='writing.html') ||
-    (isProjects && hrefFile==='projects.html') ||
-    (isRecs && hrefFile==='recommendations.html') ||
-    hrefFile===here
-  ){
-    a.classList.add('active');
-  }
-});
-
-// Mobile hamburger menu
-(function(){
-  const header = document.querySelector('header.site');
-  const nav = document.querySelector('header.site .nav');
-  if(!header || !nav) return;
-  if(header.querySelector('.menu-btn')) return; // already injected
-
-  const btn = document.createElement('button');
-  btn.className = 'menu-btn';
-  btn.setAttribute('aria-label', 'Toggle menu');
-  btn.setAttribute('aria-expanded', 'false');
-  const icon = document.createElement('span');
-  icon.className = 'menu-icon';
-  btn.appendChild(icon);
-
-  const toggle = header.querySelector('.toggle');
-  if(toggle){
-    header.insertBefore(btn, toggle);
-  }else{
-    header.appendChild(btn);
-  }
-
-  function closeMenu(){
-    header.classList.remove('menu-open');
-    btn.setAttribute('aria-expanded', 'false');
-  }
-  function openMenu(){
-    header.classList.add('menu-open');
-    btn.setAttribute('aria-expanded', 'true');
-  }
-  btn.addEventListener('click', ()=>{
-    const isOpen = header.classList.contains('menu-open');
-    if(isOpen) closeMenu(); else openMenu();
+  $$("[data-year]").forEach((el) => {
+    el.textContent = new Date().getFullYear();
   });
-  // Close on nav link click (mobile)
-  nav.addEventListener('click', (e)=>{
-    const t = e.target;
-    if(t && t.tagName==='A') closeMenu();
-  });
-  // Reset on resize to desktop
-  const mq = window.matchMedia('(min-width: 721px)');
-  function handleMq(e){ if(e.matches) closeMenu(); }
-  if(mq.addEventListener) mq.addEventListener('change', handleMq); else mq.addListener(handleMq);
-})();
 
-// Auto-populate Writing page from posts manifest
-(async function(){
-  const root = document.getElementById('writing-root');
-  if(!root) return;
-  try{
-    const res = await fetch('posts/posts.json', {cache:'no-store'});
-    if(!res.ok) throw new Error('Failed to load posts');
-    const posts = await res.json();
-    // sort by date desc
-    posts.sort((a,b)=> new Date(b.date) - new Date(a.date));
-    // group by year
-    const byYear = posts.reduce((acc, p)=>{
-      const y = new Date(p.date).getFullYear();
-      (acc[y]||(acc[y]=[])).push(p);
-      return acc;
-    },{});
-    const years = Object.keys(byYear).sort((a,b)=> Number(b)-Number(a));
-    root.innerHTML = '';
-    years.forEach(y=>{
-      const yearEl = document.createElement('div');
-      yearEl.className = 'year';
-      yearEl.textContent = y;
-      const ul = document.createElement('ul');
-      ul.className = 'postlist';
-      byYear[y].forEach(p=>{
-        const li = document.createElement('li');
-        const a = document.createElement('a');
-        a.href = p.path;
-        a.textContent = p.title;
-        const span = document.createElement('span');
-        span.className = 'date';
-        span.textContent = new Date(p.date).toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'});
-        li.appendChild(a); li.appendChild(span);
-        ul.appendChild(li);
-      });
-      root.appendChild(yearEl);
-      root.appendChild(ul);
+  const header = $("header.site");
+  const nav = header ? $(".nav", header) : null;
+
+  if (header && nav) {
+    const currentFile = location.pathname.split("/").pop() || "index.html";
+    const inPosts = location.pathname.includes("/posts/");
+    const inProjects = location.pathname.includes("/projects/");
+
+    $$(".nav a", header).forEach((link) => {
+      const hrefFile = (link.getAttribute("href") || "").split("/").pop();
+      const isActive =
+        hrefFile === currentFile ||
+        (inPosts && hrefFile === "field-notes.html") ||
+        (inProjects && hrefFile === "projects.html");
+      if (isActive) link.classList.add("active");
     });
-  }catch(err){
-    root.innerHTML = '<p class="center-sub">No posts yet. Add HTML files under <code>posts/</code>.</p>'
-  }
-})();
 
-// Auto-populate Projects page from projects manifest
-(async function(){
-  const root = document.getElementById('projects-root');
-  const featRoot = document.getElementById('featured-projects-root');
-  if(!root) return;
-  try{
-    const res = await fetch('projects/projects.json', {cache:'no-store'});
-    if(!res.ok) throw new Error('Failed to load projects');
-    const projects = await res.json();
-    // sort by date desc if provided
-    projects.sort((a,b)=> new Date(b.date||0) - new Date(a.date||0));
-    if(featRoot) featRoot.innerHTML = '';
-    root.innerHTML = '';
+    if (!$(".menu-btn", header)) {
+      const button = document.createElement("button");
+      button.className = "menu-btn";
+      button.type = "button";
+      button.setAttribute("aria-label", "Toggle navigation");
+      button.setAttribute("aria-expanded", "false");
+      button.innerHTML = '<span class="menu-icon" aria-hidden="true"></span>';
+      header.appendChild(button);
 
-    // Render featured first (but keep them in the main list too)
-    if(featRoot){
-      const featured = projects.filter(p=> !!p.featured);
-      featured.slice(0, 4).forEach(p=>{
-        const card = document.createElement('div');
-        card.className = 'featured-card';
+      const close = () => {
+        header.classList.remove("menu-open");
+        button.setAttribute("aria-expanded", "false");
+      };
 
-        const content = document.createElement('div');
-        content.className = 'featured-content';
-        const badge = document.createElement('div');
-        badge.className = 'featured-badge';
-        badge.textContent = 'Featured';
-        const title = document.createElement('a');
-        title.className = 'featured-title';
-        title.href = p.path;
-        title.textContent = p.title;
-        const summary = document.createElement('p');
-        summary.className = 'featured-summary';
-        summary.textContent = p.summary || '';
-
-        content.appendChild(badge);
-        content.appendChild(title);
-        content.appendChild(summary);
-
-        if(p.links && Array.isArray(p.links) && p.links.length){
-          const links = document.createElement('div');
-          links.className = 'featured-links';
-          p.links.forEach(l=>{
-            const a = document.createElement('a');
-            a.className = 'badge';
-            a.href = l.url;
-            a.target = '_blank';
-            a.rel = 'noopener';
-            a.textContent = l.label || 'Link';
-            links.appendChild(a);
-          });
-          content.appendChild(links);
-        }
-        card.appendChild(content);
-        featRoot.appendChild(card);
+      button.addEventListener("click", () => {
+        const open = header.classList.toggle("menu-open");
+        button.setAttribute("aria-expanded", String(open));
       });
+      nav.addEventListener("click", (event) => {
+        if (event.target.closest("a")) close();
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") close();
+      });
+      window.matchMedia("(min-width: 721px)").addEventListener?.("change", close);
     }
-    projects.forEach(p=>{
-      const card = document.createElement('div');
-      card.className = 'project-card';
+  }
 
-      const content = document.createElement('div');
-      content.className = 'project-content';
-      const title = document.createElement('a');
-      title.className = 'project-title';
-      title.href = p.path;
-      title.textContent = p.title;
-      const summary = document.createElement('p');
-      summary.className = 'project-summary';
-      summary.textContent = p.summary || '';
+  const isExternal = (url = "") => /^https?:\/\//i.test(url);
 
-      content.appendChild(title);
-      content.appendChild(summary);
-
-      if(p.links && Array.isArray(p.links) && p.links.length){
-        const links = document.createElement('div');
-        links.className = 'project-links';
-        p.links.forEach(l=>{
-          const a = document.createElement('a');
-          a.className = 'badge';
-          a.href = l.url;
-          a.target = '_blank';
-          a.rel = 'noopener';
-          a.textContent = l.label || 'Link';
-          links.appendChild(a);
-        });
-        content.appendChild(links);
+  function appendLinkGroup(parent, links = [], className) {
+    if (!Array.isArray(links) || !links.length) return;
+    const group = document.createElement("div");
+    group.className = className;
+    links.forEach((item) => {
+      const link = document.createElement("a");
+      link.className = "badge";
+      link.href = item.url;
+      link.textContent = item.label || "Open";
+      if (isExternal(item.url)) {
+        link.target = "_blank";
+        link.rel = "noopener";
       }
-      card.appendChild(content);
-      root.appendChild(card);
+      group.appendChild(link);
     });
-  }catch(err){
-    root.innerHTML = '<p class="center-sub">No projects yet. Add HTML files under <code>projects/</code> and list them in <code>projects/projects.json</code>.</p>'
+    parent.appendChild(group);
   }
-})();
 
-// Home: Bento grid with latest writing, recommendation, and project
-(async function(){
-  const grid = document.getElementById('home-cards');
-  if(!grid) return;
+  async function renderProjects() {
+    const projectsRoot = $("#projects-root");
+    const featuredRoot = $("#featured-projects-root");
+    if (!projectsRoot) return;
 
-  function createBentoCard({category, titleText, href, summary, actions}){
-    const card = document.createElement('div');
-    card.className = 'bento-card';
-    
-    const cat = document.createElement('div');
-    cat.className = 'bento-category';
-    cat.textContent = category;
-    
-    const title = document.createElement('h3');
-    title.className = 'bento-title';
-    const a = document.createElement('a');
-    a.href = href || '#';
-    a.textContent = titleText || 'Untitled';
-    title.appendChild(a);
-    
-    const sum = document.createElement('p');
-    sum.className = 'bento-summary';
-    sum.textContent = summary || '';
-    
-    card.appendChild(cat);
-    card.appendChild(title);
-    card.appendChild(sum);
-    
-    if(actions && actions.length){
-      const actionsDiv = document.createElement('div');
-      actionsDiv.className = 'bento-actions';
-      actions.forEach(act=>{
-        const link = document.createElement('a');
-        link.className = 'bento-link';
-        link.href = act.href;
-        link.textContent = act.label;
-        if(act.newTab){
-          link.target = '_blank';
-          link.rel = 'noopener';
-        }
-        actionsDiv.appendChild(link);
+    try {
+      const response = await fetch("projects/projects.json", { cache: "no-store" });
+      if (!response.ok) throw new Error("Could not load projects");
+      const projects = await response.json();
+      projects.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+
+      projectsRoot.replaceChildren();
+      featuredRoot?.replaceChildren();
+
+      projects.filter((project) => project.featured).slice(0, 4).forEach((project) => {
+        const card = document.createElement("article");
+        card.className = "featured-card";
+        const content = document.createElement("div");
+        content.className = "featured-content";
+
+        const badge = document.createElement("span");
+        badge.className = "featured-badge";
+        badge.textContent = "Featured";
+
+        const title = document.createElement("a");
+        title.className = "featured-title";
+        title.href = project.path;
+        title.textContent = project.title;
+
+        const summary = document.createElement("p");
+        summary.className = "featured-summary";
+        summary.textContent = project.summary || "";
+
+        content.append(badge, title, summary);
+        appendLinkGroup(content, project.links, "featured-links");
+        card.appendChild(content);
+        featuredRoot?.appendChild(card);
       });
-      card.appendChild(actionsDiv);
-    }
-    
-    return card;
-  }
 
-  try{
-    // fetch all in parallel
-    const [postsRes, recsRes, projRes] = await Promise.all([
-      fetch('posts/posts.json', {cache:'no-store'}),
-      fetch('recommendations/recommendations.json', {cache:'no-store'}),
-      fetch('projects/projects.json', {cache:'no-store'})
-    ]);
-    const [posts, recs, projects] = await Promise.all([
-      postsRes.ok ? postsRes.json() : [],
-      recsRes.ok ? recsRes.json() : [],
-      projRes.ok ? projRes.json() : []
-    ]);
+      projects.forEach((project) => {
+        const card = document.createElement("article");
+        card.className = "project-card";
 
-    // latest post (first card - large)
-    if(Array.isArray(posts) && posts.length){
-      posts.sort((a,b)=> new Date(b.date) - new Date(a.date));
-      const p = posts[0];
-      grid.appendChild(createBentoCard({
-        category: 'LATEST WRITING',
-        titleText: p.title,
-        href: p.path,
-        summary: p.summary,
-        actions: [{label:'Read article', href: p.path}, {label:'All writing', href:'writing.html'}]
-      }));
-    }
+        const title = document.createElement("a");
+        title.className = "project-title";
+        title.href = project.path;
+        title.textContent = project.title;
 
-    // latest recommendation (second card - medium)
-    if(Array.isArray(recs) && recs.length){
-      recs.sort((a,b)=> new Date(b.date||0) - new Date(a.date||0));
-      const r = recs[0];
-      const title = r.title + (r.author ? ` by ${r.author}` : '');
-      const summary = r.note || 'A recommendation worth checking out.';
-      grid.appendChild(createBentoCard({
-        category: 'LATEST RECOMMENDATION',
-        titleText: title,
-        href: r.url || 'recommendations.html',
-        summary,
-        actions: [{label:'View recommendation', href: r.url || 'recommendations.html', newTab: !!r.url}, {label:'All recommendations', href:'recommendations.html'}]
-      }));
-    }
+        const summary = document.createElement("p");
+        summary.className = "project-summary";
+        summary.textContent = project.summary || "";
 
-    // latest project (third card - full width)
-    if(Array.isArray(projects) && projects.length){
-      projects.sort((a,b)=> new Date(b.date||0) - new Date(a.date||0));
-      const pr = projects[0];
-      const actions = [{label:'View project', href: pr.path}];
-      if(pr.links && pr.links[0]) actions.push({label: pr.links[0].label || 'Live demo', href: pr.links[0].url, newTab: true});
-      actions.push({label:'All projects', href:'projects.html'});
-      
-      grid.appendChild(createBentoCard({
-        category: 'LATEST PROJECT',
-        titleText: pr.title,
-        href: pr.path,
-        summary: pr.summary,
-        actions
-      }));
-    }
-  }catch(err){
-    grid.innerHTML = '<p class="center-sub">Could not load latest items.</p>';
-  }
-})();
-
-  // Auto-populate Recommendations from manifest
-  (async function(){
-    const root = document.getElementById('recs-root');
-    if(!root) return;
-    try{
-      const res = await fetch('recommendations/recommendations.json', {cache:'no-store'});
-      if(!res.ok) throw new Error('Failed to load recommendations');
-      const items = await res.json();
-      // newest first if date provided
-      items.sort((a,b)=> new Date(b.date||0) - new Date(a.date||0));
-
-      const head = document.createElement('div');
-      head.className = 'recs-head';
-      head.innerHTML = '<div>TYPE</div><div>TITLE · BY/WHERE</div><div style="text-align:right">RATING</div>';
-      root.appendChild(head);
-
-      items.forEach(it=>{
-        const item = document.createElement('div');
-        item.className = 'recs-item';
-        const row = document.createElement('div');
-        row.className = 'recs-row';
-
-        const type = document.createElement('div');
-        type.className = 'recs-type';
-        type.textContent = (it.type||'').toUpperCase();
-
-        const main = document.createElement('div');
-        const title = document.createElement('p');
-        title.className = 'recs-title';
-        const a = document.createElement('a');
-        a.href = it.url || '#';
-        if(it.url) { a.target = '_blank'; a.rel = 'noopener'; }
-        a.textContent = it.title || 'Untitled';
-        title.appendChild(a);
-        const meta = document.createElement('div');
-        meta.className = 'recs-meta';
-        const by = [it.author, it.source].filter(Boolean).join(' — ');
-        const when = it.date ? new Date(it.date).toLocaleDateString(undefined, {year:'numeric', month:'short'}) : '';
-        meta.textContent = [by, when].filter(Boolean).join(' · ');
-        main.appendChild(title);
-        if(meta.textContent) main.appendChild(meta);
-
-        const rating = document.createElement('div');
-        rating.className = 'recs-rating';
-        rating.setAttribute('aria-label','Rating');
-        const max = 5;
-        const raw = Number(it.rating||0);
-        const value = Math.max(0, Math.min(max, Math.round(raw*2)/2)); // nearest 0.5
-        for(let i=1;i<=max;i++){
-          const span = document.createElement('span');
-          let cls = 'star';
-          if(i <= Math.floor(value)) cls += ' filled';
-          else if(i - 0.5 === value) cls += ' half';
-          span.className = cls;
-          rating.appendChild(span);
-        }
-
-        row.appendChild(type);
-        row.appendChild(main);
-        row.appendChild(rating);
-        item.appendChild(row);
-
-        if(it.note){
-          const note = document.createElement('p');
-          note.className = 'recs-note';
-          note.textContent = it.note;
-          item.appendChild(note);
-        }
-
-        root.appendChild(item);
+        card.append(title, summary);
+        appendLinkGroup(card, project.links, "project-links");
+        projectsRoot.appendChild(card);
       });
-    }catch(err){
-      root.innerHTML = '<p class="center-sub">No recommendations yet. Add JSON entries under <code>recommendations/recommendations.json</code>.</p>'
+    } catch (error) {
+      projectsRoot.innerHTML = "<p>Projects could not be loaded right now.</p>";
     }
-  })();
+  }
+
+  function noteIllustration(title) {
+    if (/investments/i.test(title)) return "assets/sketch-coffee.svg";
+    if (/magic circles/i.test(title)) return "assets/sketch-circles.svg";
+    return "assets/sketch-notebook.svg";
+  }
+
+  function formatDate(value) {
+    return new Date(value + "T12:00:00").toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
+
+  async function renderFieldNotes() {
+    const root = $("#field-notes-root") || $("#writing-root");
+    if (!root) return;
+
+    try {
+      const response = await fetch("posts/posts.json", { cache: "no-store" });
+      if (!response.ok) throw new Error("Could not load field notes");
+      const posts = await response.json();
+      posts.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      const featureWrap = document.createElement("div");
+      featureWrap.className = "field-notes";
+
+      posts.slice(0, 2).forEach((post) => {
+        const link = document.createElement("a");
+        link.className = "note-card";
+        link.href = post.path;
+
+        const art = document.createElement("div");
+        art.className = "note-illustration";
+        const image = document.createElement("img");
+        image.src = noteIllustration(post.title);
+        image.alt = "";
+        art.appendChild(image);
+
+        const copy = document.createElement("div");
+        copy.className = "note-copy";
+        const date = document.createElement("time");
+        date.className = "note-date";
+        date.dateTime = post.date;
+        date.textContent = formatDate(post.date);
+        const title = document.createElement("h2");
+        title.textContent = post.title;
+        const summary = document.createElement("p");
+        summary.textContent = post.summary || "";
+        const action = document.createElement("span");
+        action.className = "read-note";
+        action.textContent = "Read note →";
+        copy.append(date, title, summary, action);
+
+        link.append(art, copy);
+        featureWrap.appendChild(link);
+      });
+
+      const archive = document.createElement("section");
+      archive.className = "notes-archive";
+      const heading = document.createElement("h2");
+      heading.textContent = "More from the notebook";
+      archive.appendChild(heading);
+
+      posts.slice(2).forEach((post) => {
+        const link = document.createElement("a");
+        link.className = "archive-row";
+        link.href = post.path;
+        const title = document.createElement("strong");
+        title.textContent = post.title;
+        const date = document.createElement("time");
+        date.dateTime = post.date;
+        date.textContent = formatDate(post.date);
+        link.append(title, date);
+        archive.appendChild(link);
+      });
+
+      root.replaceChildren(featureWrap, archive);
+    } catch (error) {
+      root.innerHTML = "<p>Field notes could not be loaded right now.</p>";
+    }
+  }
+
+  renderProjects();
+  renderFieldNotes();
+})();

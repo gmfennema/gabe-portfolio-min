@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Field Notes · Gabe Fennema</title>
+  <meta name="description" content="Thoughts from Gabe Fennema on building, noticing, work, family, and choosing what matters."/>
+  <link rel="stylesheet" href="styles.css"/>
+  <link rel="icon" href="assets/favicon.png" type="image/png"/>
+  <link rel="preload" as="fetch" href="posts/posts.json" crossorigin="anonymous"/>
+</head>
+<body>
+  <div class="container">
+    <header class="site">
+      <div class="brand"><a href="index.html">GabeFen.com</a></div>
+      <nav class="nav" aria-label="Primary navigation">
+        <a href="projects.html">Projects</a>
+        <a href="field-notes.html">Field Notes</a>
+        <a href="photography.html">Photography</a>
+        <a href="about.html">About</a>
+      </nav>
+      <a class="trail-mark" href="about.html" aria-label="About Gabe">
+        <img src="assets/sketch-signpost.svg" alt=""/>
+      </a>
+    </header>
+
+    <main>
+      <section class="page-masthead">
+        <span class="eyebrow">From the notebook</span>
+        <h1 class="page-title">Field Notes</h1>
+        <p class="page-intro">Thoughts on building, noticing, and choosing what matters.</p>
+      </section>
+      <section class="notes-layout" aria-live="polite">
+        <div id="field-notes-root"></div>
+      </section>
+    </main>
+
+    <footer><p>© <span data-year></span> Gabe Fennema</p></footer>
+  </div>
+  <script src="scripts.js" defer></script>
+</body>
+</html>

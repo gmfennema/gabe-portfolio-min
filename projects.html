@@ -3,82 +3,66 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Projects • Gabe Fennema</title>
-  <meta name="description" content="Selected projects with images and links."/>
+  <title>Projects · Gabe Fennema</title>
+  <meta name="description" content="Selected data, automation, and software projects built by Gabe Fennema."/>
   <link rel="stylesheet" href="styles.css"/>
   <link rel="icon" href="assets/favicon.png" type="image/png"/>
-  <style>
-  html[data-theme="dark"] { color-scheme: dark; }
-  html[data-theme="light"] { color-scheme: light; }
-  </style>
-  <meta name="robots" content="index,follow"/>
-  <meta property="og:title" content="Projects • Gabe Fennema"/>
-  <meta property="og:description" content="Selected projects with images and links."/>
-  <meta property="og:type" content="website"/>
-  <meta property="og:url" content="projects.html"/>
-  <meta name="twitter:card" content="summary_large_image"/>
-  <meta name="twitter:title" content="Projects • Gabe Fennema"/>
-  <meta name="twitter:description" content="Selected projects with images and links."/>
   <link rel="preload" as="fetch" href="projects/projects.json" crossorigin="anonymous"/>
 </head>
 <body>
   <div class="container">
     <header class="site">
       <div class="brand"><a href="index.html">GabeFen.com</a></div>
-      <nav class="nav">
-        <a href="writing.html">WRITING</a>
-        <a href="recommendations.html">RECOMMENDATIONS</a>
-        <a href="projects.html">PROJECTS</a>
-        <a href="about.html">ABOUT</a>
+      <nav class="nav" aria-label="Primary navigation">
+        <a href="projects.html">Projects</a>
+        <a href="field-notes.html">Field Notes</a>
+        <a href="photography.html">Photography</a>
+        <a href="about.html">About</a>
       </nav>
-      <div class="toggle">
-        <span>AUTO</span>
-        <div class="switch" data-mode="auto" aria-label="Theme toggle"><span class="knob"></span></div>
-      </div>
+      <a class="trail-mark" href="about.html" aria-label="About Gabe">
+        <img src="assets/sketch-signpost.svg" alt=""/>
+      </a>
     </header>
-    <hr class="rule"/>
 
-  <h1 class="center-title">Projects</h1>
-  <p class="center-sub">A collection of things I've built and things I'm working on.</p>
+    <main>
+      <section class="page-masthead">
+        <span class="eyebrow">Things I’ve built</span>
+        <h1 class="page-title">Projects</h1>
+        <p class="page-intro">Practical tools, small experiments, and systems built to make complicated work feel clearer.</p>
+      </section>
 
-  <section class="featured-projects-section">
-    <h3>Featured</h3>
-    <div id="featured-projects-root" class="featured-projects"></div>
-  </section>
+      <section class="featured-projects-section">
+        <div class="section-heading">
+          <h2>Featured work</h2>
+          <p>A few projects that best represent how I approach product, data, and automation.</p>
+        </div>
+        <div id="featured-projects-root" class="featured-projects"></div>
+      </section>
 
-  <section class="logos logos-projects">
-    <h3>Used by the following companies</h3>
-    <div class="logos-scroller" aria-label="Company logos scroller">
-      <div class="logos-track">
-        <img src="assets/logos/activision.png" alt="Activision" class="logo-item"/>
-        <img src="assets/logos/Clouflare.png" alt="Cloudflare" class="logo-item"/>
-        <img src="assets/logos/hello_fresh.png" alt="HelloFresh" class="logo-item"/>
-        <img src="assets/logos/levels.png" alt="Levels" class="logo-item"/>
-        <img src="assets/logos/nielson.png" alt="Nielsen" class="logo-item"/>
-        <!-- duplicate for seamless scroll -->
-        <img src="assets/logos/activision.png" alt="" aria-hidden="true" class="logo-item"/>
-        <img src="assets/logos/Clouflare.png" alt="" aria-hidden="true" class="logo-item"/>
-        <img src="assets/logos/hello_fresh.png" alt="" aria-hidden="true" class="logo-item"/>
-        <img src="assets/logos/levels.png" alt="" aria-hidden="true" class="logo-item"/>
-        <img src="assets/logos/nielson.png" alt="" aria-hidden="true" class="logo-item"/>
-      </div>
-    </div>
-  </section>
+      <section class="projects-section">
+        <div class="section-heading">
+          <h2>Projects and tools</h2>
+          <p>Finished products, useful utilities, and a handful of ongoing experiments.</p>
+        </div>
+        <div id="projects-root" class="projects"></div>
+      </section>
 
-  <section>
-    <h3>Projects and Tools</h3>
-    <div id="projects-root" class="projects"></div>
-  </section>
+      <section class="logos logos-projects">
+        <h3>Used by teams at</h3>
+        <div class="logos-scroller" aria-label="Companies using Gabe’s work">
+          <div class="logos-track">
+            <img src="assets/logos/activision.png" alt="Activision" class="logo-item"/>
+            <img src="assets/logos/Clouflare.png" alt="Cloudflare" class="logo-item"/>
+            <img src="assets/logos/hello_fresh.png" alt="HelloFresh" class="logo-item"/>
+            <img src="assets/logos/levels.png" alt="Levels" class="logo-item"/>
+            <img src="assets/logos/nielson.png" alt="Nielsen" class="logo-item"/>
+          </div>
+        </div>
+      </section>
+    </main>
 
-    <footer>
-      <p>© <span id="y"></span> Gabe Fennema</p>
-    </footer>
+    <footer><p>© <span data-year></span> Gabe Fennema</p></footer>
   </div>
-  <script>
-    document.getElementById('y').textContent = new Date().getFullYear();
-  </script>
-  <script src="scripts.js"></script>
+  <script src="scripts.js" defer></script>
 </body>
 </html>
-
-

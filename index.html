@@ -3,71 +3,68 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Home • Gabe Fennema</title>
-  <meta name="description" content="Gabe Fennema — minimal portfolio and writing."/>
+  <title>Gabe Fennema · Marketing Data Engineer</title>
+  <meta name="description" content="Gabe Fennema turns messy marketing data into clear decisions, useful tools, and calm systems."/>
   <link rel="stylesheet" href="styles.css"/>
   <link rel="icon" href="assets/favicon.png" type="image/png"/>
-  <style>
-  html[data-theme="dark"] { color-scheme: dark; }
-  html[data-theme="light"] { color-scheme: light; }
-  </style>
 </head>
 <body>
-  <div class="container">
+  <div class="site-shell">
     <header class="site">
       <div class="brand"><a href="index.html">GabeFen.com</a></div>
-      <nav class="nav">
-        <a href="writing.html">WRITING</a>
-        <a href="recommendations.html">RECOMMENDATIONS</a>
-        <a href="projects.html">PROJECTS</a>
-        <a href="about.html">ABOUT</a>
+      <nav class="nav" aria-label="Primary navigation">
+        <a href="projects.html">Projects</a>
+        <a href="field-notes.html">Field Notes</a>
+        <a href="photography.html">Photography</a>
+        <a href="about.html">About</a>
       </nav>
-      <div class="toggle">
-        <span>AUTO</span>
-        <div class="switch" data-mode="auto" aria-label="Theme toggle"><span class="knob"></span></div>
-      </div>
+      <a class="trail-mark" href="about.html" aria-label="About Gabe">
+        <img src="assets/sketch-signpost.svg" alt=""/>
+      </a>
     </header>
-    <hr class="rule"/>
 
-  <section class="hero">
-    <h1 class="display">👋 I'm <a href="https://github.com/gmfennema" target="_blank">@Gabe</a>.</h1>
-    <p class="lead">Marketing data engineer focused on clarity. I turn messy data into actionable insights, automate repetitive work, and occasionally write about life optimization. Here you'll find my <a href="writing.html">writing</a>, a running log of <a href="recommendations.html">recommendations</a>, and a few <a href="projects.html">projects</a>.</p>
-    <div class="project-links" style="margin-top:12px">
-      <a class="badge" href="writing.html">Writing</a>
-      <a class="badge" href="projects.html">Projects</a>
-      <a class="badge" href="recommendations.html">Recommendations</a>
-      <a class="badge" href="about.html">About</a>
-    </div>
-  </section>
-
-    <hr class="rule"/>
-
-    <section class="recent-section">
-      <div class="section-header">
-        <h2 class="section-title">Recent Work</h2>
-        <p class="section-subtitle">Latest writing, recommendations, and projects</p>
-      </div>
-      <div class="bento-grid" id="home-cards"></div>
-    </section>
-
-    <section class="cta-section">
-      <div class="cta-card">
-        <h3>Let's work together</h3>
-        <p>Need help with data pipelines, dashboards, or marketing automation? I'm available for consulting.</p>
-        <div class="cta-actions">
-          <a class="btn-primary" href="mailto:gmfennema@gmail.com">Get in touch</a>
-          <a class="btn-secondary" href="about.html">Learn more</a>
+    <main>
+      <section class="home-hero">
+        <img class="home-landscape" src="assets/site-landscape.svg" alt="Hand-drawn mountains and a forest trail"/>
+        <div class="hero-copy">
+          <h1 class="display">Hi, I’m Gabe.</h1>
+          <div class="hand-rule" aria-hidden="true"></div>
+          <p class="lead">Marketing data engineer focused on clarity.</p>
+          <span class="sketch-arrow" aria-hidden="true">
+            <svg viewBox="0 0 130 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12h112M104 3l13 9-13 9M18 7l8 5-8 5M8 7l8 5-8 5"/>
+            </svg>
+          </span>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <section class="home-portals" aria-label="Explore the site">
+        <a class="portal-card" href="field-notes.html">
+          <img src="assets/sketch-notebook.svg" alt=""/>
+          <h2>Field Notes</h2>
+          <p>Thoughts on data, marketing, clarity, and building with intention.</p>
+        </a>
+        <a class="portal-card" href="projects.html">
+          <img src="assets/sketch-mountain.svg" alt=""/>
+          <h2>Projects</h2>
+          <p>Engineering work that turns data into decisions.</p>
+        </a>
+        <a class="portal-card" href="photography.html">
+          <img src="assets/sketch-camera.svg" alt=""/>
+          <h2>Photography</h2>
+          <p>Capturing places, light, and perspective.</p>
+        </a>
+      </section>
+
+      <section class="home-cta">
+        <a class="trail-button" href="mailto:gmfennema@gmail.com">→ &nbsp; Let’s work together</a>
+      </section>
+    </main>
 
     <footer>
-      <p>© <span id="y"></span> Gabe Fennema</p>
+      <p>© <span data-year></span> Gabe Fennema · Built with care in Arizona.</p>
     </footer>
   </div>
-  <script defer>
-    document.getElementById('y').textContent = new Date().getFullYear();
-  </script>
   <script src="scripts.js" defer></script>
 </body>
 </html>
