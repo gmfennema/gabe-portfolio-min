@@ -223,15 +223,19 @@ header.site {
   object-fit: cover;
   object-position: center bottom;
 }
-.hero-copy { position: relative; z-index: 2; width: min(100%, 640px); }
+.hero-copy { position: relative; z-index: 2; width: 100%; }
 .hero-copy::before {
   position: absolute;
   z-index: -1;
-  inset: -48px -140px -40px -90px;
+  top: -48px;
+  bottom: -40px;
+  left: -90px;
+  width: min(100%, 860px);
   content: "";
   background: radial-gradient(ellipse 62% 64% at 38% 46%, rgba(251, 247, 239, .92) 0%, rgba(251, 247, 239, .5) 50%, rgba(251, 247, 239, 0) 100%);
   pointer-events: none;
 }
+.home-hero .display,
 .hero-copy .display { white-space: nowrap; }
 .hero-copy .lead {
   max-width: 450px;
