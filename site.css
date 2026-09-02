@@ -208,16 +208,16 @@ header.site {
   position: relative;
   min-height: 510px;
   padding: 108px 9% 150px;
-  overflow: hidden;
+  overflow: visible;
   background: linear-gradient(180deg, var(--paper-soft) 0%, rgba(246, 240, 228, .55) 74%, rgba(246, 240, 228, 0) 100%);
 }
 .home-landscape {
   position: absolute;
   right: 0;
-  bottom: 0;
+  bottom: -65px;
   left: 0;
   width: 100%;
-  height: 355px;
+  height: 420px;
   object-fit: cover;
   object-position: center bottom;
   opacity: .88;
@@ -324,7 +324,7 @@ header.site {
   top: 92px;
   height: 330px;
   content: "";
-  background: url("assets/site-landscape.svg") center / 100% 100% no-repeat;
+  background: url("assets/site-landscape.svg") center 45% / cover no-repeat;
   opacity: .52;
 }
 .page-masthead > * { position: relative; z-index: 2; }
@@ -658,7 +658,7 @@ footer {
   .nav a { padding: 10px 4px; font-size: .75rem; }
   .nav a::after { bottom: 7px; right: auto; width: 48px; }
   .home-hero { min-height: 485px; padding: 104px 26px 148px; }
-  .home-landscape { height: 275px; object-position: 54% bottom; }
+  .home-landscape { bottom: -55px; height: 330px; object-position: 54% bottom; }
   .hero-copy { width: 100%; }
   .display { font-size: clamp(3.35rem, 16vw, 4.7rem); }
   .hero-copy .lead { max-width: 310px; font-size: 1.1rem; }
@@ -673,7 +673,7 @@ footer {
   .home-cta { padding: 26px 20px 50px; }
   .trail-button { width: 100%; max-width: 420px; }
   .page-masthead { min-height: 280px; margin: 0 -20px 36px; padding: 68px 26px 56px; }
-  .page-masthead::after { top: 76px; height: 260px; background-position: 58% center; }
+  .page-masthead::after { top: 76px; bottom: auto; height: 260px; background-position: 58% center; background-size: 100% 100%; }
   .page-title { font-size: clamp(3.5rem, 16vw, 5rem); }
   .page-intro { font-size: 1.03rem; }
   .featured-projects,
