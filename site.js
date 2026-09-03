@@ -215,6 +215,79 @@
     }
   }
 
+  function setupPhotoLightbox() {
+    const dialog = $("#photo-lightbox");
+    const triggers = $$(".photo-trigger");
+    if (!dialog || !triggers.length || typeof dialog.showModal !== "function") return;
+
+    const image = $(".lightbox-image", dialog);
+    const caption = $(".lightbox-caption", dialog);
+    const count = $(".lightbox-count", dialog);
+    const closeButton = $(".lightbox-close", dialog);
+    const previousButton = $(".lightbox-prev", dialog);
+    const nextButton = $(".lightbox-next", dialog);
+    let activeIndex = 0;
+    let returnFocus = null;
+
+    const showPhoto = (index) => {
+      activeIndex = (index + triggers.length) % triggers.length;
+      const trigger = triggers[activeIndex];
+      const sourceImage = $("img", trigger);
+      image.src = sourceImage.currentSrc || sourceImage.src;
+      image.alt = sourceImage.alt;
+      caption.textContent = trigger.dataset.caption || sourceImage.alt;
+      count.textContent = `${activeIndex + 1} / ${triggers.length}`;
+      previousButton.disabled = triggers.length < 2;
+      nextButton.disabled = triggers.length < 2;
+    };
+
+    const closeLightbox = () => {
+      if (dialog.open) dialog.close();
+    };
+
+    triggers.forEach((trigger, index) => {
+      trigger.addEventListener("click", () => {
+        returnFocus = trigger;
+        showPhoto(index);
+        dialog.showModal();
+        closeButton.focus();
+        document.body.classList.add("lightbox-open");
+      });
+    });
+
+    closeButton.addEventListener("click", closeLightbox);
+    previousButton.addEventListener("click", () => showPhoto(activeIndex - 1));
+    nextButton.addEventListener("click", () => showPhoto(activeIndex + 1));
+
+    dialog.addEventListener("click", (event) => {
+      if (event.target === dialog) closeLightbox();
+    });
+
+    dialog.addEventListener("cancel", (event) => {
+      event.preventDefault();
+      closeLightbox();
+    });
+
+    dialog.addEventListener("close", () => {
+      document.body.classList.remove("lightbox-open");
+      returnFocus?.focus();
+      returnFocus = null;
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (!dialog.open) return;
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        showPhoto(activeIndex - 1);
+      }
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        showPhoto(activeIndex + 1);
+      }
+    });
+  }
+
   renderProjects();
   renderFieldNotes();
+  setupPhotoLightbox();
 })();
