@@ -135,6 +135,7 @@
   function noteIllustration(title) {
     if (/investments/i.test(title)) return "assets/sketch-coffee.svg";
     if (/magic circles/i.test(title)) return "assets/sketch-circles.svg";
+    if (/episodic epics/i.test(title)) return "assets/sketch-mountain.svg";
     return "assets/sketch-notebook.svg";
   }
 
@@ -156,28 +157,38 @@
       const posts = await response.json();
       posts.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-      const featureWrap = document.createElement("div");
-      featureWrap.className = "field-notes";
+      const index = document.createElement("div");
+      index.className = "field-notes-index";
 
-      posts.slice(0, 2).forEach((post) => {
+      const featured = document.createElement("section");
+      featured.className = "featured-notes";
+      featured.setAttribute("aria-labelledby", "featured-notes-heading");
+      const featuredHeading = document.createElement("h2");
+      featuredHeading.id = "featured-notes-heading";
+      featuredHeading.textContent = "Featured notes";
+      featured.appendChild(featuredHeading);
+
+      const featureGrid = document.createElement("div");
+      featureGrid.className = "note-feature-grid";
+      posts.slice(0, 3).forEach((post) => {
         const link = document.createElement("a");
-        link.className = "note-card";
+        link.className = "note-feature-card";
         link.href = post.path;
 
         const art = document.createElement("div");
-        art.className = "note-illustration";
+        art.className = "note-feature-art";
         const image = document.createElement("img");
         image.src = noteIllustration(post.title);
         image.alt = "";
         art.appendChild(image);
 
         const copy = document.createElement("div");
-        copy.className = "note-copy";
+        copy.className = "note-feature-copy";
         const date = document.createElement("time");
         date.className = "note-date";
         date.dateTime = post.date;
         date.textContent = formatDate(post.date);
-        const title = document.createElement("h2");
+        const title = document.createElement("h3");
         title.textContent = post.title;
         const summary = document.createElement("p");
         summary.textContent = post.summary || "";
@@ -187,29 +198,63 @@
         copy.append(date, title, summary, action);
 
         link.append(art, copy);
-        featureWrap.appendChild(link);
+        featureGrid.appendChild(link);
       });
+      featured.appendChild(featureGrid);
 
       const archive = document.createElement("section");
       archive.className = "notes-archive";
-      const heading = document.createElement("h2");
-      heading.textContent = "More from the notebook";
-      archive.appendChild(heading);
+      archive.setAttribute("aria-labelledby", "notes-archive-heading");
+      const archiveHeading = document.createElement("h2");
+      archiveHeading.id = "notes-archive-heading";
+      archiveHeading.textContent = "Browse by year";
+      archive.appendChild(archiveHeading);
 
-      posts.slice(2).forEach((post) => {
-        const link = document.createElement("a");
-        link.className = "archive-row";
-        link.href = post.path;
-        const title = document.createElement("strong");
-        title.textContent = post.title;
-        const date = document.createElement("time");
-        date.dateTime = post.date;
-        date.textContent = formatDate(post.date);
-        link.append(title, date);
-        archive.appendChild(link);
+      const years = posts.reduce((groups, post) => {
+        const year = new Date(`${post.date}T12:00:00`).getFullYear();
+        if (!groups[year]) groups[year] = [];
+        groups[year].push(post);
+        return groups;
+      }, {});
+
+      Object.keys(years).sort((a, b) => b - a).forEach((year) => {
+        const yearSection = document.createElement("section");
+        yearSection.className = "archive-year";
+        yearSection.setAttribute("aria-labelledby", `year-${year}`);
+        const yearHeading = document.createElement("h3");
+        yearHeading.id = `year-${year}`;
+        yearHeading.textContent = year;
+        yearSection.appendChild(yearHeading);
+
+        const yearList = document.createElement("div");
+        yearList.className = "archive-year-list";
+        years[year].forEach((post) => {
+          const link = document.createElement("a");
+          link.className = "archive-row";
+          link.href = post.path;
+          const copy = document.createElement("span");
+          copy.className = "archive-row-copy";
+          const title = document.createElement("strong");
+          title.textContent = post.title;
+          const summary = document.createElement("span");
+          summary.textContent = post.summary || "";
+          copy.append(title, summary);
+          const date = document.createElement("time");
+          date.dateTime = post.date;
+          date.textContent = formatDate(post.date);
+          const arrow = document.createElement("span");
+          arrow.className = "archive-arrow";
+          arrow.setAttribute("aria-hidden", "true");
+          arrow.textContent = "→";
+          link.append(copy, date, arrow);
+          yearList.appendChild(link);
+        });
+        yearSection.appendChild(yearList);
+        archive.appendChild(yearSection);
       });
 
-      root.replaceChildren(featureWrap, archive);
+      index.append(featured, archive);
+      root.replaceChildren(index);
     } catch (error) {
       root.innerHTML = "<p>Field notes could not be loaded right now.</p>";
     }
