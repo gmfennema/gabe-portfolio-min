@@ -7,6 +7,6 @@
   "/writing": "field-notes.html",
   "recommendations": "field-notes.html",
   "/recommendations": "field-notes.html",
-  "/projects/habit-tracking.html": "/projects/personal-stats.html"
+  "/projects/habit-tracking.html": "/projects/personal-stats.html",
+  "/projects/relationship-eval.html": "/projects/dynamics-report.html"
 }
-

@@ -812,8 +812,46 @@
     });
   }
 
+  function setupUseCaseSwitcher() {
+    $$(".pp-uses-switch").forEach((root) => setupSwitcher(root));
+  }
+
+  function setupSwitcher(root) {
+    const tabs = $$(".pp-use", root);
+    const panes = $$(".pp-use-pane", root);
+    if (!tabs.length || !panes.length) return;
+
+    const activate = (tab) => {
+      tabs.forEach((other) => {
+        const active = other === tab;
+        other.classList.toggle("is-active", active);
+        other.setAttribute("aria-selected", String(active));
+        other.tabIndex = active ? 0 : -1;
+      });
+      panes.forEach((pane) => {
+        const active = pane.id === tab.getAttribute("aria-controls");
+        pane.hidden = !active;
+        pane.classList.toggle("is-active", active);
+      });
+    };
+
+    tabs.forEach((tab, index) => {
+      tab.addEventListener("mouseenter", () => activate(tab));
+      tab.addEventListener("focus", () => activate(tab));
+      tab.addEventListener("click", () => activate(tab));
+      tab.addEventListener("keydown", (event) => {
+        const step = event.key === "ArrowDown" || event.key === "ArrowRight" ? 1 : event.key === "ArrowUp" || event.key === "ArrowLeft" ? -1 : 0;
+        if (!step) return;
+        event.preventDefault();
+        const next = tabs[(index + step + tabs.length) % tabs.length];
+        next.focus();
+      });
+    });
+  }
+
   renderProjects();
   renderFieldNotes();
+  setupUseCaseSwitcher();
   setupNotebookPosts();
   setupPhotoLightbox();
 })();

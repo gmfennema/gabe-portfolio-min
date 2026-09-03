@@ -1,20 +1,61 @@
 [
   {
-    "title": "Relationship Eval",
+    "title": "Gain Train",
+    "kind": "Progressive web app",
+    "status": "active",
+    "date": "2026-09-03",
+    "path": "projects/gain-train.html",
+    "featured": true,
+    "summary": "A lifting log that runs like a railroad: routes, stops, punched tickets, a crew feed, and rail credits that buy a bigger engine.",
+    "links": [
+      {
+        "label": "Board the train",
+        "url": "https://lift.gabefen.com"
+      }
+    ]
+  },
+  {
+    "title": "Momento",
+    "kind": "Metal card + web app",
+    "status": "active",
+    "date": "2026-08-20",
+    "path": "projects/momento.html",
+    "featured": false,
+    "summary": "A few seconds of sound laser-engraved into a metal card. Scan it and the audio is rebuilt from the card itself, not fetched from a server.",
+    "links": [
+      {
+        "label": "Email to order",
+        "url": "mailto:gmfennema@gmail.com?subject=Momento%20card"
+      }
+    ]
+  },
+  {
+    "title": "FireVIN Rescue",
+    "kind": "Progressive web app",
+    "status": "periodic",
+    "date": "2026-06-15",
+    "path": "projects/fire-vin-rescue.html",
+    "featured": false,
+    "summary": "A free app for first responders: scan an electric vehicle’s VIN and get the guide for where its high-voltage system runs and where it’s safe to cut.",
+    "links": [
+      {
+        "label": "Open the app",
+        "url": "https://fire-vin-rescue.vercel.app"
+      }
+    ]
+  },
+  {
+    "title": "Dynamics Report",
     "kind": "Web app",
     "status": "active",
     "date": "2026-01-25",
-    "path": "projects/relationship-eval.html",
+    "path": "projects/dynamics-report.html",
     "featured": true,
-    "summary": "A private-by-default relationship questionnaire that turns answers into trait vectors (0–100), a radar chart, and a copy/paste coach prompt.",
+    "summary": "Maps how a whole family or team interacts at once: every relationship, the friction loops, and what actually helps. Free personal quiz, paid group reports.",
     "links": [
       {
-        "label": "Open App",
-        "url": "https://relationship-eval.vercel.app"
-      },
-      {
-        "label": "View on GitHub",
-        "url": "https://github.com/gmfennema/relationship-eval"
+        "label": "Take the free quiz",
+        "url": "https://dynamicsreport.com"
       }
     ]
   },

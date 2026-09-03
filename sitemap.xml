@@ -52,6 +52,20 @@
 
   <!-- Projects (local pages only) -->
   <url>
+    <loc>https://gabefen.com/projects/momento.html</loc>
+  </url>
+  <url>
+    <loc>https://gabefen.com/projects/gain-train.html</loc>
+    <lastmod>2026-09-03</lastmod>
+  </url>
+  <url>
+    <loc>https://gabefen.com/projects/fire-vin-rescue.html</loc>
+    <lastmod>2026-06-15</lastmod>
+  </url>
+  <url>
+    <loc>https://gabefen.com/projects/dynamics-report.html</loc>
+  </url>
+  <url>
     <loc>https://gabefen.com/projects/personal-stats.html</loc>
     <lastmod>2025-09-22</lastmod>
   </url>

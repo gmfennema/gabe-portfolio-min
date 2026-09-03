@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>FireVIN Rescue • Project • Gabe Fennema</title>
+  <meta name="description" content="FireVIN Rescue is a free app for first responders: scan an electric vehicle’s VIN and get the guide for where its high-voltage system runs and where it’s safe to cut."/>
+  <link rel="stylesheet" href="../site.css?v=4"/>
+  <link rel="icon" href="../assets/favicon.png" type="image/png"/>
+  <style>
+    html[data-theme="dark"] { color-scheme: dark; }
+    html[data-theme="light"] { color-scheme: light; }
+  </style>
+  <meta property="og:title" content="FireVIN Rescue • Project • Gabe Fennema"/>
+  <meta property="og:description" content="FireVIN Rescue is a free app for first responders: scan an electric vehicle’s VIN and get the guide for where its high-voltage system runs and where it’s safe to cut."/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:url" content="fire-vin-rescue.html"/>
+  <meta name="twitter:card" content="summary"/>
+  <meta name="twitter:title" content="FireVIN Rescue • Project • Gabe Fennema"/>
+  <meta name="twitter:description" content="FireVIN Rescue is a free app for first responders: scan an electric vehicle’s VIN and get the guide for where its high-voltage system runs and where it’s safe to cut."/>
+  <link rel="canonical" href="fire-vin-rescue.html"/>
+  <link rel="prefetch" href="../projects.html"/>
+  <link rel="prefetch" href="../index.html"/>
+  <link rel="prefetch" href="../field-notes.html"/>
+</head>
+<body>
+  <div class="post-container">
+    <header class="site">
+      <div class="brand"><a href="../index.html">GabeFen.com</a></div>
+      <nav class="nav" aria-label="Primary navigation">
+        <a href="../projects.html">PROJECTS</a>
+        <a href="../field-notes.html">FIELD NOTES</a>
+        <a href="../photography.html">PHOTOGRAPHY</a>
+        <a href="../about.html">ABOUT</a>
+      </nav>
+      <a class="trail-mark" href="../about.html" aria-label="About Gabe"><img src="../assets/sketch-signpost.svg" alt=""/></a>
+    </header>
+    <hr class="rule"/>
+
+    <section class="pp-masthead">
+      <div class="pp-masthead-copy">
+        <div class="pp-kicker">
+          <span class="project-kind">Progressive web app</span>
+          <span class="status-pill status-periodic">Periodic</span>
+          <a class="pp-domain" href="https://fire-vin-rescue.vercel.app" target="_blank" rel="noopener">fire-vin-rescue.vercel.app</a>
+        </div>
+        <h1 class="post-title pp-title">FireVIN Rescue</h1>
+        <p class="pp-lead">A free reference for first responders at an electric-vehicle crash. Scan the VIN, get the vehicle, open the guide that shows where the high-voltage battery and cables run and where it’s safe to cut.</p>
+        <div class="pp-actions">
+          <a class="trail-button" href="https://fire-vin-rescue.vercel.app" target="_blank" rel="noopener">Open FireVIN Rescue</a>
+          <a class="btn-secondary" href="#onboard">See how it works</a>
+        </div>
+        <p class="pp-note">Free, no account. Install it on the rig’s tablet or your phone and the guides stay available without signal.</p>
+      </div>
+      <img class="pp-emblem" src="../assets/sketch-firevin.svg" alt=""/>
+    </section>
+
+
+    <section class="pp-thesis">
+      <h2>Why it exists</h2>
+      <p>Crews have good extrication references for conventional cars and almost nothing free and fast for electric ones. An EV changes where you can cut: high-voltage cables run through sills and under seats, and the battery sits where you used to have clear floor. FireVIN Rescue puts the manufacturer’s emergency response guide one scan away, on the tool you already have in your pocket.</p>
+    </section>
+
+    <section class="pp-uses" id="onboard">
+      <h2>How it works</h2>
+      <p class="pp-uses-intro">Three screens between the wreck and the guide.</p>
+      <div class="pp-uses-switch">
+        <div class="pp-uses-list" role="tablist" aria-label="How it works">
+          <button class="pp-use is-active" type="button" role="tab" id="fv-tab-identify" aria-selected="true" aria-controls="fv-pane-identify">
+            <span class="pp-use-title">Identify the vehicle</span>
+            <span class="pp-use-copy">Scan or type the VIN.</span>
+          </button>
+          <button class="pp-use" type="button" role="tab" id="fv-tab-confirm" aria-selected="false" aria-controls="fv-pane-confirm" tabindex="-1">
+            <span class="pp-use-title">Confirm the match</span>
+            <span class="pp-use-copy">Year, make, model, VIN.</span>
+          </button>
+          <button class="pp-use" type="button" role="tab" id="fv-tab-guide" aria-selected="false" aria-controls="fv-pane-guide" tabindex="-1">
+            <span class="pp-use-title">Open the rescue guide</span>
+            <span class="pp-use-copy">Where to cut, where not to.</span>
+          </button>
+        </div>
+        <div class="pp-uses-stage pp-stage-phone">
+          <div class="pp-use-pane is-active" role="tabpanel" id="fv-pane-identify" aria-labelledby="fv-tab-identify">
+            <div class="pp-pane-copy">
+              <h3>Scan the VIN or type it.</h3>
+              <p>Point the camera at the VIN plate on the dash or door jamb. If the plate is damaged or the light is bad, type the 17 characters instead. Either way takes seconds.</p>
+            </div>
+            <img src="../assets/firevin/identify.png" alt="Identify Vehicle screen with Scan VIN and Type VIN buttons"/>
+          </div>
+          <div class="pp-use-pane" role="tabpanel" id="fv-pane-confirm" aria-labelledby="fv-tab-confirm" hidden>
+            <div class="pp-pane-copy">
+              <h3>Check it’s the right car.</h3>
+              <p>The app decodes the VIN and shows the year, make, and model, so you can confirm against the vehicle in front of you before anyone picks up a tool.</p>
+            </div>
+            <img src="../assets/firevin/type-vin.png" alt="Manual VIN entry screen with a 17-character field and Find Rescue Guide button" loading="lazy"/>
+          </div>
+          <div class="pp-use-pane" role="tabpanel" id="fv-pane-guide" aria-labelledby="fv-tab-guide" hidden>
+            <div class="pp-pane-copy">
+              <h3>Open the guide and cut safely.</h3>
+              <p>One tap opens the manufacturer’s emergency response guide for that exact model: high-voltage components, cut zones, no-cut zones, and how to disable the system. Download it, print it, or keep it on screen.</p>
+            </div>
+            <img src="../assets/firevin/matched.png" alt="Vehicle and guide matched screen for a 2025 Rivian R1T with an Open Rescue Guide button and the guide’s first page" loading="lazy"/>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <section class="pp-steps-section">
+      <h2>Getting it on the rig</h2>
+      <ol class="pp-steps">
+        <li>Open the app on the rig’s tablet or your phone.</li>
+        <li>Add it to the home screen so it launches like any other app.</li>
+        <li>Refresh guides once while you have signal. After that they stay available offline.</li>
+      </ol>
+    </section>
+
+    <section class="cta-section">
+      <div class="cta-card">
+        <h3>Free for every crew.</h3>
+        <p>No account, no cost. If your department runs EV calls, put it on the truck.</p>
+        <div class="cta-actions">
+          <a class="btn-primary" href="https://fire-vin-rescue.vercel.app" target="_blank" rel="noopener">Open FireVIN Rescue</a>
+        </div>
+      </div>
+    </section>
+
+    <p class="pp-footnote">Guides are the manufacturers’ published emergency response documents; FireVIN Rescue makes them findable, it does not write them. Corrections or a missing model: <a href="mailto:gmfennema@gmail.com">gmfennema@gmail.com</a>.</p>
+
+    <footer>
+      <p>© <span id="y"></span> Gabe Fennema</p>
+    </footer>
+  </div>
+  <script>
+    document.getElementById('y').textContent = new Date().getFullYear();
+  </script>
+  <script src="../site.js?v=4"></script>
+</body>
+</html>
