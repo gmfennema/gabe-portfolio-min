@@ -5,9 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Projects · Gabe Fennema</title>
   <meta name="description" content="Selected data, automation, and software projects built by Gabe Fennema."/>
-  <link rel="stylesheet" href="site.css?v=3"/>
+  <link rel="stylesheet" href="site.css?v=4"/>
   <link rel="icon" href="assets/favicon.png" type="image/png"/>
-  <link rel="preload" as="fetch" href="projects/projects.json" crossorigin="anonymous"/>
 </head>
 <body>
   <div class="container">
@@ -25,26 +24,54 @@
     </header>
 
     <main>
-      <section class="page-masthead">
+      <section class="page-masthead masthead-projects">
         <span class="eyebrow">Things I’ve built</span>
         <h1 class="page-title">Projects</h1>
         <p class="page-intro">Practical tools, small experiments, and systems built to make complicated work feel clearer.</p>
       </section>
 
-      <section class="featured-projects-section">
+      <section class="pinned-section" aria-labelledby="pinned-heading">
         <div class="section-heading">
-          <h2>Featured work</h2>
-          <p>A few projects that best represent how I approach product, data, and automation.</p>
+          <div>
+            <span class="eyebrow">Start here</span>
+            <h2 id="pinned-heading">Pinned</h2>
+          </div>
+          <p>The three projects I’d hand you first. All three are live and free to try.</p>
         </div>
-        <div id="featured-projects-root" class="featured-projects"></div>
+        <div id="pinned-root" class="pinned-grid"></div>
       </section>
 
-      <section class="projects-section">
+      <section class="register-section" aria-labelledby="active-heading">
         <div class="section-heading">
-          <h2>Projects and tools</h2>
-          <p>Finished products, useful utilities, and a handful of ongoing experiments.</p>
+          <div>
+            <span class="eyebrow">Active development</span>
+            <h2 id="active-heading">In the works</h2>
+          </div>
+          <p>What I’m building right now. New features land regularly.</p>
         </div>
-        <div id="projects-root" class="projects"></div>
+        <div id="active-root" class="register"></div>
+      </section>
+
+      <section class="register-section register-periodic" aria-labelledby="periodic-heading">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">Periodic development</span>
+            <h2 id="periodic-heading">Kept up</h2>
+          </div>
+          <p>Finished and in daily use. I fix bugs and add the occasional feature when it earns its place.</p>
+        </div>
+        <div id="periodic-root" class="register"></div>
+      </section>
+
+      <section class="register-section register-standing" aria-labelledby="standing-heading">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">Unmaintained</span>
+            <h2 id="standing-heading">Still standing</h2>
+          </div>
+          <p>Still out there and still working, but I’m no longer maintaining them. Use as-is.</p>
+        </div>
+        <div id="standing-root" class="register"></div>
       </section>
 
       <section class="logos logos-projects">
@@ -63,6 +90,6 @@
 
     <footer><p>© <span data-year></span> Gabe Fennema</p></footer>
   </div>
-  <script src="site.js?v=3" defer></script>
+  <script src="site.js?v=4" defer></script>
 </body>
 </html>

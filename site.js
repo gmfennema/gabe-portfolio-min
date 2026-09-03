@@ -71,10 +71,37 @@
     parent.appendChild(group);
   }
 
+  const STATUS_LABEL = { active: "Active", periodic: "Periodic", standing: "Unmaintained" };
+
+  function projectYear(project) {
+    return project.date ? new Date(`${project.date}T12:00:00`).getFullYear() : "";
+  }
+
+  function statusPill(project) {
+    const pill = document.createElement("span");
+    pill.className = `status-pill status-${project.status || "active"}`;
+    pill.textContent = STATUS_LABEL[project.status] || STATUS_LABEL.active;
+    return pill;
+  }
+
+  function projectLink(project, item, className) {
+    const link = document.createElement("a");
+    link.className = className;
+    link.href = item.url;
+    link.textContent = item.label || "Open";
+    if (isExternal(item.url)) {
+      link.target = "_blank";
+      link.rel = "noopener";
+    }
+    return link;
+  }
+
   async function renderProjects() {
-    const projectsRoot = $("#projects-root");
-    const featuredRoot = $("#featured-projects-root");
-    if (!projectsRoot) return;
+    const pinnedRoot = $("#pinned-root");
+    const activeRoot = $("#active-root");
+    const periodicRoot = $("#periodic-root");
+    const standingRoot = $("#standing-root");
+    if (!pinnedRoot && !activeRoot && !periodicRoot && !standingRoot) return;
 
     try {
       const response = await fetch("projects/projects.json", { cache: "no-store" });
@@ -82,53 +109,97 @@
       const projects = await response.json();
       projects.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
 
-      projectsRoot.replaceChildren();
-      featuredRoot?.replaceChildren();
+      // Pinned cards
+      if (pinnedRoot) {
+        pinnedRoot.replaceChildren();
+        projects.filter((project) => project.featured).slice(0, 3).forEach((project) => {
+          const card = document.createElement("article");
+          card.className = "pinned-card";
 
-      projects.filter((project) => project.featured).slice(0, 4).forEach((project) => {
-        const card = document.createElement("article");
-        card.className = "featured-card";
-        const content = document.createElement("div");
-        content.className = "featured-content";
+          const top = document.createElement("div");
+          top.className = "pinned-top";
+          const kind = document.createElement("span");
+          kind.className = "project-kind";
+          kind.textContent = project.kind || "Project";
+          top.append(kind, statusPill(project));
 
-        const badge = document.createElement("span");
-        badge.className = "featured-badge";
-        badge.textContent = "Featured";
+          const title = document.createElement("a");
+          title.className = "pinned-title";
+          title.href = project.path;
+          title.textContent = project.title;
+          if (isExternal(project.path)) { title.target = "_blank"; title.rel = "noopener"; }
 
-        const title = document.createElement("a");
-        title.className = "featured-title";
-        title.href = project.path;
-        title.textContent = project.title;
+          const summary = document.createElement("p");
+          summary.className = "pinned-summary";
+          summary.textContent = project.summary || "";
 
-        const summary = document.createElement("p");
-        summary.className = "featured-summary";
-        summary.textContent = project.summary || "";
+          const actions = document.createElement("div");
+          actions.className = "pinned-actions";
+          (project.links || []).forEach((item, index) => {
+            actions.appendChild(projectLink(project, item, index === 0 ? "trail-button pinned-primary" : "badge"));
+          });
 
-        content.append(badge, title, summary);
-        appendLinkGroup(content, project.links, "featured-links");
-        card.appendChild(content);
-        featuredRoot?.appendChild(card);
-      });
+          card.append(top, title, summary, actions);
+          pinnedRoot.appendChild(card);
+        });
+      }
 
-      projects.forEach((project) => {
-        const card = document.createElement("article");
-        card.className = "project-card";
+      // Register rows
+      const renderRegister = (root, status) => {
+        if (!root) return;
+        root.replaceChildren();
+        const rows = projects.filter((project) => (project.status || "active") === status);
+        if (!rows.length) {
+          const empty = document.createElement("p");
+          empty.className = "register-empty";
+          empty.textContent = "Nothing here yet.";
+          root.appendChild(empty);
+          return;
+        }
+        rows.forEach((project) => {
+          const row = document.createElement("article");
+          row.className = "register-row";
 
-        const title = document.createElement("a");
-        title.className = "project-title";
-        title.href = project.path;
-        title.textContent = project.title;
+          const mark = document.createElement("span");
+          mark.className = `register-mark status-${status}`;
+          mark.setAttribute("aria-hidden", "true");
 
-        const summary = document.createElement("p");
-        summary.className = "project-summary";
-        summary.textContent = project.summary || "";
+          const copy = document.createElement("div");
+          copy.className = "register-copy";
+          const title = document.createElement("a");
+          title.className = "register-title";
+          title.href = project.path;
+          title.textContent = project.title;
+          if (isExternal(project.path)) { title.target = "_blank"; title.rel = "noopener"; }
+          const summary = document.createElement("p");
+          summary.className = "register-summary";
+          summary.textContent = project.summary || "";
+          copy.append(title, summary);
 
-        card.append(title, summary);
-        appendLinkGroup(card, project.links, "project-links");
-        projectsRoot.appendChild(card);
-      });
+          const kind = document.createElement("span");
+          kind.className = "register-kind";
+          kind.textContent = project.kind || "Project";
+
+          const year = document.createElement("span");
+          year.className = "register-year";
+          year.textContent = projectYear(project);
+
+          const action = document.createElement("div");
+          action.className = "register-action";
+          const primary = (project.links || [])[0];
+          if (primary) action.appendChild(projectLink(project, primary, "badge"));
+
+          row.append(mark, copy, kind, year, action);
+          root.appendChild(row);
+        });
+      };
+      renderRegister(activeRoot, "active");
+      renderRegister(periodicRoot, "periodic");
+      renderRegister(standingRoot, "standing");
     } catch (error) {
-      projectsRoot.innerHTML = "<p>Projects could not be loaded right now.</p>";
+      [pinnedRoot, activeRoot, periodicRoot, standingRoot].forEach((root) => {
+        if (root) root.innerHTML = "<p>Projects could not be loaded right now.</p>";
+      });
     }
   }
 
@@ -170,34 +241,44 @@
 
       const featureGrid = document.createElement("div");
       featureGrid.className = "note-feature-grid";
+      const chronological = [...posts].sort((a, b) => new Date(a.date) - new Date(b.date));
       posts.slice(0, 3).forEach((post) => {
         const link = document.createElement("a");
-        link.className = "note-feature-card";
+        link.className = "note-book";
         link.href = post.path;
+        const number = chronological.indexOf(post) + 1;
 
-        const art = document.createElement("div");
-        art.className = "note-feature-art";
-        const image = document.createElement("img");
-        image.src = noteIllustration(post.title);
-        image.alt = "";
-        art.appendChild(image);
-
-        const copy = document.createElement("div");
-        copy.className = "note-feature-copy";
-        const date = document.createElement("time");
-        date.className = "note-date";
-        date.dateTime = post.date;
-        date.textContent = formatDate(post.date);
+        const cover = document.createElement("span");
+        cover.className = "note-book-cover";
+        const spine = document.createElement("span");
+        spine.className = "note-book-spine";
+        spine.setAttribute("aria-hidden", "true");
+        spine.append(
+          Object.assign(document.createElement("span"), { className: "note-book-staple" }),
+          Object.assign(document.createElement("span"), { className: "note-book-staple" }),
+          Object.assign(document.createElement("span"), { className: "note-book-staple" })
+        );
+        const emblem = document.createElement("img");
+        emblem.className = "note-book-emblem";
+        emblem.src = noteIllustration(post.title);
+        emblem.alt = "";
         const title = document.createElement("h3");
+        title.className = "note-book-title";
+        if (post.title.length > 34) title.classList.add("note-book-title-long");
         title.textContent = post.title;
-        const summary = document.createElement("p");
-        summary.textContent = post.summary || "";
-        const action = document.createElement("span");
-        action.className = "read-note";
-        action.textContent = "Read note →";
-        copy.append(date, title, summary, action);
+        const stamp = document.createElement("span");
+        stamp.className = "note-book-stamp";
+        const date = document.createElement("time");
+        date.dateTime = post.date;
+        date.textContent = new Date(`${post.date}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+        stamp.append(`Field Note No. ${String(number).padStart(2, "0")} / `, date);
+        cover.append(spine, emblem, title, stamp);
 
-        link.append(art, copy);
+        const summary = document.createElement("span");
+        summary.className = "note-book-band";
+        summary.textContent = post.summary || "";
+
+        link.append(cover, summary);
         featureGrid.appendChild(link);
       });
       featured.appendChild(featureGrid);
@@ -271,157 +352,221 @@
 
     const title = $(".post-title", hero);
     if (!title) return;
-
-    const kicker = document.createElement("span");
-    kicker.className = "notebook-kicker";
-    kicker.textContent = "Field note";
-
-    const date = document.createElement("time");
-    date.className = "notebook-date";
-    date.dateTime = dateMeta.content;
-    date.textContent = formatDate(dateMeta.content);
-
-    const description = $("meta[name='description']");
-    const summary = document.createElement("p");
-    summary.className = "notebook-summary";
-    summary.textContent = description?.content || "A note from the notebook.";
-
-    const readingTime = document.createElement("span");
-    readingTime.className = "notebook-reading-time";
-    const wordCount = content.textContent.trim().split(/\s+/).filter(Boolean).length;
-    readingTime.textContent = `${Math.max(1, Math.round(wordCount / 220))} min read`;
-
-    title.before(kicker, date);
-    title.after(summary, readingTime);
-
-    const illustration = document.createElement("img");
-    illustration.className = "notebook-illustration";
+    const noteTitle = title.textContent.trim();
     const assetPrefix = location.pathname.includes("/posts/") ? "../" : "";
-    illustration.src = `${assetPrefix}${noteIllustration(title.textContent)}`;
-    illustration.alt = "";
-    hero.appendChild(illustration);
+    const wordCount = content.textContent.trim().split(/\s+/).filter(Boolean).length;
+    const minutes = Math.max(1, Math.round(wordCount / 220));
 
-    const headings = $$("h2", content);
+    const el = (tag, className, text) => {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    };
+
+    /* ---- Inside cover (page 1) ---- */
+    hero.replaceChildren();
+    hero.classList.add("cover-inside");
+
+    const cover = el("div", "cover-print");
+    title.className = "post-title cover-title";
+    if (noteTitle.length > 44) title.classList.add("cover-title-long");
+    const stamp = el("p", "cover-stamp");
+    const stampNumber = el("span", "cover-stamp-number", "Field note");
+    const stampDate = el("time", "cover-stamp-date", formatDate(dateMeta.content));
+    stampDate.dateTime = dateMeta.content;
+    stamp.append(stampNumber, document.createTextNode(" / "), stampDate);
+    const stampMeta = el("p", "cover-stamp", `${minutes}-Minute Read`);
+    const emblem = el("img", "cover-emblem");
+    emblem.src = `${assetPrefix}${noteIllustration(noteTitle)}`;
+    emblem.alt = "";
+    cover.append(emblem, title, stamp, stampMeta);
+    const bandNumber = stampNumber;
+
+    const headings = $$("h2", content).length ? $$("h2", content) : $$("h3", content);
+    const outlineLinks = [];
+    let outline = null;
     if (headings.length) {
-      const outline = document.createElement("nav");
-      outline.className = "post-outline";
+      outline = el("nav", "post-outline");
       outline.setAttribute("aria-label", "In this note");
-      const outlineLabel = document.createElement("strong");
-      outlineLabel.textContent = "In this note";
-      outline.appendChild(outlineLabel);
-
+      outline.appendChild(el("strong", null, "In this note"));
+      const list = el("ol", "outline-list");
       headings.forEach((heading, index) => {
         if (!heading.id) heading.id = `note-section-${index + 1}`;
-        const link = document.createElement("a");
+        const item = el("li");
+        const link = el("a", "outline-link");
         link.href = `#${heading.id}`;
-        link.textContent = heading.textContent.replace(/^\d+\.\s*/, "");
-        outline.appendChild(link);
+        link.append(
+          el("span", "outline-text", heading.textContent.replace(/^\d+\.\s*/, "")),
+          el("span", "outline-leader"),
+          el("span", "outline-page")
+        );
+        item.appendChild(link);
+        list.appendChild(item);
+        outlineLinks.push(link);
       });
-      hero.appendChild(outline);
+      outline.appendChild(list);
     }
 
+    hero.append(cover);
+    if (outline) hero.appendChild(outline);
+    meta.hidden = true;
     hero.appendChild(meta);
 
+    /* ---- Reader shell ---- */
     const blocks = [...content.children].map((block) => block.cloneNode(true));
-    const reader = document.createElement("section");
-    reader.className = "post-reader";
+    const reader = el("section", "post-reader");
     reader.setAttribute("aria-label", "Paginated field note reader");
 
-    const toolbar = document.createElement("div");
-    toolbar.className = "reader-toolbar";
-    const readerLabel = document.createElement("span");
-    readerLabel.className = "reader-label";
-    readerLabel.textContent = "Field note reader";
-    const status = document.createElement("span");
-    status.className = "reader-status";
-    const progress = document.createElement("span");
-    progress.className = "reader-progress";
+    const toolbar = el("div", "reader-toolbar");
+    const readerLabel = el("span", "reader-label", "From the notebook");
+    const status = el("span", "reader-status");
+    const progress = el("span", "reader-progress");
     progress.setAttribute("aria-hidden", "true");
     toolbar.append(readerLabel, status, progress);
 
-    const stage = document.createElement("div");
-    stage.className = "reader-stage";
+    const stage = el("div", "reader-stage");
     stage.setAttribute("aria-live", "polite");
-    const pageHost = document.createElement("div");
-    pageHost.className = "reader-pages";
-    stage.appendChild(pageHost);
+    const pageHost = el("div", "reader-pages");
+    const spine = el("div", "reader-spine");
+    spine.setAttribute("aria-hidden", "true");
+    spine.append(el("span", "reader-staple"), el("span", "reader-staple"), el("span", "reader-staple"));
+    stage.append(pageHost, spine);
 
-    const pager = document.createElement("div");
-    pager.className = "reader-pager";
-    const previous = document.createElement("button");
-    previous.className = "reader-button reader-prev";
+    const pager = el("div", "reader-pager");
+    const previous = el("button", "reader-button reader-prev", "← Previous page");
     previous.type = "button";
-    previous.textContent = "← Previous page";
-    const next = document.createElement("button");
-    next.className = "reader-button reader-next";
+    const next = el("button", "reader-button reader-next", "Next page →");
     next.type = "button";
-    next.textContent = "Next page →";
-    pager.append(previous, next);
+    const hint = el("span", "reader-hint", "Tap a page edge or use the arrow keys");
+    pager.append(previous, hint, next);
 
     reader.append(toolbar, stage, pager);
     hero.before(reader);
 
-    const coverPage = document.createElement("article");
-    coverPage.className = "reader-page reader-cover-page";
-
-    const createReaderFooter = () => {
-      const footer = document.createElement("footer");
-      footer.className = "reader-page-footer";
-      const pageLabel = document.createElement("span");
-      pageLabel.className = "reader-page-label";
-      pageLabel.textContent = title.textContent;
-      const pageNumber = document.createElement("span");
-      pageNumber.className = "reader-page-number";
-      footer.append(pageLabel, pageNumber);
+    const createPageNumber = () => {
+      const footer = el("footer", "reader-page-footer");
+      footer.setAttribute("aria-hidden", "true");
+      footer.appendChild(el("span", "reader-page-number"));
       return footer;
     };
-    coverPage.append(hero, createReaderFooter());
+
+    const coverPage = el("article", "reader-page reader-cover-page");
+    coverPage.append(hero, createPageNumber());
 
     const createArticlePage = () => {
-      const page = document.createElement("article");
-      page.className = "reader-page reader-article-page";
-      const header = document.createElement("header");
-      header.className = "reader-page-header";
-      header.textContent = title.textContent;
-      const body = document.createElement("div");
-      body.className = "reader-page-body post-content";
-      page.append(header, body, createReaderFooter());
+      const page = el("article", "reader-page reader-article-page");
+      const header = el("header", "reader-page-header");
+      header.setAttribute("aria-hidden", "true");
+      header.append(el("span", "reader-running-title", noteTitle), el("span", "reader-running-section"));
+      const body = el("div", "reader-page-body post-content");
+      page.append(header, body, createPageNumber());
       return { page, body };
     };
 
+    const sectionOf = (block) => /^(H2|H3)$/.test(block.tagName) ? block.textContent.trim() : null;
+
     const buildPages = () => {
-      const measureHost = document.createElement("div");
-      measureHost.className = "reader-measure";
+      const measureHost = el("div", "reader-measure");
       stage.appendChild(measureHost);
       const desktop = window.matchMedia("(min-width: 721px)").matches;
-      const gap = desktop ? 18 : 0;
-      const pageWidth = Math.max(260, (stage.clientWidth - gap) / (desktop ? 2 : 1));
+      const pageWidth = Math.max(260, stage.clientWidth / (desktop ? 2 : 1));
       const pages = [coverPage];
+      let runningSection = "";
       let current = createArticlePage();
       current.page.style.width = `${pageWidth}px`;
       measureHost.appendChild(current.page);
+
+      const stampSection = (pageRecord, section) => {
+        const target = $(".reader-running-section", pageRecord.page);
+        if (target) target.textContent = section;
+      };
 
       const finishCurrent = () => {
         if (current.body.children.length) pages.push(current.page);
         current = createArticlePage();
         current.page.style.width = `${pageWidth}px`;
+        stampSection(current, runningSection);
         measureHost.replaceChildren(current.page);
       };
 
-      const appendListAcrossPages = (block) => {
-        let list = block.cloneNode(false);
-        current.body.appendChild(list);
-        [...block.children].forEach((item) => {
-          const itemCopy = item.cloneNode(true);
-          list.appendChild(itemCopy);
-          if (current.body.scrollHeight > current.body.clientHeight + 1 && list.children.length > 1) {
-            itemCopy.remove();
-            finishCurrent();
-            list = block.cloneNode(false);
-            current.body.appendChild(list);
-            list.appendChild(item.cloneNode(true));
+      const overflowing = () => current.body.scrollHeight > current.body.clientHeight + 1;
+
+      // Plain paragraphs can run on across pages at sentence boundaries, like handwriting would.
+      const sentencesOf = (block) => {
+        if (block.tagName !== "P" || block.children.length) return null;
+        const sentences = block.textContent.match(/[^.!?]+[.!?]+["”’)\]]*\s*|[^.!?]+$/g);
+        return sentences && sentences.length > 1 ? sentences : null;
+      };
+
+      const appendParagraphAcrossPages = (block, sentences) => {
+        let rest = sentences;
+        while (rest.length) {
+          const paragraph = block.cloneNode(false);
+          current.body.appendChild(paragraph);
+          let taken = 0;
+          for (const sentence of rest) {
+            paragraph.textContent += sentence;
+            taken += 1;
+            if (overflowing()) {
+              taken -= 1;
+              paragraph.textContent = rest.slice(0, taken).join("");
+              break;
+            }
           }
-        });
+          if (taken === 0) {
+            paragraph.remove();
+            if (!current.body.children.length) {
+              // Nothing else on the page and still no room: keep the paragraph whole rather than loop.
+              current.body.appendChild(block.cloneNode(true));
+              return;
+            }
+            finishCurrent();
+            continue;
+          }
+          rest = rest.slice(taken);
+          if (rest.length) {
+            paragraph.classList.add("runs-on");
+            finishCurrent();
+          }
+        }
+      };
+
+      // Lists start on the current page and run on across the fold; ordered lists keep their numbering.
+      const appendListAcrossPages = (block) => {
+        const total = block.children.length;
+        const firstNumber = Number(block.getAttribute("start")) || 1;
+        let items = [...block.children];
+        while (items.length) {
+          const list = block.cloneNode(false);
+          if (block.tagName === "OL" && items.length !== total) list.start = firstNumber + (total - items.length);
+          current.body.appendChild(list);
+          let taken = 0;
+          for (const item of items) {
+            const copy = item.cloneNode(true);
+            list.appendChild(copy);
+            if (overflowing()) {
+              copy.remove();
+              break;
+            }
+            taken += 1;
+          }
+          if (taken === 0) {
+            if (current.body.children.length > 1) {
+              list.remove();
+              finishCurrent();
+              continue;
+            }
+            // An item taller than an empty page: place it anyway rather than loop.
+            list.appendChild(items[0].cloneNode(true));
+            taken = 1;
+          }
+          items = items.slice(taken);
+          if (items.length) {
+            list.classList.add("runs-on");
+            finishCurrent();
+          }
+        }
       };
 
       blocks.forEach((block, index) => {
@@ -430,9 +575,12 @@
         const candidate = block.cloneNode(true);
 
         if (isHeading && current.body.children.length && nextBlock) {
-          const nextCandidate = nextBlock.cloneNode(true);
+          // Keep a heading with at least the opening of its first paragraph.
+          const nextSentences = sentencesOf(nextBlock);
+          const nextCandidate = nextBlock.cloneNode(!nextSentences);
+          if (nextSentences) nextCandidate.textContent = nextSentences.slice(0, 2).join("");
           current.body.append(candidate, nextCandidate);
-          const headingNeedsRoom = current.body.scrollHeight > current.body.clientHeight + 1;
+          const headingNeedsRoom = overflowing();
           candidate.remove();
           nextCandidate.remove();
           if (headingNeedsRoom) finishCurrent();
@@ -440,14 +588,25 @@
 
         const contentBlock = block.cloneNode(true);
         current.body.appendChild(contentBlock);
-        if (current.body.scrollHeight > current.body.clientHeight + 1) {
+        if (overflowing()) {
           contentBlock.remove();
-          if (current.body.children.length) finishCurrent();
-          if (/^(UL|OL)$/.test(block.tagName) && block.children.length > 1) {
+          const sentences = sentencesOf(block);
+          if (sentences) {
+            appendParagraphAcrossPages(block, sentences);
+          } else if (/^(UL|OL)$/.test(block.tagName) && block.children.length > 1) {
             appendListAcrossPages(block);
           } else {
+            if (current.body.children.length) finishCurrent();
             current.body.appendChild(block.cloneNode(true));
           }
+        }
+
+        const section = sectionOf(block);
+        if (section) {
+          runningSection = section;
+          // A heading that opens a page names that page; otherwise the page keeps the section it started in.
+          const opener = current.body.firstElementChild;
+          if (opener && sectionOf(opener) === section) stampSection(current, section);
         }
       });
       if (current.body.children.length) pages.push(current.page);
@@ -455,7 +614,7 @@
 
       pages.forEach((page, index) => {
         const pageNumber = $(".reader-page-number", page);
-        if (pageNumber) pageNumber.textContent = `${index + 1} / ${pages.length}`;
+        if (pageNumber) pageNumber.textContent = index === 0 ? "" : String(index + 1);
       });
       return pages;
     };
@@ -467,6 +626,18 @@
     const isDesktop = () => window.matchMedia("(min-width: 721px)").matches;
     const visibleCount = () => isDesktop() ? 2 : 1;
     const headingPages = new Map();
+
+    const indexHeadings = () => {
+      headingPages.clear();
+      pages.forEach((page, index) => {
+        $$("[id]", page).forEach((element) => headingPages.set(element.id, index));
+      });
+      outlineLinks.forEach((link) => {
+        const pageIndex = headingPages.get(link.hash.slice(1));
+        const pageLabel = $(".outline-page", link);
+        if (pageLabel) pageLabel.textContent = pageIndex === undefined ? "" : String(pageIndex + 1);
+      });
+    };
 
     const renderPages = (direction = "next") => {
       if (!pages.length) return;
@@ -483,6 +654,8 @@
       progress.style.setProperty("--reader-progress", `${(endPage / pages.length) * 100}%`);
       previous.disabled = activePage === 0;
       next.disabled = endPage >= pages.length;
+      reader.classList.toggle("at-cover", activePage === 0);
+      reader.classList.toggle("at-end", endPage >= pages.length);
     };
 
     const goToHeading = (headingId) => {
@@ -494,7 +667,7 @@
       history.replaceState(null, "", `${location.pathname}${location.search}#${headingId}`);
     };
 
-    $$(".post-outline a", coverPage).forEach((link) => {
+    outlineLinks.forEach((link) => {
       link.addEventListener("click", (event) => {
         event.preventDefault();
         goToHeading(link.hash.slice(1));
@@ -524,19 +697,47 @@
       window.clearTimeout(resizeTimer);
       resizeTimer = window.setTimeout(() => {
         pages = buildPages();
+        indexHeadings();
         renderPages();
       }, 160);
     });
 
     pages = buildPages();
-    pages.forEach((page, index) => {
-      $$('[id]', page).forEach((element) => headingPages.set(element.id, index));
-    });
+    indexHeadings();
     const initialHeading = decodeURIComponent(location.hash.slice(1));
     if (initialHeading && headingPages.has(initialHeading)) activePage = headingPages.get(initialHeading);
     grid.remove();
     renderPages();
 
+    /* ---- Place this note in the series and link its neighbours ---- */
+    const currentFile = location.pathname.split("/").pop();
+    fetch(`${assetPrefix}posts/posts.json`, { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : Promise.reject()))
+      .then((posts) => {
+        posts.sort((a, b) => new Date(a.date) - new Date(b.date));
+        const position = posts.findIndex((post) => post.path.split("/").pop() === currentFile);
+        if (position === -1) return;
+        bandNumber.textContent = `Field Note No. ${String(position + 1).padStart(2, "0")}`;
+        readerLabel.textContent = `From the notebook · Note ${position + 1} of ${posts.length}`;
+
+        const nav = el("nav", "reader-note-nav");
+        nav.setAttribute("aria-label", "Other field notes");
+        const makeLink = (post, direction) => {
+          const link = el("a", `note-nav-link note-nav-${direction}`);
+          link.href = `${assetPrefix}${post.path}`;
+          link.append(
+            el("span", "note-nav-kicker", direction === "prev" ? "← Earlier note" : "Later note →"),
+            el("span", "note-nav-title", post.title)
+          );
+          return link;
+        };
+        const earlier = posts[position - 1];
+        const later = posts[position + 1];
+        nav.appendChild(earlier ? makeLink(earlier, "prev") : el("span", "note-nav-empty", "This is the first note"));
+        nav.appendChild(later ? makeLink(later, "next") : el("span", "note-nav-empty", "This is the latest note"));
+        reader.appendChild(nav);
+      })
+      .catch(() => {});
   }
 
   function setupPhotoLightbox() {

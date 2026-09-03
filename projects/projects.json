@@ -1,17 +1,27 @@
 [
   {
     "title": "Relationship Eval",
+    "kind": "Web app",
+    "status": "active",
     "date": "2026-01-25",
     "path": "projects/relationship-eval.html",
     "featured": true,
     "summary": "A private-by-default relationship questionnaire that turns answers into trait vectors (0–100), a radar chart, and a copy/paste coach prompt.",
     "links": [
-      { "label": "Open App", "url": "https://relationship-eval.vercel.app" },
-      { "label": "View on GitHub", "url": "https://github.com/gmfennema/relationship-eval" }
+      {
+        "label": "Open App",
+        "url": "https://relationship-eval.vercel.app"
+      },
+      {
+        "label": "View on GitHub",
+        "url": "https://github.com/gmfennema/relationship-eval"
+      }
     ]
   },
   {
     "title": "CYOLLMA - Choose Your Own LLM Adventure",
+    "kind": "macOS app",
+    "status": "standing",
     "date": "2025-10-30",
     "path": "projects/cyollma.html",
     "featured": false,
@@ -29,6 +39,8 @@
   },
   {
     "title": "Personal Stats",
+    "kind": "Live dashboard",
+    "status": "periodic",
     "date": "2025-09-22",
     "path": "projects/personal-stats.html",
     "featured": true,
@@ -42,8 +54,11 @@
   },
   {
     "title": "Advanced Mortgage Payoff Simulator",
+    "kind": "Web tool",
+    "status": "periodic",
     "date": "2025-08-15",
     "path": "projects/mortgage-payoff-simulator.html",
+    "featured": true,
     "summary": "An advanced mortgage payoff simulator with a clean dashboard UI and a paydown chart.",
     "links": [
       {
@@ -54,6 +69,8 @@
   },
   {
     "title": "Sheets to Slack",
+    "kind": "Google Sheets add-on",
+    "status": "standing",
     "date": "2024-05-12",
     "path": "projects/sheets-to-slack.html",
     "featured": false,
@@ -71,9 +88,11 @@
   },
   {
     "title": "Google Sheets Theme Generator",
+    "kind": "Google Sheets add-on",
+    "status": "standing",
     "date": "2023-09-11",
     "path": "https://workspace.google.com/marketplace/app/gabes_theme_generator/407160235109?hl=en&pann=sheets_addon_widget",
-    "featured": true,
+    "featured": false,
     "summary": "Generate and apply cohesive color themes to Google Sheets with dark mode, saved themes, and font selection.",
     "links": [
       {
@@ -84,8 +103,11 @@
   },
   {
     "title": "Daily Wisdom Chrome Extension",
+    "kind": "Chrome extension",
+    "status": "standing",
     "date": "2023-06-29",
     "path": "https://chromewebstore.google.com/detail/daily-wisdom/mnnifpoepkebdonijhhmfcmfmndmajde",
+    "featured": false,
     "summary": "A Chrome extension that displays a random quote from a curated list of authors every day.",
     "links": [
       {
@@ -96,8 +118,11 @@
   },
   {
     "title": "PowerPoint Stylizer for Tableau Exports",
+    "kind": "Python tool",
+    "status": "standing",
     "date": "2025-10-15",
     "path": "https://github.com/gmfennema/tableau-power-point-stylizer",
+    "featured": false,
     "summary": "Automatically transforms bland Tableau PowerPoint exports into polished, branded presentations with batch styling, OCR title extraction, and customizable themes.",
     "links": [
       {
