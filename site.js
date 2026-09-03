@@ -260,6 +260,285 @@
     }
   }
 
+  function setupNotebookPosts() {
+    const hero = $(".post-hero");
+    const grid = $(".post-grid");
+    const content = $(".post-content");
+    const meta = $(".post-meta");
+    const dateMeta = $("meta[name='post:date']");
+    if (!hero || !grid || !content || !meta || !dateMeta) return;
+    if (hero.parentElement?.classList.contains("post-reader")) return;
+
+    const title = $(".post-title", hero);
+    if (!title) return;
+
+    const kicker = document.createElement("span");
+    kicker.className = "notebook-kicker";
+    kicker.textContent = "Field note";
+
+    const date = document.createElement("time");
+    date.className = "notebook-date";
+    date.dateTime = dateMeta.content;
+    date.textContent = formatDate(dateMeta.content);
+
+    const description = $("meta[name='description']");
+    const summary = document.createElement("p");
+    summary.className = "notebook-summary";
+    summary.textContent = description?.content || "A note from the notebook.";
+
+    const readingTime = document.createElement("span");
+    readingTime.className = "notebook-reading-time";
+    const wordCount = content.textContent.trim().split(/\s+/).filter(Boolean).length;
+    readingTime.textContent = `${Math.max(1, Math.round(wordCount / 220))} min read`;
+
+    title.before(kicker, date);
+    title.after(summary, readingTime);
+
+    const illustration = document.createElement("img");
+    illustration.className = "notebook-illustration";
+    const assetPrefix = location.pathname.includes("/posts/") ? "../" : "";
+    illustration.src = `${assetPrefix}${noteIllustration(title.textContent)}`;
+    illustration.alt = "";
+    hero.appendChild(illustration);
+
+    const headings = $$("h2", content);
+    if (headings.length) {
+      const outline = document.createElement("nav");
+      outline.className = "post-outline";
+      outline.setAttribute("aria-label", "In this note");
+      const outlineLabel = document.createElement("strong");
+      outlineLabel.textContent = "In this note";
+      outline.appendChild(outlineLabel);
+
+      headings.forEach((heading, index) => {
+        if (!heading.id) heading.id = `note-section-${index + 1}`;
+        const link = document.createElement("a");
+        link.href = `#${heading.id}`;
+        link.textContent = heading.textContent.replace(/^\d+\.\s*/, "");
+        outline.appendChild(link);
+      });
+      hero.appendChild(outline);
+    }
+
+    hero.appendChild(meta);
+
+    const blocks = [...content.children].map((block) => block.cloneNode(true));
+    const reader = document.createElement("section");
+    reader.className = "post-reader";
+    reader.setAttribute("aria-label", "Paginated field note reader");
+
+    const toolbar = document.createElement("div");
+    toolbar.className = "reader-toolbar";
+    const readerLabel = document.createElement("span");
+    readerLabel.className = "reader-label";
+    readerLabel.textContent = "Field note reader";
+    const status = document.createElement("span");
+    status.className = "reader-status";
+    const progress = document.createElement("span");
+    progress.className = "reader-progress";
+    progress.setAttribute("aria-hidden", "true");
+    toolbar.append(readerLabel, status, progress);
+
+    const stage = document.createElement("div");
+    stage.className = "reader-stage";
+    stage.setAttribute("aria-live", "polite");
+    const pageHost = document.createElement("div");
+    pageHost.className = "reader-pages";
+    stage.appendChild(pageHost);
+
+    const pager = document.createElement("div");
+    pager.className = "reader-pager";
+    const previous = document.createElement("button");
+    previous.className = "reader-button reader-prev";
+    previous.type = "button";
+    previous.textContent = "← Previous page";
+    const next = document.createElement("button");
+    next.className = "reader-button reader-next";
+    next.type = "button";
+    next.textContent = "Next page →";
+    pager.append(previous, next);
+
+    reader.append(toolbar, stage, pager);
+    hero.before(reader);
+
+    const coverPage = document.createElement("article");
+    coverPage.className = "reader-page reader-cover-page";
+
+    const createReaderFooter = () => {
+      const footer = document.createElement("footer");
+      footer.className = "reader-page-footer";
+      const pageLabel = document.createElement("span");
+      pageLabel.className = "reader-page-label";
+      pageLabel.textContent = title.textContent;
+      const pageNumber = document.createElement("span");
+      pageNumber.className = "reader-page-number";
+      footer.append(pageLabel, pageNumber);
+      return footer;
+    };
+    coverPage.append(hero, createReaderFooter());
+
+    const createArticlePage = () => {
+      const page = document.createElement("article");
+      page.className = "reader-page reader-article-page";
+      const header = document.createElement("header");
+      header.className = "reader-page-header";
+      header.textContent = title.textContent;
+      const body = document.createElement("div");
+      body.className = "reader-page-body post-content";
+      page.append(header, body, createReaderFooter());
+      return { page, body };
+    };
+
+    const buildPages = () => {
+      const measureHost = document.createElement("div");
+      measureHost.className = "reader-measure";
+      stage.appendChild(measureHost);
+      const desktop = window.matchMedia("(min-width: 721px)").matches;
+      const gap = desktop ? 18 : 0;
+      const pageWidth = Math.max(260, (stage.clientWidth - gap) / (desktop ? 2 : 1));
+      const pages = [coverPage];
+      let current = createArticlePage();
+      current.page.style.width = `${pageWidth}px`;
+      measureHost.appendChild(current.page);
+
+      const finishCurrent = () => {
+        if (current.body.children.length) pages.push(current.page);
+        current = createArticlePage();
+        current.page.style.width = `${pageWidth}px`;
+        measureHost.replaceChildren(current.page);
+      };
+
+      const appendListAcrossPages = (block) => {
+        let list = block.cloneNode(false);
+        current.body.appendChild(list);
+        [...block.children].forEach((item) => {
+          const itemCopy = item.cloneNode(true);
+          list.appendChild(itemCopy);
+          if (current.body.scrollHeight > current.body.clientHeight + 1 && list.children.length > 1) {
+            itemCopy.remove();
+            finishCurrent();
+            list = block.cloneNode(false);
+            current.body.appendChild(list);
+            list.appendChild(item.cloneNode(true));
+          }
+        });
+      };
+
+      blocks.forEach((block, index) => {
+        const isHeading = /^(H2|H3)$/.test(block.tagName);
+        const nextBlock = blocks[index + 1];
+        const candidate = block.cloneNode(true);
+
+        if (isHeading && current.body.children.length && nextBlock) {
+          const nextCandidate = nextBlock.cloneNode(true);
+          current.body.append(candidate, nextCandidate);
+          const headingNeedsRoom = current.body.scrollHeight > current.body.clientHeight + 1;
+          candidate.remove();
+          nextCandidate.remove();
+          if (headingNeedsRoom) finishCurrent();
+        }
+
+        const contentBlock = block.cloneNode(true);
+        current.body.appendChild(contentBlock);
+        if (current.body.scrollHeight > current.body.clientHeight + 1) {
+          contentBlock.remove();
+          if (current.body.children.length) finishCurrent();
+          if (/^(UL|OL)$/.test(block.tagName) && block.children.length > 1) {
+            appendListAcrossPages(block);
+          } else {
+            current.body.appendChild(block.cloneNode(true));
+          }
+        }
+      });
+      if (current.body.children.length) pages.push(current.page);
+      measureHost.remove();
+
+      pages.forEach((page, index) => {
+        const pageNumber = $(".reader-page-number", page);
+        if (pageNumber) pageNumber.textContent = `${index + 1} / ${pages.length}`;
+      });
+      return pages;
+    };
+
+    let pages = [];
+    let activePage = 0;
+    let resizeTimer;
+
+    const isDesktop = () => window.matchMedia("(min-width: 721px)").matches;
+    const visibleCount = () => isDesktop() ? 2 : 1;
+    const headingPages = new Map();
+
+    const renderPages = (direction = "next") => {
+      if (!pages.length) return;
+      const count = visibleCount();
+      activePage = Math.min(Math.max(0, activePage), Math.max(0, pages.length - count));
+      pageHost.classList.remove("turn-next", "turn-prev");
+      void pageHost.offsetWidth;
+      pageHost.classList.add(direction === "prev" ? "turn-prev" : "turn-next");
+      pageHost.replaceChildren(...pages.slice(activePage, activePage + count));
+      const endPage = Math.min(activePage + count, pages.length);
+      status.textContent = count === 1
+        ? `Page ${activePage + 1} of ${pages.length}`
+        : `Pages ${activePage + 1}–${endPage} of ${pages.length}`;
+      progress.style.setProperty("--reader-progress", `${(endPage / pages.length) * 100}%`);
+      previous.disabled = activePage === 0;
+      next.disabled = endPage >= pages.length;
+    };
+
+    const goToHeading = (headingId) => {
+      const targetPage = headingPages.get(headingId);
+      if (targetPage === undefined) return;
+      const previousPage = activePage;
+      activePage = Math.min(targetPage, Math.max(0, pages.length - visibleCount()));
+      renderPages(activePage < previousPage ? "prev" : "next");
+      history.replaceState(null, "", `${location.pathname}${location.search}#${headingId}`);
+    };
+
+    $$(".post-outline a", coverPage).forEach((link) => {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        goToHeading(link.hash.slice(1));
+      });
+    });
+
+    const turn = (direction) => {
+      const step = visibleCount();
+      activePage += direction * step;
+      renderPages(direction < 0 ? "prev" : "next");
+    };
+
+    previous.addEventListener("click", () => turn(-1));
+    next.addEventListener("click", () => turn(1));
+    stage.addEventListener("click", (event) => {
+      if (event.target.closest("a, button")) return;
+      const bounds = stage.getBoundingClientRect();
+      if (event.clientX < bounds.left + bounds.width * .3) turn(-1);
+      if (event.clientX > bounds.left + bounds.width * .7) turn(1);
+    });
+    document.addEventListener("keydown", (event) => {
+      if (!reader.isConnected || event.target.closest("input, textarea, select, button, a")) return;
+      if (event.key === "ArrowLeft") turn(-1);
+      if (event.key === "ArrowRight") turn(1);
+    });
+    window.addEventListener("resize", () => {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => {
+        pages = buildPages();
+        renderPages();
+      }, 160);
+    });
+
+    pages = buildPages();
+    pages.forEach((page, index) => {
+      $$('[id]', page).forEach((element) => headingPages.set(element.id, index));
+    });
+    const initialHeading = decodeURIComponent(location.hash.slice(1));
+    if (initialHeading && headingPages.has(initialHeading)) activePage = headingPages.get(initialHeading);
+    grid.remove();
+    renderPages();
+
+  }
+
   function setupPhotoLightbox() {
     const dialog = $("#photo-lightbox");
     const triggers = $$(".photo-trigger");
@@ -334,5 +613,6 @@
 
   renderProjects();
   renderFieldNotes();
+  setupNotebookPosts();
   setupPhotoLightbox();
 })();
