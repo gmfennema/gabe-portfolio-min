@@ -52,12 +52,12 @@
   <g mask="url(#fade)">
   <rect width="2400" height="720" fill="url(#sky)"/>
   <!-- sun -->
-  <g fill="none" stroke="#cfa66b" stroke-linecap="round" opacity=".6">
+  <g class="art-sun" fill="none" stroke="#cfa66b" stroke-linecap="round" opacity=".6">
     <circle cx="2206" cy="264" r="48" stroke-width="2.6"/>
     <path d="M2162 254c6-28 26-44 52-46 24-2 44 12 52 36" stroke-width="1.4" opacity=".7"/>
   </g>
   <!-- clouds -->
-  <g fill="none" stroke="#a8b8ba" stroke-width="3" stroke-linecap="round" opacity=".36">
+  <g class="art-clouds" fill="none" stroke="#a8b8ba" stroke-width="3" stroke-linecap="round" opacity=".36">
     <path d="M160 150c90-48 180-42 272-2 90 40 176 36 256 4 82-34 164-34 244 2"/>
     <path d="M330 196c60-24 118-22 174 6 56 26 108 24 160-6"/>
     <path d="M1180 118c60-26 118-24 176 6 64 32 128 30 190-6 56-30 108-30 158-4"/>
@@ -66,7 +66,7 @@
     <path d="M520 254c40-18 82-16 124 4 46 22 90 20 134-4" opacity=".7"/>
   </g>
   <!-- birds -->
-  <g fill="none" stroke="#24382f" stroke-width="2" stroke-linecap="round" opacity=".5">
+  <g class="art-birds" fill="none" stroke="#24382f" stroke-width="2" stroke-linecap="round" opacity=".5">
     <path d="M1452 176c5-7 9-7 12-1c3-6 7-6 12 1"/>
     <path d="M1492 158c4-6 8-6 10-1c2-5 6-5 10 1"/>
     <path d="M1522 184c4-5 7-5 9-1c2-4 5-4 9 1"/>

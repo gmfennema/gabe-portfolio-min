@@ -849,9 +849,114 @@
     });
   }
 
+  /* ---- Living header scenes: inline the SVG art so CSS can animate it ---- */
+  const SCENE_ART = {
+    "masthead-field-notes": "assets/header-field-notes.svg?v=2",
+    "masthead-projects": "assets/header-projects.svg?v=2",
+    "masthead-photography": "assets/header-photography.svg?v=2",
+  };
+  const prefersStill = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  async function inlineScene(section, url, replaceNode, label) {
+    if (!section || !url || !("fetch" in window)) return;
+    try {
+      const response = await fetch(url);
+      if (!response.ok) return;
+      const markup = await response.text();
+      const doc = new DOMParser().parseFromString(markup, "image/svg+xml");
+      const source = doc.documentElement;
+      if (!source || source.nodeName !== "svg") return;
+      const svg = document.importNode(source, true);
+      svg.classList.add("scene-art");
+      svg.setAttribute("focusable", "false");
+      if (label) {
+        svg.setAttribute("role", "img");
+        svg.setAttribute("aria-label", label);
+      } else {
+        svg.setAttribute("aria-hidden", "true");
+        svg.removeAttribute("role");
+      }
+      svg.removeAttribute("aria-labelledby");
+      if (replaceNode) {
+        svg.classList.add(...replaceNode.classList);
+        replaceNode.replaceWith(svg);
+      } else {
+        section.prepend(svg);
+      }
+      section.classList.add("has-scene");
+      watchScene(svg);
+    } catch (error) {
+      /* The CSS background stays in place, so a failed fetch costs nothing. */
+    }
+  }
+
+  function watchScene(svg) {
+    if (!("IntersectionObserver" in window)) return;
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => svg.classList.toggle("scene-paused", !entry.isIntersecting));
+    }, { threshold: 0.02 });
+    io.observe(svg);
+  }
+
+  function setupScenes() {
+    if (prefersStill()) return;
+    $$(".page-masthead").forEach((section) => {
+      const key = [...section.classList].find((name) => SCENE_ART[name]);
+      inlineScene(section, key ? SCENE_ART[key] : "assets/site-landscape.svg?v=3");
+    });
+    const heroArt = $(".home-hero .home-landscape");
+    if (heroArt) inlineScene(heroArt.parentElement, heroArt.getAttribute("src"), heroArt, heroArt.alt);
+  }
+
+  /* ---- Scroll reveals for cards, rows, and notes (including ones rendered later) ---- */
+  function setupReveals() {
+    const selector = ".section-heading, .pinned-card, .register-row, .note-book, .notes-archive li, .photo-item, .service-card, .logos";
+    if (!("IntersectionObserver" in window) || prefersStill()) return;
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("is-in");
+        io.unobserve(entry.target);
+      });
+    }, { rootMargin: "0px 0px -6% 0px", threshold: 0.06 });
+
+    const seen = new WeakSet();
+    const scan = () => {
+      $$(selector).forEach((el) => {
+        if (seen.has(el)) return;
+        seen.add(el);
+        const parent = el.parentElement;
+        const index = parent ? [...parent.children].indexOf(el) : 0;
+        el.style.setProperty("--reveal-i", Math.min(index, 7));
+        el.classList.add("reveal");
+        io.observe(el);
+      });
+    };
+    scan();
+    const main = $("main");
+    if (main && "MutationObserver" in window) {
+      new MutationObserver(scan).observe(main, { childList: true, subtree: true });
+    }
+  }
+
+  /* ---- Photos fade in as they finish loading ---- */
+  function setupPhotoFades() {
+    $$(".photo-trigger img").forEach((img) => {
+      const done = () => img.classList.add("is-loaded");
+      if (img.complete && img.naturalWidth) done();
+      else {
+        img.addEventListener("load", done, { once: true });
+        img.addEventListener("error", done, { once: true });
+      }
+    });
+  }
+
   renderProjects();
   renderFieldNotes();
   setupUseCaseSwitcher();
   setupNotebookPosts();
   setupPhotoLightbox();
+  setupScenes();
+  setupReveals();
+  setupPhotoFades();
 })();
