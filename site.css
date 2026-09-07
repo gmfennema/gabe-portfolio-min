@@ -1485,7 +1485,12 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
   --sheet-edge: #ece3d0;
   --kraft: #d4c19f;
   --kraft-deep: #c2ab84;
-  --dot: rgba(36, 56, 47, .16);
+  --rule-ink: rgba(36, 56, 47, .15);
+  /* Ruled paper: one line per line of prose. Prose blocks below are sized in whole
+     --rule-step units so the text keeps sitting on the ruling down the page.
+     --rule-lead is half-leading plus Georgia's ascent, i.e. the first baseline. */
+  --rule-step: 1.6875rem;
+  --rule-lead: calc(var(--rule-step) / 2 + .349em);
   --margin-line: rgba(180, 102, 53, .38);
   --stamp: "American Typewriter", "Courier Prime", "Courier New", Courier, monospace;
   --cover-face: Futura, "Avenir Next", "Century Gothic", "Trebuchet MS", sans-serif;
@@ -1545,9 +1550,7 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
   min-height: 0;
   flex-direction: column;
   overflow: hidden;
-  background:
-    radial-gradient(circle at 1px 1px, var(--dot) 1px, transparent 1.6px) 11px 11px / 22px 22px,
-    var(--sheet);
+  background: var(--sheet);
   transform-origin: center;
   backface-visibility: hidden;
 }
@@ -1722,16 +1725,26 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
 .reader-running-section { flex-shrink: 0; max-width: 55%; color: var(--rust); }
 .reader-running-section:empty { display: none; }
 .reader-page-body { position: relative; flex: 1; min-height: 0; padding: 16px 34px 26px 62px; overflow: hidden; }
-.reader-page-body.post-content { color: #33403a; font-size: 1rem; line-height: 1.7; }
-.reader-page-body.post-content > p:first-child { margin-top: 0; }
-.reader-page-body.post-content h2 { position: relative; margin: 1.35em 0 .55em; font-size: clamp(1.55rem, 2.6vw, 2.05rem); line-height: 1.1; letter-spacing: -.03em; }
+.reader-page-body.post-content { color: #33403a; font-size: 1rem; line-height: var(--rule-step); }
+/* The ruling is positioned off the content box, so it keeps step with the prose
+   whatever the running header measures, and tiled both ways to run edge to edge. */
+.reader-article-page .reader-page-body {
+  background-image: linear-gradient(to bottom, var(--rule-ink) 1px, transparent 1px);
+  background-position: 0 var(--rule-lead);
+  background-size: 100% var(--rule-step);
+  background-origin: content-box;
+  background-clip: border-box;
+  background-repeat: repeat;
+}
+.reader-page-body.post-content p { margin: 0 0 var(--rule-step); }
+.reader-page-body.post-content h2 { position: relative; margin: var(--rule-step) 0 0; font-size: clamp(1.55rem, 2.6vw, 2.05rem); line-height: calc(var(--rule-step) * 2); letter-spacing: -.03em; }
 .reader-page-body.post-content h2:first-child,
-.reader-page-body.post-content h3:first-child { margin-top: .1em; }
+.reader-page-body.post-content h3:first-child { margin-top: 0; }
 /* A pencil tick in the margin marks each new section; sub-sections get a shorter one. */
 .reader-page-body.post-content h3 { position: relative; }
 .reader-page-body.post-content h3::before {
   position: absolute;
-  top: .5em;
+  top: .6em;
   left: -34px;
   width: 12px;
   height: 2px;
@@ -1742,7 +1755,7 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
 }
 .reader-page-body.post-content h2::before {
   position: absolute;
-  top: .55em;
+  top: .8em;
   left: -40px;
   width: 22px;
   height: 2px;
@@ -1750,27 +1763,27 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
   background: var(--rust);
   transform: rotate(-6deg);
 }
-.reader-page-body.post-content h3 { margin: 1.3em 0 .45em; font-size: 1.22rem; line-height: 1.2; }
+.reader-page-body.post-content h3 { margin: var(--rule-step) 0 0; font-size: 1.22rem; line-height: var(--rule-step); }
 .reader-page-body.post-content ul,
-.reader-page-body.post-content ol { padding-left: 1.25em; }
-.reader-page-body.post-content li { margin-bottom: .3em; }
+.reader-page-body.post-content ol { margin: 0 0 var(--rule-step); padding-left: 1.25em; }
+.reader-page-body.post-content li { margin-bottom: 0; }
 .reader-page-body.post-content li::marker { color: var(--rust); }
 .reader-page-body.post-content img { max-height: 320px; padding: 6px; object-fit: contain; border-radius: 3px; background: var(--paper-soft); }
 .reader-page-body.post-content pre {
   max-height: 310px;
-  margin: 1.1em 0;
-  padding: 14px 16px;
+  margin: var(--rule-step) 0;
+  padding: calc(var(--rule-step) / 2 - 1px) 16px;
   overflow: auto;
   border: 1px solid var(--line);
   border-radius: 4px;
   background: rgba(251, 247, 239, .9);
   font-size: .82rem;
-  line-height: 1.5;
+  line-height: var(--rule-step);
 }
 .reader-page-body.post-content code { background: rgba(233, 223, 204, .7); }
 .reader-page-body.post-content pre code { padding: 0; background: transparent; }
-.reader-page-body.post-content blockquote { margin: 1.6em 0; padding: 16px 0; border-top: 1px solid var(--rust); border-right: 0; border-bottom: 1px solid var(--line); border-left: 0; color: var(--ink); font-family: var(--display); font-size: 1.22rem; line-height: 1.35; }
-.reader-page-body.post-content hr.rule { margin: 1.4em 0; }
+.reader-page-body.post-content blockquote { margin: var(--rule-step) 0; padding: calc(var(--rule-step) - 1px) 0; border-top: 1px solid var(--rust); border-right: 0; border-bottom: 1px solid var(--line); border-left: 0; color: var(--ink); font-family: var(--display); font-size: 1.22rem; line-height: var(--rule-step); }
+.reader-page-body.post-content hr.rule { margin: calc(var(--rule-step) - 1px) 0 var(--rule-step); }
 .reader-page-body.post-content .footnotes { color: var(--muted); font-size: .86rem; }
 .reader-page-body.post-content sup a { text-decoration: none; }
 
@@ -1974,7 +1987,7 @@ footer {
   .post-meta { grid-template-columns: 1fr; }
   .post-content { font-size: 1rem; }
   .callouts { grid-template-columns: 1fr; }
-  .post-reader { --reader-page-height: min(700px, calc(100svh - 220px)); margin: 28px 0 46px; }
+  .post-reader { --reader-page-height: min(700px, calc(100svh - 220px)); --rule-step: 1.5625rem; margin: 28px 0 46px; }
   .reader-toolbar { grid-template-columns: 1fr auto; grid-template-areas: "label status" "progress progress"; gap: 11px 14px; margin-bottom: 13px; }
   .reader-label { grid-area: label; }
   .reader-status { grid-area: status; }
@@ -1993,7 +2006,7 @@ footer {
   .reader-cover-page .post-title.cover-title-long { font-size: clamp(1.1rem, 5.2vw, 1.5rem); }
   .reader-page-header { padding: 16px 22px 0 44px; }
   .reader-page-body { padding: 12px 22px 22px 44px; }
-  .reader-page-body.post-content { font-size: .97rem; line-height: 1.64; }
+  .reader-page-body.post-content { font-size: .97rem; }
   .reader-page-body.post-content h2::before { left: -28px; width: 16px; }
   .reader-page-body.post-content h3::before { left: -24px; width: 9px; }
   .reader-page-footer { padding: 0 22px 14px; }
