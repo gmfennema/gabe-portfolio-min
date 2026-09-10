@@ -341,6 +341,239 @@
     }
   }
 
+  /* =========================================================
+     Field-note reader
+
+     A note is written once, as an ordinary <article>. The reader is a
+     presentation of it: a paginated spread when there is room for one,
+     a continuous ruled scroll otherwise. The article itself stays in
+     the document as the scroll view, the print layout and the fallback,
+     so a paginator that goes wrong costs a reader nothing.
+     ========================================================= */
+
+  const READER_FIGURE_MIN = 170; // a picture squeezed below this belongs overleaf
+  const READER_FIGURE_SLACK = 8; // room for a picture that settles a hair taller
+  const READER_FIGURE_PADDING = 12; // the mount around a picture, top and bottom
+  const READER_FIGURE_MARGINS = 32; // the air a figure keeps above and below it
+  const READER_FIGURE_MAX = 320; // ...and never grows past the design's cap
+  const READER_RESUME_DAYS = 14; // how long a reader's place in a note is kept
+  const READER_RESUME_PAGES = 6; // short notes are not worth resuming into
+  const READER_MIN_PAGE = 460;   // a spread shorter than this stops being comfortable
+  const READER_KEEP_PAGE = 420;  // ...but once open, a spread is not yanked away
+  const READER_MAX_PAGE = 780;
+  const READER_BREATHING_ROOM = 26;
+
+  const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const readerStore = {
+    get(key) {
+      try { return window.localStorage.getItem(key); } catch { return null; }
+    },
+    set(key, value) {
+      try { window.localStorage.setItem(key, value); } catch { /* private mode */ }
+    }
+  };
+
+  /* ---- Cutting a block without losing its markup ---- */
+
+  function textNodesOf(root) {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    let node;
+    while ((node = walker.nextNode())) nodes.push(node);
+    return nodes;
+  }
+
+  function locateOffset(nodes, offset) {
+    let remaining = offset;
+    for (const node of nodes) {
+      if (remaining <= node.length) return { node, offset: remaining };
+      remaining -= node.length;
+    }
+    const last = nodes[nodes.length - 1];
+    return last ? { node: last, offset: last.length } : null;
+  }
+
+  // A copy of `block` holding characters [start, end) of its text, with any
+  // inline markup spanning the cut kept intact on both sides.
+  function sliceBlock(block, start, end) {
+    const nodes = textNodesOf(block);
+    const from = locateOffset(nodes, start);
+    const to = locateOffset(nodes, end);
+    if (!from || !to) return block.cloneNode(true);
+    const range = document.createRange();
+    range.setStart(from.node, from.offset);
+    range.setEnd(to.node, to.offset);
+    const clone = block.cloneNode(false);
+    clone.appendChild(range.cloneContents());
+    return clone;
+  }
+
+  // Paragraphs of plain prose can be cut anywhere. Anything holding a
+  // replaced element is moved whole, so a cut can never drop a picture.
+  const isSplittable = (block) =>
+    block.tagName === "P" &&
+    block.textContent.trim().length > 120 &&
+    !block.querySelector("img, svg, video, iframe, object, canvas, pre");
+
+  /* ---- The pagination engine ----
+     `makePage()` hands back a fresh, correctly sized page to fill;
+     `fits(body)` reports whether what is in it still fits the sheet. */
+  function paginateBlocks(blocks, makePage, fits) {
+    const pages = [];
+    let current = makePage();
+    const overflowing = () => !fits(current.body);
+
+    const flush = () => {
+      if (current.body.children.length) pages.push(current);
+      current = makePage();
+    };
+
+    // Fill the page with as much of `block` as fits, breaking on a word.
+    const runOn = (block) => {
+      const text = block.textContent;
+      const total = text.length;
+      let start = 0;
+      let guard = 0;
+      while (start < total && guard++ < 200) {
+        let low = 1;
+        let high = total - start;
+        let fitLength = 0;
+        while (low <= high) {
+          const mid = Math.floor((low + high) / 2);
+          const candidate = sliceBlock(block, start, start + mid);
+          current.body.appendChild(candidate);
+          const roomLeft = !overflowing();
+          candidate.remove();
+          if (roomLeft) { fitLength = mid; low = mid + 1; } else { high = mid - 1; }
+        }
+
+        if (fitLength && fitLength < total - start) {
+          const wordBreak = text.lastIndexOf(" ", start + fitLength);
+          if (wordBreak > start) fitLength = wordBreak - start;
+        }
+
+        if (fitLength <= 0) {
+          if (current.body.children.length) { flush(); continue; }
+          // Taller than an empty page: let the page scroll rather than clip it.
+          current.body.appendChild(sliceBlock(block, start, total));
+          current.body.classList.add("is-overflowing");
+          return;
+        }
+
+        const piece = sliceBlock(block, start, start + fitLength);
+        if (start > 0) piece.classList.add("runs-in");
+        let next = start + fitLength;
+        while (next < total && /\s/.test(text[next])) next += 1;
+        if (next < total) piece.classList.add("runs-on");
+        current.body.appendChild(piece);
+        start = next;
+        if (start < total) flush();
+      }
+    };
+
+    // A picture too tall for the room left is sized down to fill it, the way a
+    // magazine would, rather than leaving half a page blank behind it.
+    const fitFigure = (block) => {
+      const last = current.body.lastElementChild;
+      if (!last) return false;
+      const probe = block.cloneNode(true);
+      const image = probe.tagName === "IMG" ? probe : probe.querySelector("img");
+      if (!image || probe.querySelectorAll("img").length > 1) return false;
+
+      // Work the size out in one step from the room actually left on the page.
+      // (Re-measuring inside a loop is unreliable here: the measuring page is
+      // hidden, and its layout does not always settle between reads.)
+      const style = window.getComputedStyle(current.body);
+      const limit = current.body.getBoundingClientRect().bottom - parseFloat(style.paddingBottom);
+      const used = last.getBoundingClientRect().bottom;
+      const natural = parseFloat(image.style.height) || READER_FIGURE_MAX;
+      const target = Math.floor(limit - used - READER_FIGURE_MARGINS - READER_FIGURE_SLACK);
+      if (target < READER_FIGURE_MIN) return false;
+
+      image.style.height = `${Math.min(natural, target)}px`;
+      current.body.appendChild(probe);
+      if (fits(current.body)) return true;
+      probe.remove();
+      return false;
+    };
+
+    // Lists start where they start and run on across the fold, numbering intact.
+    const runOnList = (block) => {
+      const total = block.children.length;
+      const firstNumber = Number(block.getAttribute("start")) || 1;
+      let items = [...block.children];
+      let guard = 0;
+      while (items.length && guard++ < 200) {
+        const list = block.cloneNode(false);
+        if (block.tagName === "OL" && items.length !== total) list.start = firstNumber + (total - items.length);
+        current.body.appendChild(list);
+        let taken = 0;
+        for (const item of items) {
+          const copy = item.cloneNode(true);
+          list.appendChild(copy);
+          if (overflowing()) { copy.remove(); break; }
+          taken += 1;
+        }
+        if (taken === 0) {
+          if (current.body.children.length > 1) { list.remove(); flush(); continue; }
+          list.appendChild(items[0].cloneNode(true));
+          current.body.classList.add("is-overflowing");
+          taken = 1;
+        }
+        items = items.slice(taken);
+        if (items.length) { list.classList.add("runs-on"); flush(); }
+      }
+    };
+
+    blocks.forEach((block, index) => {
+      const isHeading = /^(H2|H3)$/.test(block.tagName);
+      const nextBlock = blocks[index + 1];
+
+      // A heading never ends a page alone: it travels with the opening of
+      // whatever it introduces.
+      if (isHeading && current.body.children.length && nextBlock) {
+        const probeHeading = block.cloneNode(true);
+        const probeNext = nextBlock.cloneNode(true);
+        current.body.append(probeHeading, probeNext);
+        const cramped = overflowing() && !fitsPartially(current.body, probeNext, fits);
+        probeHeading.remove();
+        probeNext.remove();
+        if (cramped) flush();
+      }
+
+      const candidate = block.cloneNode(true);
+      current.body.appendChild(candidate);
+      if (!overflowing()) return;
+
+      candidate.remove();
+      if (isSplittable(block)) runOn(block);
+      else if (/^(UL|OL)$/.test(block.tagName) && block.children.length > 1) runOnList(block);
+      else if (fitFigure(block)) { /* the picture shrank into the room that was left */ }
+      else {
+        if (current.body.children.length) flush();
+        current.body.appendChild(block.cloneNode(true));
+        if (overflowing()) current.body.classList.add("is-overflowing");
+      }
+    });
+
+    if (current.body.children.length) pages.push(current);
+    return pages;
+  }
+
+  // True when at least the first couple of lines of `probe` share the page,
+  // which is enough to keep a heading company.
+  function fitsPartially(body, probe, fits) {
+    if (fits(body)) return true;
+    const text = probe.textContent;
+    if (!text || probe.tagName !== "P") return false;
+    const stub = sliceBlock(probe, 0, Math.min(text.length, 120));
+    probe.replaceWith(stub);
+    const roomLeft = fits(body);
+    stub.replaceWith(probe);
+    return roomLeft;
+  }
+
   function setupNotebookPosts() {
     const hero = $(".post-hero");
     const grid = $(".post-grid");
@@ -356,6 +589,7 @@
     const assetPrefix = location.pathname.includes("/posts/") ? "../" : "";
     const wordCount = content.textContent.trim().split(/\s+/).filter(Boolean).length;
     const minutes = Math.max(1, Math.round(wordCount / 220));
+    const storeKey = `notebook:${location.pathname}`;
 
     const el = (tag, className, text) => {
       const node = document.createElement(tag);
@@ -380,6 +614,8 @@
     const emblem = el("img", "cover-emblem");
     emblem.src = `${assetPrefix}${noteIllustration(noteTitle)}`;
     emblem.alt = "";
+    emblem.width = 132;
+    emblem.height = 100;
     cover.append(emblem, title, stamp, stampMeta);
     const bandNumber = stampNumber;
 
@@ -414,24 +650,31 @@
     hero.appendChild(meta);
 
     /* ---- Reader shell ---- */
-    const blocks = [...content.children].map((block) => block.cloneNode(true));
+    const sourceBlocks = [...content.children];
+    const sourceText = content.textContent.replace(/\s+/g, "");
     const reader = el("section", "post-reader");
-    reader.setAttribute("aria-label", "Paginated field note reader");
+    reader.dataset.mode = "loading";
 
     const toolbar = el("div", "reader-toolbar");
     const readerLabel = el("span", "reader-label", "From the notebook");
     const status = el("span", "reader-status");
     const progress = el("span", "reader-progress");
     progress.setAttribute("aria-hidden", "true");
-    toolbar.append(readerLabel, status, progress);
+    const viewToggle = el("button", "reader-view", "Scroll view");
+    viewToggle.type = "button";
+    toolbar.append(readerLabel, progress, status, viewToggle);
 
     const stage = el("div", "reader-stage");
-    stage.setAttribute("aria-live", "polite");
-    const pageHost = el("div", "reader-pages");
+    const track = el("div", "reader-track");
+    track.tabIndex = 0;
+    track.setAttribute("role", "group");
+    track.setAttribute("aria-label", `${noteTitle}, pages`);
     const spine = el("div", "reader-spine");
     spine.setAttribute("aria-hidden", "true");
     spine.append(el("span", "reader-staple"), el("span", "reader-staple"), el("span", "reader-staple"));
-    stage.append(pageHost, spine);
+    const skeleton = el("div", "reader-skeleton");
+    skeleton.setAttribute("aria-hidden", "true");
+    stage.append(track, spine, skeleton);
 
     const pager = el("div", "reader-pager");
     const previous = el("button", "reader-button reader-prev", "← Previous page");
@@ -439,9 +682,25 @@
     const next = el("button", "reader-button reader-next", "Next page →");
     next.type = "button";
     const hint = el("span", "reader-hint", "Tap a page edge or use the arrow keys");
-    pager.append(previous, hint, next);
+    if (readerStore.get("notebook:hinted")) hint.hidden = true;
+    const restart = el("button", "reader-restart", "Start from the beginning");
+    restart.type = "button";
+    restart.hidden = true;
+    const middle = el("span", "reader-pager-middle");
+    middle.append(hint, restart);
+    pager.append(previous, middle, next);
 
-    reader.append(toolbar, stage, pager);
+    const announcer = el("p", "visually-hidden");
+    announcer.setAttribute("aria-live", "polite");
+
+    // The article itself becomes the scroll view: one ruled sheet, in order.
+    const continuous = el("div", "reader-continuous");
+    const continuousHead = el("p", "continuous-head", noteTitle);
+    continuousHead.setAttribute("aria-hidden", "true");
+    content.classList.add("notebook-prose");
+    continuous.append(continuousHead, content);
+
+    reader.append(toolbar, stage, pager, continuous, announcer);
     hero.before(reader);
 
     const createPageNumber = () => {
@@ -459,178 +718,142 @@
       const header = el("header", "reader-page-header");
       header.setAttribute("aria-hidden", "true");
       header.append(el("span", "reader-running-title", noteTitle), el("span", "reader-running-section"));
-      const body = el("div", "reader-page-body post-content");
+      const body = el("div", "reader-page-body post-content notebook-prose");
       page.append(header, body, createPageNumber());
       return { page, body };
     };
 
     const sectionOf = (block) => /^(H2|H3)$/.test(block.tagName) ? block.textContent.trim() : null;
 
+    /* ---- Sizing: the spread and its controls have to fit the screen ---- */
+    // How much height a spread could have and still leave its controls on
+    // screen. Measured off the reader and its toolbar rather than the stage,
+    // because the stage is hidden in the scroll view and would measure as
+    // nothing — which is how a reader ends up flipping between the two.
+    const boxHeight = (node, side) => {
+      const style = window.getComputedStyle(node);
+      return (node.offsetHeight || 0) + parseFloat(style[side] || 0);
+    };
+    const measureRoom = () => {
+      const readerTop = reader.getBoundingClientRect().top + window.scrollY;
+      const toolbarBox = boxHeight(toolbar, "marginBottom");
+      const pagerBox = (pager.offsetHeight || 42) + parseFloat(window.getComputedStyle(pager).marginTop || 0);
+      return window.innerHeight - readerTop - toolbarBox - pagerBox - READER_BREATHING_ROOM;
+    };
+
+    // Hysteresis: a spread needs real room to open, and a little less to stay,
+    // so a few pixels of layout drift cannot flip the view back and forth.
+    const canSpread = () => {
+      if (window.matchMedia("(max-width: 720px)").matches) return false;
+      const floor = reader.dataset.mode === "spread" ? READER_KEEP_PAGE : READER_MIN_PAGE;
+      return measureRoom() >= floor;
+    };
+
+    const preferredMode = () => {
+      if (!canSpread()) return "continuous";
+      return readerStore.get(`${storeKey}:view`) === "scroll" ? "continuous" : "spread";
+    };
+
+    /* ---- Building the pages ---- */
+    let pages = [];
+    const headingPages = new Map();
+
     const buildPages = () => {
+      const height = Math.max(READER_MIN_PAGE, Math.min(READER_MAX_PAGE, Math.round(measureRoom())));
+      reader.style.setProperty("--reader-page-height", `${height}px`);
+
       const measureHost = el("div", "reader-measure");
       stage.appendChild(measureHost);
-      const desktop = window.matchMedia("(min-width: 721px)").matches;
-      const pageWidth = Math.max(260, stage.clientWidth / (desktop ? 2 : 1));
-      const pages = [coverPage];
+      const pageWidth = Math.max(260, stage.clientWidth / 2);
       let runningSection = "";
-      let current = createArticlePage();
-      current.page.style.width = `${pageWidth}px`;
-      measureHost.appendChild(current.page);
+      let blockIndex = 0;
 
-      const stampSection = (pageRecord, section) => {
-        const target = $(".reader-running-section", pageRecord.page);
-        if (target) target.textContent = section;
+      const makePage = () => {
+        const record = createArticlePage();
+        record.page.style.width = `${pageWidth}px`;
+        record.page.style.height = `${height}px`;
+        $(".reader-running-section", record.page).textContent = runningSection || noteTitle;
+        // Measure against the furniture the finished page will carry: an empty
+        // page number collapses its footer, and the page would then be measured
+        // taller than it ends up being.
+        $(".reader-page-number", record.page).textContent = "00";
+        measureHost.replaceChildren(record.page);
+        return record;
+      };
+      // "Fits" means no content sits below the page's content box. scrollHeight
+      // answers a subtly different question — it counts trailing padding and
+      // margins — and pages built against it come out a little too full.
+      const fits = (body) => {
+        const last = body.lastElementChild;
+        if (!last) return true;
+        const style = window.getComputedStyle(body);
+        const limit = body.getBoundingClientRect().bottom - parseFloat(style.paddingBottom);
+        return last.getBoundingClientRect().bottom <= limit + 1;
       };
 
-      const finishCurrent = () => {
-        if (current.body.children.length) pages.push(current.page);
-        current = createArticlePage();
-        current.page.style.width = `${pageWidth}px`;
-        stampSection(current, runningSection);
-        measureHost.replaceChildren(current.page);
-      };
+      // Blocks are tagged so a rebuild can put the reader back where it was,
+      // and stripped of ids so the page copies never collide with the article.
+      const gauge = createArticlePage();
+      gauge.page.style.width = `${pageWidth}px`;
+      gauge.page.style.height = `${height}px`;
+      measureHost.replaceChildren(gauge.page);
+      const columnWidth = gauge.body.clientWidth
+        - parseFloat(window.getComputedStyle(gauge.body).paddingLeft)
+        - parseFloat(window.getComputedStyle(gauge.body).paddingRight);
 
-      const overflowing = () => current.body.scrollHeight > current.body.clientHeight + 1;
-
-      // Plain paragraphs can run on across pages at sentence boundaries, like handwriting would.
-      const sentencesOf = (block) => {
-        if (block.tagName !== "P" || block.children.length) return null;
-        const sentences = block.textContent.match(/[^.!?]+[.!?]+["”’)\]]*\s*|[^.!?]+$/g);
-        return sentences && sentences.length > 1 ? sentences : null;
-      };
-
-      const appendParagraphAcrossPages = (block, sentences) => {
-        let rest = sentences;
-        while (rest.length) {
-          const paragraph = block.cloneNode(false);
-          current.body.appendChild(paragraph);
-          let taken = 0;
-          for (const sentence of rest) {
-            paragraph.textContent += sentence;
-            taken += 1;
-            if (overflowing()) {
-              taken -= 1;
-              paragraph.textContent = rest.slice(0, taken).join("");
-              break;
-            }
-          }
-          if (taken === 0) {
-            paragraph.remove();
-            if (!current.body.children.length) {
-              // Nothing else on the page and still no room: keep the paragraph whole rather than loop.
-              current.body.appendChild(block.cloneNode(true));
-              return;
-            }
-            finishCurrent();
-            continue;
-          }
-          rest = rest.slice(taken);
-          if (rest.length) {
-            paragraph.classList.add("runs-on");
-            finishCurrent();
-          }
-        }
-      };
-
-      // Lists start on the current page and run on across the fold; ordered lists keep their numbering.
-      const appendListAcrossPages = (block) => {
-        const total = block.children.length;
-        const firstNumber = Number(block.getAttribute("start")) || 1;
-        let items = [...block.children];
-        while (items.length) {
-          const list = block.cloneNode(false);
-          if (block.tagName === "OL" && items.length !== total) list.start = firstNumber + (total - items.length);
-          current.body.appendChild(list);
-          let taken = 0;
-          for (const item of items) {
-            const copy = item.cloneNode(true);
-            list.appendChild(copy);
-            if (overflowing()) {
-              copy.remove();
-              break;
-            }
-            taken += 1;
-          }
-          if (taken === 0) {
-            if (current.body.children.length > 1) {
-              list.remove();
-              finishCurrent();
-              continue;
-            }
-            // An item taller than an empty page: place it anyway rather than loop.
-            list.appendChild(items[0].cloneNode(true));
-            taken = 1;
-          }
-          items = items.slice(taken);
-          if (items.length) {
-            list.classList.add("runs-on");
-            finishCurrent();
-          }
-        }
-      };
-
-      blocks.forEach((block, index) => {
-        const isHeading = /^(H2|H3)$/.test(block.tagName);
-        const nextBlock = blocks[index + 1];
-        const candidate = block.cloneNode(true);
-
-        if (isHeading && current.body.children.length && nextBlock) {
-          // Keep a heading with at least the opening of its first paragraph.
-          const nextSentences = sentencesOf(nextBlock);
-          const nextCandidate = nextBlock.cloneNode(!nextSentences);
-          if (nextSentences) nextCandidate.textContent = nextSentences.slice(0, 2).join("");
-          current.body.append(candidate, nextCandidate);
-          const headingNeedsRoom = overflowing();
-          candidate.remove();
-          nextCandidate.remove();
-          if (headingNeedsRoom) finishCurrent();
-        }
-
-        const contentBlock = block.cloneNode(true);
-        current.body.appendChild(contentBlock);
-        if (overflowing()) {
-          contentBlock.remove();
-          const sentences = sentencesOf(block);
-          if (sentences) {
-            appendParagraphAcrossPages(block, sentences);
-          } else if (/^(UL|OL)$/.test(block.tagName) && block.children.length > 1) {
-            appendListAcrossPages(block);
-          } else {
-            if (current.body.children.length) finishCurrent();
-            current.body.appendChild(block.cloneNode(true));
-          }
-        }
-
-        const section = sectionOf(block);
-        if (section) {
-          runningSection = section;
-          // A heading that opens a page names that page; otherwise the page keeps the section it started in.
-          const opener = current.body.firstElementChild;
-          if (opener && sectionOf(opener) === section) stampSection(current, section);
-        }
+      const blocks = sourceBlocks.map((block) => {
+        const copy = block.cloneNode(true);
+        copy.dataset.block = String(blockIndex++);
+        if (copy.id) { copy.dataset.srcId = copy.id; copy.removeAttribute("id"); }
+        $$("[id]", copy).forEach((node) => node.removeAttribute("id"));
+        $$("img", copy).forEach((image) => {
+          const intrinsicWidth = Number(image.getAttribute("width"));
+          const intrinsicHeight = Number(image.getAttribute("height"));
+          if (!intrinsicWidth || !intrinsicHeight) return;
+          const drawn = (columnWidth - READER_FIGURE_PADDING) * (intrinsicHeight / intrinsicWidth);
+          image.style.height = `${Math.round(Math.min(READER_FIGURE_MAX, drawn + READER_FIGURE_PADDING))}px`;
+        });
+        return copy;
       });
-      if (current.body.children.length) pages.push(current.page);
+
+      const records = paginateBlocks(blocks, makePage, fits);
       measureHost.remove();
 
-      pages.forEach((page, index) => {
+      // Running heads follow the section a page opens in.
+      records.forEach((record) => {
+        const opener = record.body.firstElementChild;
+        const section = opener && sectionOf(opener);
+        if (section) runningSection = section;
+        $(".reader-running-section", record.page).textContent = runningSection;
+        record.page.style.width = "";
+        record.page.style.height = "";
+      });
+
+      const built = [coverPage, ...records.map((record) => record.page)];
+      built.forEach((page, index) => {
         const pageNumber = $(".reader-page-number", page);
         if (pageNumber) pageNumber.textContent = index === 0 ? "" : String(index + 1);
       });
-      return pages;
+
+      // Nothing may go missing between the article and its pages.
+      const pagedText = records.map((record) => record.body.textContent).join("").replace(/\s+/g, "");
+      if (pagedText !== sourceText) {
+        throw new Error(`Reader dropped content (${sourceText.length - pagedText.length} characters)`);
+      }
+
+      return built;
     };
-
-    let pages = [];
-    let activePage = 0;
-    let resizeTimer;
-
-    const isDesktop = () => window.matchMedia("(min-width: 721px)").matches;
-    const visibleCount = () => isDesktop() ? 2 : 1;
-    const headingPages = new Map();
 
     const indexHeadings = () => {
       headingPages.clear();
       pages.forEach((page, index) => {
-        $$("[id]", page).forEach((element) => headingPages.set(element.id, index));
+        $$("[data-src-id]", page).forEach((node) => {
+          if (!headingPages.has(node.dataset.srcId)) headingPages.set(node.dataset.srcId, index);
+        });
+        const opener = $(".reader-page-body", page)?.firstElementChild;
+        if (opener?.dataset.srcId && !headingPages.has(opener.dataset.srcId)) {
+          headingPages.set(opener.dataset.srcId, index);
+        }
       });
       outlineLinks.forEach((link) => {
         const pageIndex = headingPages.get(link.hash.slice(1));
@@ -639,75 +862,308 @@
       });
     };
 
-    const renderPages = (direction = "next") => {
-      if (!pages.length) return;
-      const count = visibleCount();
-      activePage = Math.min(Math.max(0, activePage), Math.max(0, pages.length - count));
-      pageHost.classList.remove("turn-next", "turn-prev");
-      void pageHost.offsetWidth;
-      pageHost.classList.add(direction === "prev" ? "turn-prev" : "turn-next");
-      pageHost.replaceChildren(...pages.slice(activePage, activePage + count));
-      const endPage = Math.min(activePage + count, pages.length);
-      status.textContent = count === 1
-        ? `Page ${activePage + 1} of ${pages.length}`
-        : `Pages ${activePage + 1}–${endPage} of ${pages.length}`;
-      progress.style.setProperty("--reader-progress", `${(endPage / pages.length) * 100}%`);
-      previous.disabled = activePage === 0;
-      next.disabled = endPage >= pages.length;
-      reader.classList.toggle("at-cover", activePage === 0);
-      reader.classList.toggle("at-end", endPage >= pages.length);
+    /* ---- Paging ---- */
+    const spreadWidth = () => track.clientWidth || 1;
+    const currentSpread = () => Math.round(track.scrollLeft / spreadWidth());
+    const currentPage = () => Math.min(pages.length - 1, currentSpread() * 2);
+
+    const scrollToPage = (index, smooth = true) => {
+      const spread = Math.floor(Math.max(0, Math.min(index, pages.length - 1)) / 2);
+      track.scrollTo({
+        left: spread * spreadWidth(),
+        behavior: smooth && !reducedMotion() ? "smooth" : "auto"
+      });
     };
 
-    const goToHeading = (headingId) => {
-      const targetPage = headingPages.get(headingId);
-      if (targetPage === undefined) return;
-      const previousPage = activePage;
-      activePage = Math.min(targetPage, Math.max(0, pages.length - visibleCount()));
-      renderPages(activePage < previousPage ? "prev" : "next");
-      history.replaceState(null, "", `${location.pathname}${location.search}#${headingId}`);
+    // `assume` lets a turn update the chrome at once instead of waiting for the
+    // scroll to settle, so the controls never lag behind the page on screen.
+    const syncChrome = (assume) => {
+      if (reader.dataset.mode !== "spread" || !pages.length) return;
+      const first = assume === undefined ? currentPage() : Math.max(0, Math.min(assume, pages.length - 1));
+      const last = Math.min(first + 2, pages.length);
+      status.textContent = `Pages ${first + 1}–${last} of ${pages.length}`;
+      progress.style.setProperty("--reader-progress", `${(last / pages.length) * 100}%`);
+      previous.disabled = first === 0;
+      next.disabled = last >= pages.length;
+      reader.classList.toggle("at-cover", first === 0);
+      reader.classList.toggle("at-end", last >= pages.length);
+      const anchor = $(".reader-page-body [data-block]", pages[first]);
+      if (anchor) readerStore.set(storeKey, JSON.stringify({ block: Number(anchor.dataset.block), at: Date.now() }));
+      if (first === 0) restart.hidden = true;
+      const hash = `#p${first + 1}`;
+      if (location.hash !== hash) history.replaceState(null, "", `${location.pathname}${location.search}${hash}`);
+      announcer.textContent = `Pages ${first + 1} to ${last} of ${pages.length}`;
     };
+
+    const turn = (direction) => {
+      const target = Math.max(0, Math.min(currentPage() + direction * 2, pages.length - 1));
+      scrollToPage(target);
+      syncChrome(target);
+      readerStore.set("notebook:hinted", "1");
+      hint.hidden = true;
+    };
+
+    const readMark = () => {
+      try {
+        const saved = JSON.parse(readerStore.get(storeKey) || "null");
+        if (!saved || typeof saved.block !== "number") return null;
+        const age = Date.now() - (saved.at || 0);
+        return age < READER_RESUME_DAYS * 86400000 ? saved.block : null;
+      } catch {
+        return null;
+      }
+    };
+
+    const pageOfBlock = (blockIndex) => {
+      const found = pages.findIndex((page) =>
+        [...$$("[data-block]", page)].some((node) => Number(node.dataset.block) === blockIndex));
+      return found === -1 ? 0 : found;
+    };
+
+    const firstVisibleBlock = () => {
+      const page = pages[currentPage()];
+      const node = page && $(".reader-page-body [data-block]", page);
+      return node ? Number(node.dataset.block) : 0;
+    };
+
+    /* ---- Mode switching ---- */
+    const setMode = (mode, { restoreBlock } = {}) => {
+      reader.dataset.mode = mode;
+      viewToggle.hidden = mode === "continuous" && !canSpread();
+      viewToggle.textContent = mode === "spread" ? "Scroll view" : "Page view";
+      viewToggle.setAttribute("aria-pressed", String(mode === "continuous"));
+      if (mode === "spread") {
+        skeleton.hidden = true;
+        if (restoreBlock !== undefined) scrollToPage(pageOfBlock(restoreBlock), false);
+        syncChrome();
+      } else {
+        status.textContent = `${minutes}-minute read`;
+        progress.style.setProperty("--reader-progress", "0%");
+      }
+    };
+
+    // Last line of defence: a page that ends up taller than it measured scrolls
+    // instead of clipping, so a reader can always reach every word.
+    const verifyPages = () => {
+      let strained = 0;
+      pages.forEach((page) => {
+        const body = $(".reader-page-body", page);
+        const last = body && body.lastElementChild;
+        if (!last) return;
+        const limit = body.getBoundingClientRect().bottom
+          - parseFloat(window.getComputedStyle(body).paddingBottom);
+        const over = last.getBoundingClientRect().bottom > limit + 1;
+        body.classList.toggle("is-overflowing", over);
+        if (over) strained += 1;
+      });
+      reader.dataset.strained = String(strained);
+    };
+
+    const mountSpread = (restoreBlock) => {
+      pages = buildPages();
+      // The cover goes back to being page one.
+      // A spread is always two sheets: an odd note ends on a blank right page.
+      const mounted = pages.length % 2 ? [...pages, el("article", "reader-page reader-blank-page")] : pages;
+      track.replaceChildren(...mounted);
+      indexHeadings();
+      setMode("spread", { restoreBlock });
+      verifyPages();
+      // And again once the spread has settled, in case anything landed taller.
+      window.clearTimeout(verifyTimer);
+      verifyTimer = window.setTimeout(verifyPages, 300);
+      $$(".reader-page-body img", track).forEach((image) => {
+        if (image.complete) return;
+        image.addEventListener("load", () => {
+          window.clearTimeout(verifyTimer);
+          verifyTimer = window.setTimeout(verifyPages, 120);
+        }, { once: true });
+      });
+    };
+    let verifyTimer;
+
+    const goContinuous = (reason) => {
+      if (reason) reader.dataset.fallback = reason;
+      track.replaceChildren();
+      pages = [];
+      skeleton.hidden = true;
+      // The cover carries the note's title, date and contents, so it leads the
+      // scroll view too rather than living only inside the spread.
+      continuous.before(coverPage);
+      setMode("continuous");
+    };
+
+    const render = (restoreBlock) => {
+      const mode = preferredMode();
+      if (mode === "spread") {
+        try {
+          mountSpread(restoreBlock);
+          return;
+        } catch (error) {
+          console.error("Field-note reader fell back to the scroll view.", error);
+          goContinuous("paginate-failed");
+          return;
+        }
+      }
+      goContinuous();
+    };
+
+    /* ---- Wiring ---- */
+    previous.addEventListener("click", () => turn(-1));
+    next.addEventListener("click", () => turn(1));
+    restart.addEventListener("click", () => {
+      restart.hidden = true;
+      scrollToPage(0);
+      syncChrome(0);
+    });
+
+    viewToggle.addEventListener("click", () => {
+      const goingToScroll = reader.dataset.mode === "spread";
+      readerStore.set(`${storeKey}:view`, goingToScroll ? "scroll" : "spread");
+      if (goingToScroll) {
+        const block = firstVisibleBlock();
+        goContinuous();
+        const target = content.children[block];
+        target?.scrollIntoView({ block: "center", behavior: reducedMotion() ? "auto" : "smooth" });
+      } else {
+        render(0);
+        track.focus({ preventScroll: true });
+      }
+    });
+
+    // A click on the outer third of the spread turns the page, unless the
+    // reader is in the middle of selecting a quote.
+    stage.addEventListener("click", (event) => {
+      if (reader.dataset.mode !== "spread") return;
+      if (event.target.closest("a, button")) return;
+      if (!window.getSelection()?.isCollapsed) return;
+      const bounds = stage.getBoundingClientRect();
+      if (event.clientX < bounds.left + bounds.width * .28) turn(-1);
+      else if (event.clientX > bounds.left + bounds.width * .72) turn(1);
+    });
+
+    let readerInView = false;
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver((entries) => {
+        readerInView = entries.some((entry) => entry.isIntersecting);
+      }, { threshold: .35 }).observe(stage);
+    }
+
+    document.addEventListener("keydown", (event) => {
+      if (reader.dataset.mode !== "spread" || !reader.isConnected) return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.target.closest("input, textarea, select, [contenteditable]")) return;
+      const focused = stage.contains(document.activeElement);
+      if (!focused && !readerInView) return;
+      const anywhere = {
+        ArrowLeft: () => turn(-1),
+        ArrowRight: () => turn(1),
+        PageUp: () => turn(-1),
+        PageDown: () => turn(1)
+      };
+      const whenFocused = {
+        Home: () => scrollToPage(0),
+        End: () => scrollToPage(pages.length - 1),
+        " ": () => turn(event.shiftKey ? -1 : 1)
+      };
+      const action = anywhere[event.key] || (focused ? whenFocused[event.key] : null);
+      if (!action) return;
+      event.preventDefault();
+      action();
+    });
+
+    // Swiping and trackpad scrolling settle on their own; the chrome catches up
+    // once the movement stops rather than on every frame of it.
+    let scrollSettle;
+    track.addEventListener("scroll", () => {
+      window.clearTimeout(scrollSettle);
+      scrollSettle = window.setTimeout(() => syncChrome(), 60);
+    }, { passive: true });
 
     outlineLinks.forEach((link) => {
       link.addEventListener("click", (event) => {
-        event.preventDefault();
-        goToHeading(link.hash.slice(1));
+        const headingId = link.hash.slice(1);
+        if (reader.dataset.mode === "spread") {
+          const target = headingPages.get(headingId);
+          if (target === undefined) return;
+          event.preventDefault();
+          scrollToPage(target);
+          syncChrome(target);
+          history.pushState(null, "", `${location.pathname}${location.search}#${headingId}`);
+        }
       });
     });
 
-    const turn = (direction) => {
-      const step = visibleCount();
-      activePage += direction * step;
-      renderPages(direction < 0 ? "prev" : "next");
-    };
+    window.addEventListener("popstate", () => {
+      if (reader.dataset.mode !== "spread") return;
+      const target = location.hash.slice(1);
+      const pageMatch = /^p(\d+)$/.exec(target);
+      if (pageMatch) scrollToPage(Number(pageMatch[1]) - 1);
+      else if (headingPages.has(target)) scrollToPage(headingPages.get(target));
+    });
 
-    previous.addEventListener("click", () => turn(-1));
-    next.addEventListener("click", () => turn(1));
-    stage.addEventListener("click", (event) => {
-      if (event.target.closest("a, button")) return;
-      const bounds = stage.getBoundingClientRect();
-      if (event.clientX < bounds.left + bounds.width * .3) turn(-1);
-      if (event.clientX > bounds.left + bounds.width * .7) turn(1);
-    });
-    document.addEventListener("keydown", (event) => {
-      if (!reader.isConnected || event.target.closest("input, textarea, select, button, a")) return;
-      if (event.key === "ArrowLeft") turn(-1);
-      if (event.key === "ArrowRight") turn(1);
-    });
-    window.addEventListener("resize", () => {
+    // Only a change in the space available warrants re-paginating; the reader
+    // keeps the paragraph it was on.
+    let lastSize = "";
+    let resizeTimer;
+    const onResize = () => {
       window.clearTimeout(resizeTimer);
       resizeTimer = window.setTimeout(() => {
-        pages = buildPages();
-        indexHeadings();
-        renderPages();
-      }, 160);
-    });
+        const size = `${stage.clientWidth}x${Math.round(measureRoom())}x${window.innerWidth}`;
+        if (size === lastSize) return;
+        lastSize = size;
+        const block = reader.dataset.mode === "spread" ? firstVisibleBlock() : 0;
+        render(block);
+      }, 180);
+    };
+    if ("ResizeObserver" in window) new ResizeObserver(onResize).observe(document.body);
+    window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", onResize);
 
-    pages = buildPages();
-    indexHeadings();
-    const initialHeading = decodeURIComponent(location.hash.slice(1));
-    if (initialHeading && headingPages.has(initialHeading)) activePage = headingPages.get(initialHeading);
+    /* ---- First paint ---- */
     grid.remove();
-    renderPages();
+    const start = () => {
+      const hashTarget = decodeURIComponent(location.hash.slice(1));
+      lastSize = `${stage.clientWidth}x${Math.round(measureRoom())}x${window.innerWidth}`;
+      render(0);
+
+      if (reader.dataset.mode === "spread") {
+        const pageMatch = /^p(\d+)$/.exec(hashTarget);
+        if (pageMatch) scrollToPage(Number(pageMatch[1]) - 1, false);
+        else if (headingPages.has(hashTarget)) scrollToPage(headingPages.get(hashTarget), false);
+        else {
+          // Long notes remember where a reader stopped; short ones are not worth
+          // interrupting, and the reader can always go back to page one.
+          const saved = readMark();
+          if (saved !== null && pages.length > READER_RESUME_PAGES) {
+            const resumePage = pageOfBlock(saved);
+            if (resumePage > 0) {
+              scrollToPage(resumePage, false);
+              restart.hidden = false;
+            }
+          }
+        }
+        syncChrome();
+        // The browser may have jumped to a heading mid-spread; show the whole book.
+        if (hashTarget) reader.scrollIntoView({ block: "start", behavior: "auto" });
+      } else if (hashTarget && !/^p\d+$/.test(hashTarget)) {
+        document.getElementById(hashTarget)?.scrollIntoView({ block: "start", behavior: "auto" });
+      }
+    };
+
+    let started = false;
+    const startOnce = () => {
+      if (started) return;
+      started = true;
+      start();
+    };
+    // If measuring stalls (fonts that never resolve, a thrown promise), the
+    // scroll view takes over rather than leaving a blank sheet.
+    const safety = window.setTimeout(() => {
+      if (!started) { started = true; goContinuous("slow-start"); }
+    }, 1200);
+    const finishStart = () => { window.clearTimeout(safety); startOnce(); };
+    if (document.fonts?.ready) document.fonts.ready.then(finishStart, finishStart);
+    else finishStart();
 
     /* ---- Place this note in the series and link its neighbours ---- */
     const currentFile = location.pathname.split("/").pop();
