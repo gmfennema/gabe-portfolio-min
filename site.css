@@ -39,7 +39,9 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
-img { display: block; max-width: 100%; }
+/* Images carry intrinsic width/height so layout is stable before they load;
+   height:auto keeps that from turning into a stretched picture. */
+img { display: block; max-width: 100%; height: auto; }
 a {
   color: var(--ink);
   text-decoration-color: rgba(180, 102, 53, .55);
@@ -1506,13 +1508,17 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
 }
 .reader-toolbar {
   display: grid;
-  grid-template-columns: auto minmax(110px, 1fr) auto;
+  grid-template-columns: auto minmax(110px, 1fr) auto auto;
   align-items: center;
   gap: 18px;
   margin: 0 4px 18px;
 }
+.reader-toolbar > * { min-width: 0; }
 .reader-label,
 .reader-status {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--muted);
   font-family: var(--utility);
   font-size: .7rem;
@@ -1543,16 +1549,24 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
     0 26px 40px -10px rgba(43, 45, 35, .28);
   pointer-events: none;
 }
-.reader-pages { position: relative; }
-.reader-pages {
-  display: grid;
+/* Every page of the note lives in this track, so find-in-page, select-all and
+   translate see the whole note; the stage is just the window onto it. */
+.reader-track {
+  display: flex;
   height: 100%;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  border-radius: 12px;
 }
+.reader-track::-webkit-scrollbar { display: none; }
+.reader-track:focus-visible { outline: 3px solid rgba(180, 102, 53, .55); outline-offset: 3px; }
 .reader-page {
   position: relative;
   display: flex;
+  flex: 0 0 50%;
   height: 100%;
   min-width: 0;
   min-height: 0;
@@ -1562,13 +1576,16 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
   transform-origin: center;
   backface-visibility: hidden;
 }
+/* A spread starts on every other page, so turning moves two sheets at once. */
+.reader-page:nth-child(odd) { scroll-snap-align: start; }
 /* Outer corners are rounded like a memo book; inner corners meet at the spine. */
-.reader-page:first-child { border-radius: 12px 0 0 12px; }
-.reader-page:last-child { border-radius: 0 12px 12px 0; }
+.reader-page:nth-child(odd) { border-radius: 12px 0 0 12px; }
+.reader-page:nth-child(even) { border-radius: 0 12px 12px 0; }
 .reader-page:only-child { border-radius: 12px; }
+.reader-page.reader-blank-page { background: var(--sheet); }
 /* Paper curling into the gutter. */
-.reader-page:first-child:not(:only-child)::after,
-.reader-page:last-child:not(:only-child)::after {
+.reader-page:nth-child(odd):not(:only-child)::after,
+.reader-page:nth-child(even)::after {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -1576,8 +1593,8 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
   content: "";
   pointer-events: none;
 }
-.reader-page:first-child:not(:only-child)::after { right: 0; background: linear-gradient(90deg, transparent, rgba(92, 78, 52, .06) 70%, rgba(92, 78, 52, .16)); }
-.reader-page:last-child:not(:only-child)::after { left: 0; background: linear-gradient(270deg, transparent, rgba(92, 78, 52, .05) 70%, rgba(92, 78, 52, .14)); }
+.reader-page:nth-child(odd):not(:only-child)::after { right: 0; background: linear-gradient(90deg, transparent, rgba(92, 78, 52, .06) 70%, rgba(92, 78, 52, .16)); }
+.reader-page:nth-child(even)::after { left: 0; background: linear-gradient(270deg, transparent, rgba(92, 78, 52, .05) 70%, rgba(92, 78, 52, .14)); }
 
 /* The margin line runs down the left of every interior page. */
 .reader-article-page::before {
@@ -1615,23 +1632,6 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
 .reader-staple:nth-child(2) { top: 50%; margin-top: -11px; }
 .reader-staple:nth-child(3) { bottom: 14%; }
 
-/* Page turns: the new left page lands from the spine, the new right page lifts in. */
-.reader-pages.turn-next .reader-page:first-child { transform-origin: right center; animation: page-land-left .42s cubic-bezier(.2, .7, .2, 1); }
-.reader-pages.turn-next .reader-page:last-child:not(:first-child) { animation: page-settle .42s ease-out; }
-.reader-pages.turn-prev .reader-page:last-child { transform-origin: left center; animation: page-land-right .42s cubic-bezier(.2, .7, .2, 1); }
-.reader-pages.turn-prev .reader-page:first-child:not(:last-child) { animation: page-settle .42s ease-out; }
-@keyframes page-land-left {
-  from { opacity: .4; transform: rotateY(-38deg); }
-  to { opacity: 1; transform: rotateY(0); }
-}
-@keyframes page-land-right {
-  from { opacity: .4; transform: rotateY(38deg); }
-  to { opacity: 1; transform: rotateY(0); }
-}
-@keyframes page-settle {
-  from { opacity: .55; }
-  to { opacity: 1; }
-}
 
 /* Inside cover: kraft stock, a pasted label, and the filled-in form. */
 .reader-cover-page {
@@ -1733,10 +1733,15 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
 .reader-running-section { flex-shrink: 0; max-width: 55%; color: var(--rust); }
 .reader-running-section:empty { display: none; }
 .reader-page-body { position: relative; flex: 1; min-height: 0; padding: 16px 34px 26px 62px; overflow: hidden; }
-.reader-page-body.post-content { color: #33403a; font-size: 1rem; line-height: var(--rule-step); }
+.notebook-prose { color: #33403a; font-size: 1rem; line-height: var(--rule-step); }
+/* The fallback must not narrow the column: a scrollbar here would reflow the
+   text and make the very overflow it is compensating for worse. */
+.reader-page-body.is-overflowing { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+.reader-page-body.is-overflowing::-webkit-scrollbar { display: none; }
 /* The ruling is positioned off the content box, so it keeps step with the prose
    whatever the running header measures, and tiled both ways to run edge to edge. */
-.reader-article-page .reader-page-body {
+.reader-article-page .reader-page-body,
+.reader-continuous {
   background-image: linear-gradient(to bottom, var(--rule-ink) 1px, transparent 1px);
   background-position: 0 var(--rule-lead);
   background-size: 100% var(--rule-step);
@@ -1744,13 +1749,13 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
   background-clip: border-box;
   background-repeat: repeat;
 }
-.reader-page-body.post-content p { margin: 0 0 var(--rule-step); }
-.reader-page-body.post-content h2 { position: relative; margin: var(--rule-step) 0 0; font-size: clamp(1.55rem, 2.6vw, 2.05rem); line-height: calc(var(--rule-step) * 2); letter-spacing: -.03em; }
-.reader-page-body.post-content h2:first-child,
-.reader-page-body.post-content h3:first-child { margin-top: 0; }
+.notebook-prose p { margin: 0 0 var(--rule-step); }
+.notebook-prose h2 { position: relative; margin: var(--rule-step) 0 0; font-size: clamp(1.55rem, 2.6vw, 2.05rem); line-height: calc(var(--rule-step) * 2); letter-spacing: -.03em; }
+.notebook-prose h2:first-child,
+.notebook-prose h3:first-child { margin-top: 0; }
 /* A pencil tick in the margin marks each new section; sub-sections get a shorter one. */
-.reader-page-body.post-content h3 { position: relative; }
-.reader-page-body.post-content h3::before {
+.notebook-prose h3 { position: relative; }
+.notebook-prose h3::before {
   position: absolute;
   top: .6em;
   left: -34px;
@@ -1761,7 +1766,7 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
   opacity: .8;
   transform: rotate(-6deg);
 }
-.reader-page-body.post-content h2::before {
+.notebook-prose h2::before {
   position: absolute;
   top: .8em;
   left: -40px;
@@ -1771,13 +1776,13 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
   background: var(--rust);
   transform: rotate(-6deg);
 }
-.reader-page-body.post-content h3 { margin: var(--rule-step) 0 0; font-size: 1.22rem; line-height: var(--rule-step); }
-.reader-page-body.post-content ul,
-.reader-page-body.post-content ol { margin: 0 0 var(--rule-step); padding-left: 1.25em; }
-.reader-page-body.post-content li { margin-bottom: 0; }
-.reader-page-body.post-content li::marker { color: var(--rust); }
-.reader-page-body.post-content img { max-height: 320px; padding: 6px; object-fit: contain; border-radius: 3px; background: var(--paper-soft); }
-.reader-page-body.post-content pre {
+.notebook-prose h3 { margin: var(--rule-step) 0 0; font-size: 1.22rem; line-height: var(--rule-step); }
+.notebook-prose ul,
+.notebook-prose ol { margin: 0 0 var(--rule-step); padding-left: 1.25em; }
+.notebook-prose li { margin-bottom: 0; }
+.notebook-prose li::marker { color: var(--rust); }
+.notebook-prose img { max-height: 320px; padding: 6px; object-fit: contain; border-radius: 3px; background: var(--paper-soft); }
+.notebook-prose pre {
   max-height: 310px;
   margin: var(--rule-step) 0;
   padding: calc(var(--rule-step) / 2 - 1px) 16px;
@@ -1788,12 +1793,12 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
   font-size: .82rem;
   line-height: var(--rule-step);
 }
-.reader-page-body.post-content code { background: rgba(233, 223, 204, .7); }
-.reader-page-body.post-content pre code { padding: 0; background: transparent; }
-.reader-page-body.post-content blockquote { margin: var(--rule-step) 0; padding: calc(var(--rule-step) - 1px) 0; border-top: 1px solid var(--rust); border-right: 0; border-bottom: 1px solid var(--line); border-left: 0; color: var(--ink); font-family: var(--display); font-size: 1.22rem; line-height: var(--rule-step); }
-.reader-page-body.post-content hr.rule { margin: calc(var(--rule-step) - 1px) 0 var(--rule-step); }
-.reader-page-body.post-content .footnotes { color: var(--muted); font-size: .86rem; }
-.reader-page-body.post-content sup a { text-decoration: none; }
+.notebook-prose code { background: rgba(233, 223, 204, .7); }
+.notebook-prose pre code { padding: 0; background: transparent; }
+.notebook-prose blockquote { margin: var(--rule-step) 0; padding: calc(var(--rule-step) - 1px) 0; border-top: 1px solid var(--rust); border-right: 0; border-bottom: 1px solid var(--line); border-left: 0; color: var(--ink); font-family: var(--display); font-size: 1.22rem; line-height: var(--rule-step); }
+.notebook-prose hr.rule { margin: calc(var(--rule-step) - 1px) 0 var(--rule-step); }
+.notebook-prose .footnotes { color: var(--muted); font-size: .86rem; }
+.notebook-prose sup a { text-decoration: none; }
 
 /* Page numbers, stamped in the outer bottom corner. */
 .reader-page-footer {
@@ -1806,7 +1811,7 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
   font-size: .8rem;
   letter-spacing: .04em;
 }
-.reader-page:first-child:not(:only-child) .reader-page-footer { justify-content: flex-start; }
+.reader-page:nth-child(odd):not(:only-child) .reader-page-footer { justify-content: flex-start; }
 .reader-page-number:empty { display: none; }
 
 .reader-pager { display: flex; margin: 22px 4px 0; align-items: center; justify-content: space-between; gap: 18px; }
@@ -1825,9 +1830,121 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
 }
 .reader-button:hover:not(:disabled) { border-color: var(--rust); color: var(--rust); background: rgba(251, 247, 239, .8); transform: translateY(-2px); }
 .reader-button:disabled { cursor: default; opacity: .35; }
+.reader-pager-middle { display: flex; min-width: 0; flex-direction: column; align-items: center; gap: 4px; }
 .reader-hint { color: var(--muted); font-family: var(--utility); font-size: .68rem; letter-spacing: .06em; text-align: center; }
+.reader-restart {
+  padding: 2px 4px;
+  border: 0;
+  color: var(--rust);
+  background: none;
+  font-family: var(--utility);
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-decoration: underline;
+  text-underline-offset: .25em;
+  cursor: pointer;
+}
+.reader-restart[hidden] { display: none; }
 .reader-measure { position: absolute; inset: 0; height: 100%; visibility: hidden; pointer-events: none; }
-.reader-measure .reader-page { position: absolute; top: 0; left: 0; }
+.reader-measure .reader-page { position: absolute; top: 0; left: 0; flex: none; }
+
+/* ---------------------------------------------------------
+   Two views of one note
+   The reader shows a spread when the screen has room for one and a
+   continuous ruled scroll when it does not. The scroll view is also
+   what prints, what a failed pagination falls back to, and what
+   small screens get, so it is a first-class layout, not a stub.
+   --------------------------------------------------------- */
+.post-reader[data-mode="loading"] .reader-continuous,
+.post-reader[data-mode="spread"] .reader-continuous { display: none; }
+.post-reader[data-mode="continuous"] .reader-stage,
+.post-reader[data-mode="continuous"] .reader-pager { display: none; }
+.post-reader[data-mode="loading"] .reader-pager { visibility: hidden; }
+.post-reader[data-mode="spread"] .reader-skeleton { display: none; }
+
+/* In the scroll view the cover is a title card at the head of the note. */
+.post-reader[data-mode="continuous"] .reader-cover-page {
+  height: auto;
+  flex: none;
+  margin: 0 0 20px;
+  border-radius: 12px;
+  overflow: visible;
+}
+.post-reader[data-mode="continuous"] .reader-cover-page .post-hero,
+.post-reader[data-mode="continuous"] .cover-print { flex: none; overflow: visible; }
+.post-reader[data-mode="continuous"] .cover-print { padding: 30px 0 18px; }
+.post-reader[data-mode="continuous"] .reader-cover-page .post-outline { overflow: visible; }
+.post-reader[data-mode="continuous"] .reader-cover-page .reader-page-footer { display: none; }
+.post-reader[data-mode="continuous"] .reader-cover-page::after { display: none; }
+
+.reader-view {
+  justify-self: end;
+  padding: 4px 10px;
+  border: 1px solid var(--line-dark);
+  border-radius: 999px;
+  color: var(--muted);
+  background: transparent;
+  font-family: var(--utility);
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color .18s ease, color .18s ease;
+}
+.reader-view:hover { border-color: var(--rust); color: var(--rust); }
+.reader-view[hidden] { display: none; }
+
+/* A ruled sheet stands in while the pages are being measured. */
+.reader-skeleton {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background:
+    linear-gradient(to bottom, var(--rule-ink) 1px, transparent 1px) 0 34px / 100% var(--rule-step) repeat,
+    var(--sheet);
+  opacity: .75;
+}
+
+/* The scroll view: one long sheet of the same paper. */
+.reader-continuous {
+  position: relative;
+  padding: 26px 34px 40px 62px;
+  border-radius: 12px;
+  background: var(--sheet);
+  box-shadow: 0 1px 0 var(--sheet-edge), 0 3px 0 var(--sheet), 0 4px 0 var(--sheet-edge), 0 26px 40px -10px rgba(43, 45, 35, .28);
+}
+.reader-continuous::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 44px;
+  width: 1px;
+  content: "";
+  background: var(--margin-line);
+}
+.continuous-head {
+  margin: 0 0 var(--rule-step);
+  color: var(--muted);
+  font-family: var(--utility);
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.reader-continuous .post-content { margin: 0; }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 
 /* Neighbouring notes on the shelf */
 .reader-note-nav {
@@ -1996,16 +2113,14 @@ footer {
   .post-content { font-size: 1rem; }
   .callouts { grid-template-columns: 1fr; }
   .post-reader { --reader-page-height: min(700px, calc(100svh - 220px)); --rule-step: 1.5625rem; margin: 28px 0 46px; }
-  .reader-toolbar { grid-template-columns: 1fr auto; grid-template-areas: "label status" "progress progress"; gap: 11px 14px; margin-bottom: 13px; }
+  .reader-toolbar { grid-template-columns: 1fr auto; grid-template-areas: "label view" "progress progress" "status status"; gap: 9px 14px; margin-bottom: 13px; }
   .reader-label { grid-area: label; }
-  .reader-status { grid-area: status; }
+  .reader-status { grid-area: status; justify-self: start; }
   .reader-progress { grid-area: progress; }
+  .reader-view { grid-area: view; }
   .reader-stage::before { box-shadow: 0 1px 0 var(--sheet-edge), 0 3px 0 var(--sheet), 0 18px 30px -10px rgba(43, 45, 35, .26); }
-  .reader-pages { grid-template-columns: 1fr; }
-  .reader-page { border-radius: 12px; }
+  .reader-page { flex-basis: 100%; scroll-snap-align: start; border-radius: 12px; }
   .reader-spine { display: none; }
-  .reader-pages.turn-next .reader-page { transform-origin: left center; animation: page-land-right .38s cubic-bezier(.2, .7, .2, 1); }
-  .reader-pages.turn-prev .reader-page { transform-origin: right center; animation: page-land-left .38s cubic-bezier(.2, .7, .2, 1); }
   .reader-article-page::before { left: 30px; }
   .reader-cover-page .post-hero { padding: 0 22px 18px; }
   .reader-cover-page .post-title.cover-title { font-size: clamp(1.4rem, 6.4vw, 2rem); }
@@ -2014,9 +2129,11 @@ footer {
   .reader-cover-page .post-title.cover-title-long { font-size: clamp(1.1rem, 5.2vw, 1.5rem); }
   .reader-page-header { padding: 16px 22px 0 44px; }
   .reader-page-body { padding: 12px 22px 22px 44px; }
-  .reader-page-body.post-content { font-size: .97rem; }
-  .reader-page-body.post-content h2::before { left: -28px; width: 16px; }
-  .reader-page-body.post-content h3::before { left: -24px; width: 9px; }
+  .reader-continuous { padding: 18px 22px 28px 44px; }
+  .reader-continuous::before { left: 30px; }
+  .notebook-prose { font-size: .97rem; }
+  .notebook-prose h2::before { left: -28px; width: 16px; }
+  .notebook-prose h3::before { left: -24px; width: 9px; }
   .reader-page-footer { padding: 0 22px 14px; }
   .reader-pager { flex-wrap: wrap; margin-top: 14px; gap: 10px; }
   .reader-button { flex: 1; padding-right: 10px; padding-left: 10px; font-size: .9rem; }
@@ -2211,4 +2328,38 @@ footer {
 @media (prefers-reduced-motion: reduce) {
   .reveal, .reveal:not(.is-in) { opacity: 1; translate: none; transition: none; }
   .section-heading.reveal:not(.is-in) .eyebrow::before { transform: rotate(-2deg); }
+}
+
+/* =========================================================
+   Print: a field note prints as the document it is, not as
+   whichever spread happened to be open.
+   ========================================================= */
+@media print {
+  .page-masthead,
+  .site-footer,
+  footer,
+  .reader-toolbar,
+  .reader-stage,
+  .reader-pager,
+  .reader-note-nav,
+  .trail-mark,
+  .scene-art { display: none !important; }
+  .post-reader[data-mode] .reader-continuous { display: block; }
+  .reader-continuous {
+    padding: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+  .reader-continuous::before { display: none; }
+  .notebook-prose { color: #1d1f1c; font-size: 11pt; }
+  .notebook-prose h2,
+  .notebook-prose h3 { break-after: avoid-page; }
+  .notebook-prose figure,
+  .notebook-prose img,
+  .notebook-prose pre,
+  .notebook-prose blockquote { break-inside: avoid; }
+  .notebook-prose pre { max-height: none; }
+  body { background: #fff; }
+  @page { margin: 18mm 16mm; }
 }

@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Field-note reader invariants</title>
+<style>
+  body { margin: 0; padding: 16px; font: 13px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  #frames { position: fixed; top: 0; left: -20000px; }
+  .fail { color: #b00020; font-weight: 700; }
+  .pass { color: #1b6b3a; }
+  h1 { font-size: 15px; }
+</style>
+</head>
+<body>
+<h1>Field-note reader invariants</h1>
+<pre id="log">running…</pre>
+<div id="frames"></div>
+<script>
+/* Checks the reader against the promises it makes, in a real browser, at real
+   sizes. Run it with tools/check-reader.sh (or open it and read the list).
+
+   The invariants:
+     1. the reader settles into a real view (never stuck loading)
+     2. a spread keeps every character of the article
+     3. a spread keeps every picture in the article
+     4. no page hides its own content
+     5. the controls are reachable without scrolling
+     6. small screens get the scroll view
+     7. no duplicate ids leak out of the page copies
+     8. every outline entry knows its page                                    */
+
+const SIZES = [
+  { label: "desktop", width: 1440, height: 900, expect: "spread" },
+  { label: "laptop", width: 1280, height: 800, expect: "spread" },
+  { label: "small-laptop", width: 1180, height: 720, expect: "any" },
+  { label: "phone", width: 390, height: 844, expect: "continuous" }
+];
+
+const log = document.getElementById("log");
+const frames = document.getElementById("frames");
+const lines = [];
+let failures = 0;
+
+function record(ok, name, detail) {
+  if (!ok) failures += 1;
+  lines.push(`${ok ? "PASS" : "FAIL"}  ${name}${detail ? " — " + detail : ""}`);
+  log.innerHTML = lines
+    .map((line) => `<span class="${line.startsWith("PASS") ? "pass" : "fail"}">${line}</span>`)
+    .join("\n");
+}
+
+const strip = (text) => text.replace(/\s+/g, "");
+
+function load(src, width, height) {
+  return new Promise((resolve, reject) => {
+    const frame = document.createElement("iframe");
+    frame.width = width;
+    frame.height = height;
+    frame.style.border = "0";
+    frame.src = src;
+    frame.addEventListener("load", () => {
+      const started = Date.now();
+      const settle = () => {
+        const doc = frame.contentDocument;
+        const reader = doc && doc.querySelector(".post-reader");
+        if (reader && reader.dataset.mode && reader.dataset.mode !== "loading") {
+          setTimeout(() => resolve(frame), 120);
+          return;
+        }
+        if (Date.now() - started > 6000) { reject(new Error("reader never settled")); return; }
+        setTimeout(settle, 80);
+      };
+      settle();
+    });
+    frame.addEventListener("error", () => reject(new Error("frame failed to load")));
+    frames.appendChild(frame);
+  });
+}
+
+async function checkPost(path, size) {
+  const name = `${path.split("/").pop().replace(".html", "")} @ ${size.label}`;
+  let frame;
+  try {
+    // #p1 pins the first spread so a remembered position cannot skew a run.
+    frame = await load(`../${path}#p1`, size.width, size.height);
+  } catch (error) {
+    record(false, name, error.message);
+    return;
+  }
+
+  const doc = frame.contentDocument;
+  const reader = doc.querySelector(".post-reader");
+  const mode = reader.dataset.mode;
+  const article = doc.querySelector(".reader-continuous .post-content");
+
+  if (size.expect !== "any") {
+    record(mode === size.expect, `${name}: mode`, `expected ${size.expect}, got ${mode}${reader.dataset.fallback ? " (" + reader.dataset.fallback + ")" : ""}`);
+  } else {
+    record(mode === "spread" || mode === "continuous", `${name}: mode`, mode);
+  }
+
+  const pager = doc.querySelector(".reader-pager");
+  const controls = mode === "spread" ? pager : doc.querySelector(".reader-toolbar");
+  const bottom = Math.round(controls.getBoundingClientRect().bottom);
+  record(bottom <= size.height, `${name}: controls reachable`, `bottom ${bottom} vs viewport ${size.height}`);
+
+  if (mode === "spread") {
+    const bodies = [...doc.querySelectorAll(".reader-page-body")];
+    const paged = strip(bodies.map((body) => body.textContent).join(""));
+    const source = strip(article.textContent);
+    record(paged === source, `${name}: text intact`, `${paged.length} of ${source.length} characters`);
+
+    const pagedImages = doc.querySelectorAll(".reader-page-body img").length;
+    const sourceImages = article.querySelectorAll("img").length;
+    record(pagedImages === sourceImages, `${name}: pictures intact`, `${pagedImages} of ${sourceImages}`);
+
+    // "Hidden" means content drawn below the page's content box, which is what
+    // a reader would actually lose; trailing margins do not count.
+    const hiddenBy = (body) => {
+      const last = body.lastElementChild;
+      if (!last) return 0;
+      const limit = body.getBoundingClientRect().bottom
+        - parseFloat(frame.contentWindow.getComputedStyle(body).paddingBottom);
+      return Math.round(last.getBoundingClientRect().bottom - limit);
+    };
+    // Safety: a page that runs long must be scrollable, never silently cut.
+    const clipped = bodies.filter((body) =>
+      !body.classList.contains("is-overflowing") && hiddenBy(body) > 1);
+    // Quality: needing that escape hatch at all means the measuring was off.
+    const strained = bodies.filter((body) => body.classList.contains("is-overflowing"));
+    record(strained.length === 0, `${name}: pages measured true`, `${strained.length} page(s) needed the overflow fallback`);
+    record(clipped.length === 0, `${name}: nothing clipped`, clipped
+      .map((body) => `page ${bodies.indexOf(body) + 2} over by ${hiddenBy(body)}px [${
+        [...body.children].map((child) => child.tagName + ":" + Math.round(child.getBoundingClientRect().height)).join(" ")}]`)
+      .join("; ") || "0 page(s) overflow");
+
+    const empty = bodies.filter((body) => !body.children.length);
+    record(empty.length === 0, `${name}: no blank pages`, `${empty.length} empty`);
+
+    const outlinePages = [...doc.querySelectorAll(".outline-page")];
+    const unresolved = outlinePages.filter((label) => !label.textContent.trim());
+    record(unresolved.length === 0, `${name}: outline resolves`, `${unresolved.length} entries without a page`);
+    // Turning has to move the spread and say so.
+    const track = doc.querySelector(".reader-track");
+    const startLeft = track.scrollLeft;
+    doc.querySelector(".reader-next").click();
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    record(track.scrollLeft > startLeft, `${name}: next turns the page`, `scrollLeft ${startLeft} → ${track.scrollLeft}`);
+    const turnedStatus = doc.querySelector(".reader-status").textContent;
+    record(/Pages 3/.test(turnedStatus), `${name}: status follows the turn`, turnedStatus);
+    doc.querySelector(".reader-prev").click();
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    record(track.scrollLeft === startLeft, `${name}: previous comes back`, `scrollLeft ${track.scrollLeft}`);
+  } else {
+    record(!!article && article.offsetHeight > 0, `${name}: article visible`, "scroll view shows the note");
+  }
+
+  record(reader.dataset.mode === mode, `${name}: view stays put`, `settled as ${mode}, now ${reader.dataset.mode}`);
+
+  const ids = [...doc.querySelectorAll("[id]")].map((node) => node.id);
+  const duplicates = ids.filter((id, index) => ids.indexOf(id) !== index);
+  record(duplicates.length === 0, `${name}: unique ids`, duplicates.join(", "));
+
+  frame.remove();
+}
+
+(async () => {
+  const posts = await fetch("../posts/posts.json").then((response) => response.json());
+  for (const size of SIZES) {
+    for (const post of posts) {
+      await checkPost(post.path, size);
+    }
+  }
+  lines.push("");
+  lines.push(failures ? `RESULT FAIL (${failures} failing checks)` : `RESULT PASS (${lines.length - 1} checks)`);
+  log.textContent = lines.join("\n");
+  document.title = failures ? "FAIL" : "PASS";
+})();
+</script>
+</body>
+</html>
