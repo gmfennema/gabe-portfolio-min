@@ -788,6 +788,8 @@ header.site {
 }
 
 .photo-item {
+  display: flex;
+  flex-direction: column;
   margin: 0;
   overflow: hidden;
   border-radius: 12px;
@@ -810,6 +812,9 @@ header.site {
 .photo-trigger img {
   width: 100%;
   height: auto;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  object-position: center;
   display: block;
   transition: transform .4s var(--ease-out-quart, cubic-bezier(.25, 1, .5, 1));
 }
@@ -836,7 +841,10 @@ header.site {
 }
 
 .photo-item figcaption {
-  padding: 14px 18px 18px;
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+  padding: 14px 18px;
   font-family: var(--utility);
   font-size: 0.78rem;
   color: var(--muted);
