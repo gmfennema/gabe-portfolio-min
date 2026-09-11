@@ -1607,6 +1607,56 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
   background: var(--margin-line);
 }
 
+/* The sheet mid-turn: a clone of the page that is leaving, swinging away
+   around the spine. It is decorative and transient — the real pages stay
+   in the track underneath it the whole time. */
+.reader-turn {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  overflow: hidden;
+  border-radius: 12px;
+  perspective: 1500px;
+  pointer-events: none;
+}
+.reader-turn:empty { display: none; }
+.reader-leaf {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  overflow: hidden;
+  user-select: none;
+  backface-visibility: hidden;
+  pointer-events: none;
+  will-change: transform;
+}
+.reader-leaf > .reader-page {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  flex: none;
+  border-radius: inherit;
+}
+/* Light falls away from the fold as the sheet lifts. */
+.reader-leaf-shade { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
+.reader-leaf-forward {
+  right: 0;
+  left: 50%;
+  border-radius: 0 12px 12px 0;
+  transform-origin: left center;
+  box-shadow: -14px 0 26px -12px rgba(43, 45, 35, .45);
+}
+.reader-leaf-back {
+  right: 50%;
+  left: 0;
+  border-radius: 12px 0 0 12px;
+  transform-origin: right center;
+  box-shadow: 14px 0 26px -12px rgba(43, 45, 35, .45);
+}
+.reader-leaf-forward .reader-leaf-shade { background: linear-gradient(90deg, rgba(43, 45, 35, .04), rgba(43, 45, 35, .5)); }
+.reader-leaf-back .reader-leaf-shade { background: linear-gradient(270deg, rgba(43, 45, 35, .04), rgba(43, 45, 35, .5)); }
+
 /* Saddle stitch */
 .reader-spine {
   position: absolute;
@@ -1851,10 +1901,11 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
 
 /* ---------------------------------------------------------
    Two views of one note
-   The reader shows a spread when the screen has room for one and a
-   continuous ruled scroll when it does not. The scroll view is also
-   what prints, what a failed pagination falls back to, and what
-   small screens get, so it is a first-class layout, not a stub.
+   The reader turns pages by default — two sheets where there is room,
+   one on a phone — and scrolls when a reader asks for it or when no
+   page would fit. The scroll view is also what prints and what a
+   failed pagination falls back to, so it is a first-class layout,
+   not a stub.
    --------------------------------------------------------- */
 .post-reader[data-mode="loading"] .reader-continuous,
 .post-reader[data-mode="spread"] .reader-continuous { display: none; }
@@ -2113,14 +2164,36 @@ footer {
   .post-content { font-size: 1rem; }
   .callouts { grid-template-columns: 1fr; }
   .post-reader { --reader-page-height: min(700px, calc(100svh - 220px)); --rule-step: 1.5625rem; margin: 28px 0 46px; }
-  .reader-toolbar { grid-template-columns: 1fr auto; grid-template-areas: "label view" "progress progress" "status status"; gap: 9px 14px; margin-bottom: 13px; }
+  /* Two rows, not three: every pixel the chrome gives back is a line of
+     prose the page can hold, and a short page is what sends a phone to the
+     scroll view. */
+  .reader-toolbar { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "label label view" "status progress view"; gap: 7px 12px; margin-bottom: 12px; align-items: center; }
   .reader-label { grid-area: label; }
   .reader-status { grid-area: status; justify-self: start; }
-  .reader-progress { grid-area: progress; }
-  .reader-view { grid-area: view; }
+  .reader-progress { grid-area: progress; align-self: center; }
+  .reader-view { grid-area: view; align-self: center; }
   .reader-stage::before { box-shadow: 0 1px 0 var(--sheet-edge), 0 3px 0 var(--sheet), 0 18px 30px -10px rgba(43, 45, 35, .26); }
+  /* A phone is one sheet wide, so the turn is a single page and the leaf
+     that turns covers the whole stage. */
+  .reader-turn { perspective: 1250px; }
   .reader-page { flex-basis: 100%; scroll-snap-align: start; border-radius: 12px; }
+  .reader-leaf-forward,
+  .reader-leaf-back { right: 0; left: 0; border-radius: 12px; }
   .reader-spine { display: none; }
+  /* The cover is a sheet of the same paper here. Full-bleed kraft on a phone
+     reads as a wide brown banner across the screen rather than as the cover
+     of a memo book. */
+  .reader-cover-page {
+    color: var(--ink);
+    background: var(--sheet);
+  }
+  .reader-cover-page .post-title.cover-title { color: var(--ink); }
+  .cover-stamp { color: var(--ink-soft); }
+  .cover-emblem { mix-blend-mode: normal; opacity: .75; }
+  .reader-cover-page .post-outline { border-top-color: var(--line-dark); }
+  .reader-cover-page .post-outline strong { color: var(--rust); }
+  .outline-link { color: var(--ink); }
+  .outline-leader { border-bottom-color: var(--line-dark); }
   .reader-article-page::before { left: 30px; }
   .reader-cover-page .post-hero { padding: 0 22px 18px; }
   .reader-cover-page .post-title.cover-title { font-size: clamp(1.4rem, 6.4vw, 2rem); }
@@ -2135,8 +2208,12 @@ footer {
   .notebook-prose h2::before { left: -28px; width: 16px; }
   .notebook-prose h3::before { left: -24px; width: 9px; }
   .reader-page-footer { padding: 0 22px 14px; }
-  .reader-pager { flex-wrap: wrap; margin-top: 14px; gap: 10px; }
-  .reader-button { flex: 1; padding-right: 10px; padding-left: 10px; font-size: .9rem; }
+  /* The two buttons share one row and the restart link drops below them, so
+     a label can never wrap a button onto a second line. */
+  .reader-pager { flex-wrap: wrap; margin-top: 13px; gap: 8px; }
+  .reader-button { flex: 1; min-height: 44px; padding-right: 8px; padding-left: 8px; font-size: .88rem; white-space: nowrap; }
+  .reader-pager-middle { order: 3; flex-basis: 100%; }
+  .reader-pager-middle:empty { display: none; }
   .reader-hint { display: none; }
   .reader-note-nav { grid-template-columns: 1fr; gap: 14px; }
   .note-nav-next, .note-nav-empty:last-child { text-align: left; }

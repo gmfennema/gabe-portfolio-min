@@ -34,10 +34,20 @@ The rules it lives by:
 - **The article is the source of truth.** It stays in the page as the scroll
   view, the print layout and the fallback. The paginated spread is a
   presentation of it, built from clones.
-- **Two views, chosen by fit.** A spread when the screen can hold one with its
-  controls visible, a continuous ruled scroll otherwise (always on phones).
-  `data-mode` on `.post-reader` says which is live; `data-fallback` says why,
-  when pagination gave up.
+- **Two views, and the reader picks.** Pages by default — two sheets on a
+  desktop spread, one at a time on a phone — with a continuous ruled scroll
+  a tap away on the toolbar toggle. The choice is kept under `notebook:view`
+  for the whole notebook, not per note. Only a screen with no room for a page
+  at all is forced to scroll. `data-mode` on `.post-reader` says which view is
+  live; `data-fallback` says why, when pagination gave up.
+- **One breakpoint, two places.** `READER_PHONE` in `site.js` and the
+  `max-width: 720px` block in `site.css` both decide whether a spread is one
+  sheet or two. They have to agree, or a turn moves the wrong distance.
+- **A turn is animated, and the pages do not move.** `flipSheet()` clones the
+  sheet that is leaving into `.reader-turn` and swings it around the spine
+  while the track jumps, underneath it, to the destination. The clone is
+  `aria-hidden`, unselectable and gone in under half a second; the real pages
+  never leave the track. Reduced motion skips the flip and scrolls instead.
 - **Every page stays in the DOM**, in a scroll-snapping track, so find-in-page,
   select-all and translate see the whole note.
 - **Nothing may go missing.** After building, the paginator compares the text

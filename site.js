@@ -362,6 +362,11 @@
   const READER_KEEP_PAGE = 420;  // ...but once open, a spread is not yanked away
   const READER_MAX_PAGE = 780;
   const READER_BREATHING_ROOM = 26;
+  // A phone shows one sheet rather than two, so it needs far less height to
+  // hold a page worth reading. Below this there is no note left on the sheet.
+  const READER_PHONE = 720;      // the width the stylesheet switches to one page at
+  const READER_MIN_PHONE_PAGE = 300;
+  const READER_FLIP_MS = 420;    // how long a sheet takes to swing out of the way
 
   const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -674,7 +679,12 @@
     spine.append(el("span", "reader-staple"), el("span", "reader-staple"), el("span", "reader-staple"));
     const skeleton = el("div", "reader-skeleton");
     skeleton.setAttribute("aria-hidden", "true");
-    stage.append(track, spine, skeleton);
+    // Where a turning sheet lives. It carries the perspective and clips to the
+    // book, so a page lifting off it is bounded by the covers rather than
+    // rising over the toolbar.
+    const turnLayer = el("div", "reader-turn");
+    turnLayer.setAttribute("aria-hidden", "true");
+    stage.append(track, spine, skeleton, turnLayer);
 
     const pager = el("div", "reader-pager");
     const previous = el("button", "reader-button reader-prev", "← Previous page");
@@ -741,17 +751,25 @@
       return window.innerHeight - readerTop - toolbarBox - pagerBox - READER_BREATHING_ROOM;
     };
 
-    // Hysteresis: a spread needs real room to open, and a little less to stay,
-    // so a few pixels of layout drift cannot flip the view back and forth.
-    const canSpread = () => {
-      if (window.matchMedia("(max-width: 720px)").matches) return false;
-      const floor = reader.dataset.mode === "spread" ? READER_KEEP_PAGE : READER_MIN_PAGE;
-      return measureRoom() >= floor;
+    // A phone turns one sheet at a time; anything wider opens a two-page
+    // spread. This is the same breakpoint the stylesheet lays the pages out
+    // at, and the two have to agree or a turn moves the wrong distance.
+    const onePage = () => window.matchMedia(`(max-width: ${READER_PHONE}px)`).matches;
+    const columns = () => (onePage() ? 1 : 2);
+    const pageFloor = () => {
+      if (onePage()) return READER_MIN_PHONE_PAGE;
+      // Hysteresis: a spread needs real room to open, and a little less to
+      // stay, so a few pixels of layout drift cannot flip the view back and
+      // forth.
+      return reader.dataset.mode === "spread" ? READER_KEEP_PAGE : READER_MIN_PAGE;
     };
+    const canSpread = () => measureRoom() >= pageFloor();
 
+    // Which view a reader last chose, kept for the notebook as a whole: a
+    // preference for scrolling is about how someone reads, not about one note.
     const preferredMode = () => {
       if (!canSpread()) return "continuous";
-      return readerStore.get(`${storeKey}:view`) === "scroll" ? "continuous" : "spread";
+      return readerStore.get("notebook:view") === "scroll" ? "continuous" : "spread";
     };
 
     /* ---- Building the pages ---- */
@@ -759,12 +777,12 @@
     const headingPages = new Map();
 
     const buildPages = () => {
-      const height = Math.max(READER_MIN_PAGE, Math.min(READER_MAX_PAGE, Math.round(measureRoom())));
+      const height = Math.max(pageFloor(), Math.min(READER_MAX_PAGE, Math.round(measureRoom())));
       reader.style.setProperty("--reader-page-height", `${height}px`);
 
       const measureHost = el("div", "reader-measure");
       stage.appendChild(measureHost);
-      const pageWidth = Math.max(260, stage.clientWidth / 2);
+      const pageWidth = Math.max(260, stage.clientWidth / columns());
       let runningSection = "";
       let blockIndex = 0;
 
@@ -865,10 +883,10 @@
     /* ---- Paging ---- */
     const spreadWidth = () => track.clientWidth || 1;
     const currentSpread = () => Math.round(track.scrollLeft / spreadWidth());
-    const currentPage = () => Math.min(pages.length - 1, currentSpread() * 2);
+    const currentPage = () => Math.min(pages.length - 1, currentSpread() * columns());
 
     const scrollToPage = (index, smooth = true) => {
-      const spread = Math.floor(Math.max(0, Math.min(index, pages.length - 1)) / 2);
+      const spread = Math.floor(Math.max(0, Math.min(index, pages.length - 1)) / columns());
       track.scrollTo({
         left: spread * spreadWidth(),
         behavior: smooth && !reducedMotion() ? "smooth" : "auto"
@@ -880,8 +898,11 @@
     const syncChrome = (assume) => {
       if (reader.dataset.mode !== "spread" || !pages.length) return;
       const first = assume === undefined ? currentPage() : Math.max(0, Math.min(assume, pages.length - 1));
-      const last = Math.min(first + 2, pages.length);
-      status.textContent = `Pages ${first + 1}–${last} of ${pages.length}`;
+      const last = Math.min(first + columns(), pages.length);
+      const label = columns() === 1
+        ? `Page ${first + 1} of ${pages.length}`
+        : `Pages ${first + 1}–${last} of ${pages.length}`;
+      status.textContent = label;
       progress.style.setProperty("--reader-progress", `${(last / pages.length) * 100}%`);
       previous.disabled = first === 0;
       next.disabled = last >= pages.length;
@@ -892,12 +913,62 @@
       if (first === 0) restart.hidden = true;
       const hash = `#p${first + 1}`;
       if (location.hash !== hash) history.replaceState(null, "", `${location.pathname}${location.search}${hash}`);
-      announcer.textContent = `Pages ${first + 1} to ${last} of ${pages.length}`;
+      announcer.textContent = label;
+    };
+
+    /* ---- The page turn ----
+       A clone of the sheet that is leaving swings away around the spine while
+       the track jumps, instantly and underneath it, to the page being turned
+       to. The real pages never move, so find-in-page and select-all keep
+       seeing the whole note mid-turn. */
+    const canAnimate = typeof Element.prototype.animate === "function";
+    let leaf = null;
+    let leafAnimation = null;
+
+    const clearLeaf = () => {
+      if (leafAnimation) { leafAnimation.onfinish = null; leafAnimation.cancel(); }
+      leafAnimation = null;
+      if (leaf) leaf.remove();
+      leaf = null;
+    };
+
+    const flipSheet = (from, direction) => {
+      if (!canAnimate || reducedMotion() || !stage.clientWidth) return false;
+      // Turning forward, the sheet that leaves is the right-hand page of the
+      // spread; turning back, it is the left-hand one. On a phone, where a
+      // spread is one page wide, both are the page on screen.
+      const leaving = pages[direction > 0 ? from + columns() - 1 : from];
+      if (!leaving) return false;
+      clearLeaf();
+
+      leaf = el("div", `reader-leaf reader-leaf-${direction > 0 ? "forward" : "back"}`);
+      leaf.setAttribute("aria-hidden", "true");
+      const face = leaving.cloneNode(true);
+      face.removeAttribute("id");
+      $$("[id]", face).forEach((node) => node.removeAttribute("id"));
+      const shade = el("span", "reader-leaf-shade");
+      leaf.append(face, shade);
+      turnLayer.appendChild(leaf);
+
+      const angle = direction > 0 ? -90 : 90;
+      const timing = { duration: READER_FLIP_MS, easing: "cubic-bezier(.34, .06, .3, .99)" };
+      shade.animate([{ opacity: 0 }, { opacity: .45 }], { ...timing, fill: "forwards" });
+      leafAnimation = leaf.animate(
+        [{ transform: "rotateY(0deg)" }, { transform: `rotateY(${angle}deg)` }],
+        timing
+      );
+      leafAnimation.onfinish = clearLeaf;
+      return true;
     };
 
     const turn = (direction) => {
-      const target = Math.max(0, Math.min(currentPage() + direction * 2, pages.length - 1));
-      scrollToPage(target);
+      const from = currentPage();
+      const target = Math.max(0, Math.min(from + direction * columns(), pages.length - 1));
+      if (target === from) return;
+      // With a sheet turning over the top, the page beneath has to be there
+      // already — a smooth scroll would slide it in behind the animation.
+      const turning = flipSheet(from, direction);
+      scrollToPage(target, !turning);
       syncChrome(target);
       readerStore.set("notebook:hinted", "1");
       hint.hidden = true;
@@ -960,10 +1031,14 @@
     };
 
     const mountSpread = (restoreBlock) => {
+      clearLeaf();
       pages = buildPages();
       // The cover goes back to being page one.
-      // A spread is always two sheets: an odd note ends on a blank right page.
-      const mounted = pages.length % 2 ? [...pages, el("article", "reader-page reader-blank-page")] : pages;
+      // A two-page spread is always two sheets: an odd note ends on a blank
+      // right page. A phone turns one sheet at a time and needs no filler.
+      const mounted = columns() === 2 && pages.length % 2
+        ? [...pages, el("article", "reader-page reader-blank-page")]
+        : pages;
       track.replaceChildren(...mounted);
       indexHeadings();
       setMode("spread", { restoreBlock });
@@ -983,6 +1058,7 @@
 
     const goContinuous = (reason) => {
       if (reason) reader.dataset.fallback = reason;
+      clearLeaf();
       track.replaceChildren();
       pages = [];
       skeleton.hidden = true;
@@ -1018,14 +1094,14 @@
 
     viewToggle.addEventListener("click", () => {
       const goingToScroll = reader.dataset.mode === "spread";
-      readerStore.set(`${storeKey}:view`, goingToScroll ? "scroll" : "spread");
+      readerStore.set("notebook:view", goingToScroll ? "scroll" : "spread");
       if (goingToScroll) {
         const block = firstVisibleBlock();
         goContinuous();
         const target = content.children[block];
         target?.scrollIntoView({ block: "center", behavior: reducedMotion() ? "auto" : "smooth" });
       } else {
-        render(0);
+        render();
         track.focus({ preventScroll: true });
       }
     });
@@ -1111,7 +1187,12 @@
         const size = `${stage.clientWidth}x${Math.round(measureRoom())}x${window.innerWidth}`;
         if (size === lastSize) return;
         lastSize = size;
-        const block = reader.dataset.mode === "spread" ? firstVisibleBlock() : 0;
+        // Nothing to restore when the reader is already at the front of the
+        // note: block 0 sits on page two, and restoring it would turn past
+        // the cover.
+        const block = reader.dataset.mode === "spread" && currentPage() > 0
+          ? firstVisibleBlock()
+          : undefined;
         render(block);
       }, 180);
     };
@@ -1124,7 +1205,7 @@
     const start = () => {
       const hashTarget = decodeURIComponent(location.hash.slice(1));
       lastSize = `${stage.clientWidth}x${Math.round(measureRoom())}x${window.innerWidth}`;
-      render(0);
+      render();
 
       if (reader.dataset.mode === "spread") {
         const pageMatch = /^p(\d+)$/.exec(hashTarget);
