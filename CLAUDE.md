@@ -52,6 +52,12 @@ The rules it lives by:
   on, so there the sheet turns about its own middle and the revolution stays
   on the page. The clone is `aria-hidden`, unselectable and gone inside a
   second; the real pages never leave the track. Reduced motion skips it.
+- **The words change when the paper does.** The track jumps to the
+  destination the instant a turn starts, so `flipSheet()` also pins a
+  `.reader-hold` copy of the page the sheet is about to land on, as it was,
+  underneath the sheet for the length of the turn. Without it the page under
+  the turning sheet changes its text before any paper has crossed it, and the
+  sheet arrives too late to look like it carried the words over.
 - **The cover's stock follows the view, not the screen.** Kraft board in the
   page view at any width, because there is a book to have a cover; the site's
   own ground in the scroll view, where there is not. Both are keyed off

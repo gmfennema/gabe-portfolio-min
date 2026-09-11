@@ -1607,6 +1607,30 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
   background: var(--margin-line);
 }
 
+/* The page the sheet lands on, held as it was for the length of the turn.
+   The track jumps to the destination as soon as a turn starts, so without
+   this the words underneath change before any paper has crossed them. It
+   sits under the sheet and goes away with it, by which time the track behind
+   is showing the same page. */
+.reader-hold {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  overflow: hidden;
+  user-select: none;
+  pointer-events: none;
+}
+.reader-hold > .reader-page {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  flex: none;
+  border-radius: inherit;
+}
+.reader-hold-left { right: 50%; left: 0; border-radius: 12px 0 0 12px; }
+.reader-hold-right { right: 0; left: 50%; border-radius: 0 12px 12px 0; }
+
 /* The sheet mid-turn: a two-sided clone that turns right over around the
    spine, its back the page it lands as. Decorative and transient — the real
    pages stay in the track underneath it the whole time. */
@@ -1636,6 +1660,10 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
   inset: 0;
   overflow: hidden;
   backface-visibility: hidden;
+  /* The lifted sheet casts on the page it is leaving, so its edge reads as
+     paper above paper rather than as a tear through the words. At rest it
+     covers that page exactly and the shadow is clipped away unseen. */
+  box-shadow: 0 2px 26px rgba(43, 45, 35, .34);
 }
 .reader-leaf-reverse { transform: rotateY(180deg); }
 .reader-leaf-face > .reader-page {
@@ -2207,6 +2235,8 @@ footer {
   .reader-leaf-backward { right: 0; left: 0; transform-origin: center; }
   .reader-leaf-forward .reader-leaf-face,
   .reader-leaf-backward .reader-leaf-face { border-radius: 12px; }
+  .reader-hold-left,
+  .reader-hold-right { right: 0; left: 0; border-radius: 12px; }
   .reader-leaf-face .reader-leaf-shade { background: rgba(43, 45, 35, .4); }
   .reader-page { flex-basis: 100%; scroll-snap-align: start; border-radius: 12px; }
   .reader-leaf-forward,

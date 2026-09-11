@@ -931,19 +931,34 @@
     const clearLeaf = () => {
       if (leafAnimation) { leafAnimation.onfinish = null; leafAnimation.cancel(); }
       leafAnimation = null;
-      if (leaf) leaf.remove();
       leaf = null;
+      turnLayer.replaceChildren();
     };
 
-    // One side of the turning sheet: a copy of a page, with the ids stripped
-    // so the copy cannot collide with the article it came from.
-    const leafFace = (page, side) => {
-      const face = el("div", `reader-leaf-face reader-leaf-${side}`);
+    // A copy of a page, with the ids stripped so it cannot collide with the
+    // article it came from.
+    const pageCopy = (page) => {
       const copy = page.cloneNode(true);
       copy.removeAttribute("id");
       $$("[id]", copy).forEach((node) => node.removeAttribute("id"));
-      face.append(copy, el("span", "reader-leaf-shade"));
+      return copy;
+    };
+
+    // One side of the turning sheet.
+    const leafFace = (page, side) => {
+      const face = el("div", `reader-leaf-face reader-leaf-${side}`);
+      face.append(pageCopy(page), el("span", "reader-leaf-shade"));
       return face;
+    };
+
+    // The page the sheet is about to land on, held as it was. The track jumps
+    // to the destination the moment a turn starts, so without this the words
+    // underneath change before any paper has moved over them — and the sheet
+    // arrives too late to look like it carried them.
+    const heldPage = (page, side) => {
+      const hold = el("div", `reader-hold reader-hold-${side}`);
+      hold.append(pageCopy(page));
+      return hold;
     };
 
     const flipSheet = (from, to, direction) => {
@@ -955,25 +970,35 @@
       const wide = columns() === 2;
       const front = pages[direction > 0 && wide ? from + 1 : from];
       const back = pages[direction > 0 || !wide ? to : to + 1];
+      // What the sheet comes down on: the other leaf of the spread it is
+      // leaving, or on a phone the page it is lifting off.
+      const under = pages[wide && direction < 0 ? from + 1 : from];
       if (!front || !back) return false;
       clearLeaf();
 
+      const side = wide && direction < 0 ? "right" : "left";
       leaf = el("div", `reader-leaf reader-leaf-${direction > 0 ? "forward" : "backward"}`);
       leaf.setAttribute("aria-hidden", "true");
       leaf.append(leafFace(front, "front"), leafFace(back, "reverse"));
-      turnLayer.appendChild(leaf);
+      // The held page goes down first, so the sheet turns over the top of it.
+      turnLayer.append(heldPage(under, side), leaf);
 
       const angle = direction > 0 ? -180 : 180;
       const timing = { duration: READER_FLIP_MS, easing: "cubic-bezier(.42, .02, .34, 1)" };
-      // The face turning away darkens as it goes; the one arriving lightens
-      // as it comes to rest, so the sheet reads as catching the light.
-      $(".reader-leaf-front .reader-leaf-shade", leaf)
-        .animate([{ opacity: 0 }, { opacity: .5 }], { ...timing, fill: "forwards" });
-      $(".reader-leaf-reverse .reader-leaf-shade", leaf)
-        .animate([{ opacity: .5 }, { opacity: 0 }], { ...timing, fill: "forwards" });
+      // A sheet is darkest edge-on, halfway through, so each face reaches its
+      // shade at the fold: the one turning away darkens into it, the one
+      // arriving lightens out of it as it comes to rest.
+      $(".reader-leaf-front .reader-leaf-shade", leaf).animate(
+        [{ opacity: 0 }, { opacity: .55, offset: .5 }, { opacity: .55 }],
+        { ...timing, fill: "forwards" }
+      );
+      $(".reader-leaf-reverse .reader-leaf-shade", leaf).animate(
+        [{ opacity: .55 }, { opacity: .55, offset: .5 }, { opacity: 0 }],
+        { ...timing, fill: "forwards" }
+      );
       leafAnimation = leaf.animate(
         [{ transform: "rotateY(0deg)" }, { transform: `rotateY(${angle}deg)` }],
-        timing
+        { ...timing, fill: "forwards" }
       );
       leafAnimation.onfinish = clearLeaf;
       return true;
