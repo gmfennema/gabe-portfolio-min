@@ -155,12 +155,12 @@ async function checkPost(path, size) {
     const track = doc.querySelector(".reader-track");
     const startLeft = track.scrollLeft;
     doc.querySelector(".reader-next").click();
-    await new Promise((resolve) => setTimeout(resolve, 600));
+    await new Promise((resolve) => setTimeout(resolve, 900));
     record(track.scrollLeft > startLeft, `${name}: next turns the page`, `scrollLeft ${startLeft} → ${track.scrollLeft}`);
     const turnedStatus = doc.querySelector(".reader-status").textContent;
     record(new RegExp(`Pages? ${1 + columns}\\b`).test(turnedStatus), `${name}: status follows the turn`, turnedStatus);
     doc.querySelector(".reader-prev").click();
-    await new Promise((resolve) => setTimeout(resolve, 600));
+    await new Promise((resolve) => setTimeout(resolve, 900));
     record(track.scrollLeft === startLeft, `${name}: previous comes back`, `scrollLeft ${track.scrollLeft}`);
   } else {
     record(!!article && article.offsetHeight > 0, `${name}: article visible`, "scroll view shows the note");

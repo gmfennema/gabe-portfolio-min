@@ -43,11 +43,19 @@ The rules it lives by:
 - **One breakpoint, two places.** `READER_PHONE` in `site.js` and the
   `max-width: 720px` block in `site.css` both decide whether a spread is one
   sheet or two. They have to agree, or a turn moves the wrong distance.
-- **A turn is animated, and the pages do not move.** `flipSheet()` clones the
-  sheet that is leaving into `.reader-turn` and swings it around the spine
-  while the track jumps, underneath it, to the destination. The clone is
-  `aria-hidden`, unselectable and gone in under half a second; the real pages
-  never leave the track. Reduced motion skips the flip and scrolls instead.
+- **A turn is animated, and the pages do not move.** `flipSheet()` builds a
+  two-sided clone in `.reader-turn` — front the sheet that is leaving, back
+  the page it lands as — and turns it right over while the track jumps,
+  underneath it, to the destination. It finishes sitting exactly on what is
+  already there, so taking it away is invisible. A spread hinges at the spine
+  and the sheet crosses to the other leaf; a phone has no other leaf to land
+  on, so there the sheet turns about its own middle and the revolution stays
+  on the page. The clone is `aria-hidden`, unselectable and gone inside a
+  second; the real pages never leave the track. Reduced motion skips it.
+- **The cover's stock follows the view, not the screen.** Kraft board in the
+  page view at any width, because there is a book to have a cover; the site's
+  own ground in the scroll view, where there is not. Both are keyed off
+  `data-mode`.
 - **Every page stays in the DOM**, in a scroll-snapping track, so find-in-page,
   select-all and translate see the whole note.
 - **Nothing may go missing.** After building, the paginator compares the text

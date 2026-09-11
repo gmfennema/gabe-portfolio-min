@@ -1607,9 +1607,9 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
   background: var(--margin-line);
 }
 
-/* The sheet mid-turn: a clone of the page that is leaving, swinging away
-   around the spine. It is decorative and transient — the real pages stay
-   in the track underneath it the whole time. */
+/* The sheet mid-turn: a two-sided clone that turns right over around the
+   spine, its back the page it lands as. Decorative and transient — the real
+   pages stay in the track underneath it the whole time. */
 .reader-turn {
   position: absolute;
   inset: 0;
@@ -1624,13 +1624,21 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
   position: absolute;
   top: 0;
   bottom: 0;
-  overflow: hidden;
   user-select: none;
-  backface-visibility: hidden;
   pointer-events: none;
+  transform-style: preserve-3d;
   will-change: transform;
 }
-.reader-leaf > .reader-page {
+/* The two sides of the sheet. Only one faces the reader at a time, so the
+   turn shows the page it is leaving, then the page it lands as. */
+.reader-leaf-face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  backface-visibility: hidden;
+}
+.reader-leaf-reverse { transform: rotateY(180deg); }
+.reader-leaf-face > .reader-page {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -1638,24 +1646,30 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
   flex: none;
   border-radius: inherit;
 }
-/* Light falls away from the fold as the sheet lifts. */
+/* Light falls away from the fold as the sheet lifts, and returns as it lands.
+   The back is mirrored, so its fold is on the opposite side in its own
+   coordinates and its gradient runs the other way. */
 .reader-leaf-shade { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
+/* Turning forward, the right-hand sheet swings left around the spine and lands
+   as the left-hand page; turning back, the mirror of that. */
 .reader-leaf-forward {
   right: 0;
   left: 50%;
-  border-radius: 0 12px 12px 0;
   transform-origin: left center;
-  box-shadow: -14px 0 26px -12px rgba(43, 45, 35, .45);
 }
-.reader-leaf-back {
+.reader-leaf-backward {
   right: 50%;
   left: 0;
-  border-radius: 12px 0 0 12px;
   transform-origin: right center;
-  box-shadow: 14px 0 26px -12px rgba(43, 45, 35, .45);
 }
-.reader-leaf-forward .reader-leaf-shade { background: linear-gradient(90deg, rgba(43, 45, 35, .04), rgba(43, 45, 35, .5)); }
-.reader-leaf-back .reader-leaf-shade { background: linear-gradient(270deg, rgba(43, 45, 35, .04), rgba(43, 45, 35, .5)); }
+/* Both faces carry the outgoing page's corners: mirrored, they read as the
+   corners of the page the sheet lands as. */
+.reader-leaf-forward .reader-leaf-face { border-radius: 0 12px 12px 0; }
+.reader-leaf-backward .reader-leaf-face { border-radius: 12px 0 0 12px; }
+.reader-leaf-forward .reader-leaf-front .reader-leaf-shade,
+.reader-leaf-backward .reader-leaf-reverse .reader-leaf-shade { background: linear-gradient(90deg, rgba(43, 45, 35, .03), rgba(43, 45, 35, .52)); }
+.reader-leaf-forward .reader-leaf-reverse .reader-leaf-shade,
+.reader-leaf-backward .reader-leaf-front .reader-leaf-shade { background: linear-gradient(270deg, rgba(43, 45, 35, .03), rgba(43, 45, 35, .52)); }
 
 /* Saddle stitch */
 .reader-spine {
@@ -1914,14 +1928,24 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
 .post-reader[data-mode="loading"] .reader-pager { visibility: hidden; }
 .post-reader[data-mode="spread"] .reader-skeleton { display: none; }
 
-/* In the scroll view the cover is a title card at the head of the note. */
+/* In the scroll view the cover is a title card at the head of the note — no
+   book, so no board stock: it sits on the page's own ground, at any width. */
 .post-reader[data-mode="continuous"] .reader-cover-page {
   height: auto;
   flex: none;
   margin: 0 0 20px;
   border-radius: 12px;
   overflow: visible;
+  color: var(--ink);
+  background: transparent;
 }
+.post-reader[data-mode="continuous"] .reader-cover-page .post-title.cover-title { color: var(--ink); }
+.post-reader[data-mode="continuous"] .cover-stamp { color: var(--ink-soft); }
+.post-reader[data-mode="continuous"] .cover-emblem { mix-blend-mode: normal; opacity: .8; }
+.post-reader[data-mode="continuous"] .reader-cover-page .post-outline { border-top-color: var(--line-dark); }
+.post-reader[data-mode="continuous"] .reader-cover-page .post-outline strong { color: var(--rust); }
+.post-reader[data-mode="continuous"] .outline-link { color: var(--ink); }
+.post-reader[data-mode="continuous"] .outline-leader { border-bottom-color: var(--line-dark); }
 .post-reader[data-mode="continuous"] .reader-cover-page .post-hero,
 .post-reader[data-mode="continuous"] .cover-print { flex: none; overflow: visible; }
 .post-reader[data-mode="continuous"] .cover-print { padding: 30px 0 18px; }
@@ -2176,24 +2200,18 @@ footer {
   /* A phone is one sheet wide, so the turn is a single page and the leaf
      that turns covers the whole stage. */
   .reader-turn { perspective: 1250px; }
+  /* One sheet wide, and no second half of the book for a sheet hinged at the
+     spine to land on — so here it turns over about its own middle, which
+     keeps the whole revolution on the page. */
+  .reader-leaf-forward,
+  .reader-leaf-backward { right: 0; left: 0; transform-origin: center; }
+  .reader-leaf-forward .reader-leaf-face,
+  .reader-leaf-backward .reader-leaf-face { border-radius: 12px; }
+  .reader-leaf-face .reader-leaf-shade { background: rgba(43, 45, 35, .4); }
   .reader-page { flex-basis: 100%; scroll-snap-align: start; border-radius: 12px; }
   .reader-leaf-forward,
   .reader-leaf-back { right: 0; left: 0; border-radius: 12px; }
   .reader-spine { display: none; }
-  /* The cover is a sheet of the same paper here. Full-bleed kraft on a phone
-     reads as a wide brown banner across the screen rather than as the cover
-     of a memo book. */
-  .reader-cover-page {
-    color: var(--ink);
-    background: var(--sheet);
-  }
-  .reader-cover-page .post-title.cover-title { color: var(--ink); }
-  .cover-stamp { color: var(--ink-soft); }
-  .cover-emblem { mix-blend-mode: normal; opacity: .75; }
-  .reader-cover-page .post-outline { border-top-color: var(--line-dark); }
-  .reader-cover-page .post-outline strong { color: var(--rust); }
-  .outline-link { color: var(--ink); }
-  .outline-leader { border-bottom-color: var(--line-dark); }
   .reader-article-page::before { left: 30px; }
   .reader-cover-page .post-hero { padding: 0 22px 18px; }
   .reader-cover-page .post-title.cover-title { font-size: clamp(1.4rem, 6.4vw, 2rem); }

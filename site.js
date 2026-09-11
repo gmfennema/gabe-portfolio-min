@@ -366,7 +366,7 @@
   // hold a page worth reading. Below this there is no note left on the sheet.
   const READER_PHONE = 720;      // the width the stylesheet switches to one page at
   const READER_MIN_PHONE_PAGE = 300;
-  const READER_FLIP_MS = 420;    // how long a sheet takes to swing out of the way
+  const READER_FLIP_MS = 620;    // how long a sheet takes to turn right over
 
   const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -917,10 +917,13 @@
     };
 
     /* ---- The page turn ----
-       A clone of the sheet that is leaving swings away around the spine while
-       the track jumps, instantly and underneath it, to the page being turned
-       to. The real pages never move, so find-in-page and select-all keep
-       seeing the whole note mid-turn. */
+       A clone of the sheet that is leaving turns right over — a full half
+       revolution, front face to back face — while the track jumps, instantly
+       and underneath it, to the pages being turned to. The sheet's back is
+       the page it lands as, so when the turn finishes the clone sits exactly
+       on top of what is already there and can be taken away unseen. The real
+       pages never move, so find-in-page and select-all keep seeing the whole
+       note mid-turn. */
     const canAnimate = typeof Element.prototype.animate === "function";
     let leaf = null;
     let leafAnimation = null;
@@ -932,27 +935,42 @@
       leaf = null;
     };
 
-    const flipSheet = (from, direction) => {
+    // One side of the turning sheet: a copy of a page, with the ids stripped
+    // so the copy cannot collide with the article it came from.
+    const leafFace = (page, side) => {
+      const face = el("div", `reader-leaf-face reader-leaf-${side}`);
+      const copy = page.cloneNode(true);
+      copy.removeAttribute("id");
+      $$("[id]", copy).forEach((node) => node.removeAttribute("id"));
+      face.append(copy, el("span", "reader-leaf-shade"));
+      return face;
+    };
+
+    const flipSheet = (from, to, direction) => {
       if (!canAnimate || reducedMotion() || !stage.clientWidth) return false;
-      // Turning forward, the sheet that leaves is the right-hand page of the
-      // spread; turning back, it is the left-hand one. On a phone, where a
-      // spread is one page wide, both are the page on screen.
-      const leaving = pages[direction > 0 ? from + columns() - 1 : from];
-      if (!leaving) return false;
+      // Turning forward on a spread, the sheet that leaves is the right-hand
+      // page and it lands as the left-hand page of the spread being turned
+      // to; turning back, the mirror of that. On a phone a spread is one page
+      // wide, so the sheet on screen turns over to become the next one.
+      const wide = columns() === 2;
+      const front = pages[direction > 0 && wide ? from + 1 : from];
+      const back = pages[direction > 0 || !wide ? to : to + 1];
+      if (!front || !back) return false;
       clearLeaf();
 
-      leaf = el("div", `reader-leaf reader-leaf-${direction > 0 ? "forward" : "back"}`);
+      leaf = el("div", `reader-leaf reader-leaf-${direction > 0 ? "forward" : "backward"}`);
       leaf.setAttribute("aria-hidden", "true");
-      const face = leaving.cloneNode(true);
-      face.removeAttribute("id");
-      $$("[id]", face).forEach((node) => node.removeAttribute("id"));
-      const shade = el("span", "reader-leaf-shade");
-      leaf.append(face, shade);
+      leaf.append(leafFace(front, "front"), leafFace(back, "reverse"));
       turnLayer.appendChild(leaf);
 
-      const angle = direction > 0 ? -90 : 90;
-      const timing = { duration: READER_FLIP_MS, easing: "cubic-bezier(.34, .06, .3, .99)" };
-      shade.animate([{ opacity: 0 }, { opacity: .45 }], { ...timing, fill: "forwards" });
+      const angle = direction > 0 ? -180 : 180;
+      const timing = { duration: READER_FLIP_MS, easing: "cubic-bezier(.42, .02, .34, 1)" };
+      // The face turning away darkens as it goes; the one arriving lightens
+      // as it comes to rest, so the sheet reads as catching the light.
+      $(".reader-leaf-front .reader-leaf-shade", leaf)
+        .animate([{ opacity: 0 }, { opacity: .5 }], { ...timing, fill: "forwards" });
+      $(".reader-leaf-reverse .reader-leaf-shade", leaf)
+        .animate([{ opacity: .5 }, { opacity: 0 }], { ...timing, fill: "forwards" });
       leafAnimation = leaf.animate(
         [{ transform: "rotateY(0deg)" }, { transform: `rotateY(${angle}deg)` }],
         timing
@@ -967,7 +985,7 @@
       if (target === from) return;
       // With a sheet turning over the top, the page beneath has to be there
       // already — a smooth scroll would slide it in behind the animation.
-      const turning = flipSheet(from, direction);
+      const turning = flipSheet(from, target, direction);
       scrollToPage(target, !turning);
       syncChrome(target);
       readerStore.set("notebook:hinted", "1");
