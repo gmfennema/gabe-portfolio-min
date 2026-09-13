@@ -1699,6 +1699,25 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
 .reader-leaf-forward .reader-leaf-reverse .reader-leaf-shade,
 .reader-leaf-backward .reader-leaf-front .reader-leaf-shade { background: linear-gradient(270deg, rgba(43, 45, 35, .03), rgba(43, 45, 35, .52)); }
 
+/* One page wide, and no facing leaf for a sheet to come down on. The sheet is
+   the whole stage and still hinges at the spine, on its left, so a turn lifts
+   the page by its right edge and carries it over towards the spine instead of
+   spinning it about its own middle. Half a revolution in it is edge-on and
+   past the left edge, where the clip on .reader-turn takes it: the rest of the
+   turn happens off the book, as it does in a book held open at one page. */
+.reader-leaf-single {
+  right: 0;
+  left: 0;
+  transform-origin: left center;
+}
+.reader-leaf-single .reader-leaf-face { border-radius: 12px; }
+/* The lifting edge is the far one from the hinge, and it darkens as it rises,
+   which deepens the shadow it throws on the page coming out from under it. */
+.reader-leaf-single .reader-leaf-front .reader-leaf-shade { background: linear-gradient(90deg, rgba(43, 45, 35, .03), rgba(43, 45, 35, .52)); }
+/* Coming back, the page being left is held under the whole width of the
+   returning sheet. */
+.reader-hold-single { right: 0; left: 0; border-radius: 12px; }
+
 /* Saddle stitch */
 .reader-spine {
   position: absolute;
@@ -2225,22 +2244,10 @@ footer {
   .reader-progress { grid-area: progress; align-self: center; }
   .reader-view { grid-area: view; align-self: center; }
   .reader-stage::before { box-shadow: 0 1px 0 var(--sheet-edge), 0 3px 0 var(--sheet), 0 18px 30px -10px rgba(43, 45, 35, .26); }
-  /* A phone is one sheet wide, so the turn is a single page and the leaf
-     that turns covers the whole stage. */
+  /* A phone is one sheet wide, so the leaf that turns covers the whole stage
+     and stands nearer the eye than a sheet on a spread does. */
   .reader-turn { perspective: 1250px; }
-  /* One sheet wide, and no second half of the book for a sheet hinged at the
-     spine to land on — so here it turns over about its own middle, which
-     keeps the whole revolution on the page. */
-  .reader-leaf-forward,
-  .reader-leaf-backward { right: 0; left: 0; transform-origin: center; }
-  .reader-leaf-forward .reader-leaf-face,
-  .reader-leaf-backward .reader-leaf-face { border-radius: 12px; }
-  .reader-hold-left,
-  .reader-hold-right { right: 0; left: 0; border-radius: 12px; }
-  .reader-leaf-face .reader-leaf-shade { background: rgba(43, 45, 35, .4); }
   .reader-page { flex-basis: 100%; scroll-snap-align: start; border-radius: 12px; }
-  .reader-leaf-forward,
-  .reader-leaf-back { right: 0; left: 0; border-radius: 12px; }
   .reader-spine { display: none; }
   .reader-article-page::before { left: 30px; }
   .reader-cover-page .post-hero { padding: 0 22px 18px; }
