@@ -367,6 +367,11 @@
   const READER_PHONE = 720;      // the width the stylesheet switches to one page at
   const READER_MIN_PHONE_PAGE = 300;
   const READER_FLIP_MS = 620;    // how long a sheet takes to turn right over
+  // One page wide there is no facing leaf, so a turn is only the quarter
+  // revolution up to the spine: past that the sheet is edge-on and whatever
+  // is left of it happens off the book. A shorter arc wants a shorter turn.
+  const READER_LIFT_MS = 380;
+  const READER_LIFT_DEG = 95;    // a few degrees past edge-on, so the sheet is gone
 
   const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -961,27 +966,84 @@
       return hold;
     };
 
+    // One page wide, there is no facing leaf for a sheet to land on, so what
+    // a reader can see of a turn is the half on this side of the spine. Going
+    // on, the sheet lifts by its right edge and swings left about the spine,
+    // uncovering the page it was lying on as it goes and edge-on — invisible,
+    // and clipped away by the book's edge — by the time it gets there. Going
+    // back is that same movement run backwards: the previous page swings in
+    // from the spine and comes down over the page being left. The hinge is
+    // the left edge either way, so a page turns about the spine rather than
+    // spinning about its own middle.
+    const flipPage = (from, to, direction) => {
+      const forward = direction > 0;
+      // Going on, the sheet carries the page it is lifting off; coming back,
+      // it is the page arriving, face up.
+      const face = pages[forward ? from : to];
+      if (!face) return false;
+      clearLeaf();
+
+      leaf = el("div", "reader-leaf reader-leaf-single");
+      leaf.setAttribute("aria-hidden", "true");
+      leaf.append(leafFace(face, "front"));
+      // Going on, the track underneath is already showing the page the sheet
+      // is lying on, which is exactly what should appear as it lifts. Coming
+      // back it is showing the destination too early, so the page being left
+      // is pinned under the returning sheet for the length of the turn.
+      if (!forward) turnLayer.append(heldPage(pages[from], "single"));
+      turnLayer.append(leaf);
+
+      // Paper picks up speed as it goes over: the sheet leaves under the
+      // finger and falls away, and coming back it lands the same way round —
+      // the second easing is the first read backwards, so the movement is the
+      // same movement whichever direction the reader is going.
+      const timing = {
+        duration: READER_LIFT_MS,
+        easing: forward ? "cubic-bezier(.3, .08, .62, .62)" : "cubic-bezier(.38, .38, .7, .92)",
+        fill: "forwards",
+      };
+      const frames = [{ transform: "rotateY(0deg)" }, { transform: `rotateY(-${READER_LIFT_DEG}deg)` }];
+      // A sheet darkens as it turns away from the page and lightens as it
+      // comes back down onto it.
+      const shade = [{ opacity: 0 }, { opacity: .55 }];
+      if (!forward) {
+        frames.reverse();
+        shade.reverse();
+        // The returning sheet starts edge-on at the spine: it is put there
+        // before it is ever painted, or the destination flashes up flat.
+        leaf.style.transform = `rotateY(-${READER_LIFT_DEG}deg)`;
+      }
+      $(".reader-leaf-shade", leaf).animate(shade, timing);
+      leafAnimation = leaf.animate(frames, timing);
+      leafAnimation.onfinish = clearLeaf;
+      return true;
+    };
+
     const flipSheet = (from, to, direction) => {
       if (!canAnimate || reducedMotion() || !stage.clientWidth) return false;
+      // A phone is one page wide and turns its single leaf about the spine.
+      if (columns() === 1) return flipPage(from, to, direction);
       // Turning forward on a spread, the sheet that leaves is the right-hand
       // page and it lands as the left-hand page of the spread being turned
-      // to; turning back, the mirror of that. On a phone a spread is one page
-      // wide, so the sheet on screen turns over to become the next one.
-      const wide = columns() === 2;
-      const front = pages[direction > 0 && wide ? from + 1 : from];
-      const back = pages[direction > 0 || !wide ? to : to + 1];
+      // to; turning back, the mirror of that.
+      const front = pages[direction > 0 ? from + 1 : from];
+      const back = pages[direction > 0 ? to : to + 1];
       // What the sheet comes down on: the other leaf of the spread it is
-      // leaving, or on a phone the page it is lifting off.
-      const under = pages[wide && direction < 0 ? from + 1 : from];
+      // leaving.
+      const under = pages[direction < 0 ? from + 1 : from];
       if (!front || !back) return false;
       clearLeaf();
 
-      const side = wide && direction < 0 ? "right" : "left";
+      const side = direction < 0 ? "right" : "left";
       leaf = el("div", `reader-leaf reader-leaf-${direction > 0 ? "forward" : "backward"}`);
       leaf.setAttribute("aria-hidden", "true");
       leaf.append(leafFace(front, "front"), leafFace(back, "reverse"));
       // The held page goes down first, so the sheet turns over the top of it.
-      turnLayer.append(heldPage(under, side), leaf);
+      // A note with an odd number of pages ends on a spread with nothing on
+      // its other leaf, and a sheet coming back off that one lands on bare
+      // board: there is no page to hold.
+      if (under) turnLayer.append(heldPage(under, side));
+      turnLayer.append(leaf);
 
       const angle = direction > 0 ? -180 : 180;
       const timing = { duration: READER_FLIP_MS, easing: "cubic-bezier(.42, .02, .34, 1)" };

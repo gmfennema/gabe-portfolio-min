@@ -48,16 +48,24 @@ The rules it lives by:
   the page it lands as — and turns it right over while the track jumps,
   underneath it, to the destination. It finishes sitting exactly on what is
   already there, so taking it away is invisible. A spread hinges at the spine
-  and the sheet crosses to the other leaf; a phone has no other leaf to land
-  on, so there the sheet turns about its own middle and the revolution stays
-  on the page. The clone is `aria-hidden`, unselectable and gone inside a
-  second; the real pages never leave the track. Reduced motion skips it.
+  and the sheet crosses to the other leaf. A phone is one page wide and has no
+  other leaf to land on, so `flipPage()` turns a single face about that same
+  hinge on the left: going on, the sheet lifts by its right edge and swings
+  towards the spine, uncovering the page it was lying on, and is edge-on and
+  clipped away by the time it reaches it — the rest of the revolution happens
+  off the book, as it does in a book held open at one page. Coming back is
+  that same turn run backwards, easing included. The clone is `aria-hidden`,
+  unselectable and gone inside a second; the real pages never leave the track.
+  Reduced motion skips it.
 - **The words change when the paper does.** The track jumps to the
   destination the instant a turn starts, so `flipSheet()` also pins a
   `.reader-hold` copy of the page the sheet is about to land on, as it was,
   underneath the sheet for the length of the turn. Without it the page under
   the turning sheet changes its text before any paper has crossed it, and the
-  sheet arrives too late to look like it carried the words over.
+  sheet arrives too late to look like it carried the words over. A phone needs
+  the hold only on the way back, where the sheet comes down over the page
+  being left; going on, the page the track has jumped to is exactly what
+  should come out from under the sheet as it lifts.
 - **The cover's stock follows the view, not the screen.** Kraft board in the
   page view at any width, because there is a book to have a cover; the site's
   own ground in the scroll view, where there is not. Both are keyed off
