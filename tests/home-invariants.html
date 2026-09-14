@@ -29,7 +29,8 @@ async function load(width, height, noScript = false) {
   await new Promise((resolve, reject) => {
     const timeout = setTimeout(() => reject(new Error('Homepage did not load')), 15000);
     frame.onload = () => { clearTimeout(timeout); resolve(); };
-    frame.src = '../index.html';
+    // A fresh preview URL avoids mixing a new test runner with stale CDN HTML.
+    frame.src = '../index.html?preview=' + Date.now();
   });
   frame.scrollIntoView({behavior:'instant',block:'start'});
   await pause(150);
