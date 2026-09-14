@@ -45,6 +45,8 @@
 .sign-link:hover .sign-border, .sign-link:focus-visible .sign-border { opacity: 1; stroke: #ffe6b7; stroke-width: 3; }
 .sign-link:focus-visible { outline: none !important; }
 .junction-trails { pointer-events: none; }
+.journey-motion .junction-incoming { opacity: 0; }
+.trail-home:not(.journey-motion) .ground-trail { opacity: 0; }
 .walk-furniture { position: absolute; bottom: 46px; left: 5%; right: 5%; display: flex; gap: 23px; align-items: center; color: var(--cream); }
 .walk-mile { display: flex; align-items: center; gap: 12px; flex: 0 0 180px; }
 .mile-number { font-family: var(--display); font-size: 2.5rem; line-height: 1; }

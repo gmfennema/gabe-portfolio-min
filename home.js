@@ -13,6 +13,8 @@
   const mile = home.querySelector('.mile-number');
   const mileCopy = home.querySelector('.mile-copy');
   const colophon = home.querySelector('.scene-colophon');
+  const distantTrail = home.querySelector('.ground-trail');
+  const arrivingTrail = home.querySelector('.junction-incoming');
   const layers = Object.fromEntries([...home.querySelectorAll('[data-depth]')].map(el => [el.dataset.depth, el]));
   const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const shortScreen = window.matchMedia('(max-height: 580px)');
@@ -63,6 +65,11 @@
     layers['front-left'].style.transform = `translate(${-travel * 370}px, ${travel * 100}px) scale(${1 + travel * .65})`;
     layers['front-right'].style.transform = `translate(${travel * 370}px, ${travel * 100}px) scale(${1 + travel * .65})`;
     sign.style.transform = `translate(${lerp(775, 720, travel)}px, ${lerp(698, finalBase, travel)}px) scale(${scale})`;
+    // The close foreground joins the fork and continues below the viewport.
+    // Blend the two depth planes while the camera passes the last bend.
+    const nearTrail = ease((p - .62) / .24);
+    distantTrail.style.opacity = (1 - nearTrail).toFixed(3);
+    arrivingTrail.style.opacity = nearTrail.toFixed(3);
     show(arrival, ease((p - .7) / .18));
     colophon.style.opacity = ease((p - .82) / .12).toFixed(3);
     progressBar.style.transform = `scaleX(${clamp(p / .9)})`;
@@ -105,7 +112,7 @@
       cancelAnimationFrame(frame);
       frame = 0;
       focusOnArrival = false;
-      [intro, arrival, sign, colophon, progressBar, ...Object.values(layers)].forEach(el => el.removeAttribute('style'));
+      [intro, arrival, sign, colophon, progressBar, distantTrail, arrivingTrail, ...Object.values(layers)].forEach(el => el.removeAttribute('style'));
       intro.inert = false;
       arrival.inert = false;
       enableSigns(true);
