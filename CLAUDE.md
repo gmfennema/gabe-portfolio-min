@@ -101,8 +101,12 @@ Do not split the signpost or contact CTA into a separate section.
 Run `node tests/trail-world.cjs` for centerline, arc length, heading continuity,
 near-plane clipping, passing-landmark and responsive arrival checks.
 
-`home.js` requests frames only on scroll/resize. It does not intercept wheel
-or touch input. The faraway sign leaves the tab order until it is close enough;
+`home.js` requests frames on scroll/resize and during the optional junction
+shortcut. The shortcut uses a 1.8–4.8 second quintic scroll, then releases its
+animation frame. Wheel, touch, pointer, scroll keys, Escape, Tab, hidden tabs,
+and reduced motion cancel it immediately. It never prevents native scrolling.
+The mountains remain an SVG panorama with snow cornices, granite fractures,
+layered distant summits, and engraved foothills. The faraway sign leaves the tab order until it is close enough;
 the skip link brings it into view. Reduced motion, short viewports, and no JS
 show a still composition of the same SVG with working sign links.
 

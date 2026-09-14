@@ -92,6 +92,37 @@
   let previousStop = '';
   let previousReady = null;
   let focusOnArrival = false;
+  let journeyFrame = 0;
+  function cancelJourney() {
+    if (!journeyFrame) return;
+    cancelAnimationFrame(journeyFrame);
+    journeyFrame = 0;
+    focusOnArrival = false;
+  }
+  function walkToJunction() {
+    cancelAnimationFrame(journeyFrame);
+    const from = window.scrollY;
+    const remaining = Math.min(1, Math.abs(start + distance - from) / distance);
+    const duration = 1800 + 3000 * Math.sqrt(remaining);
+    const began = performance.now();
+    function advance(now) {
+      const t = Math.min(1, (now - began) / duration);
+      // Quintic easing has zero velocity and acceleration at both ends.
+      const eased = t * t * t * (10 + t * (-15 + 6 * t));
+      window.scrollTo({top:from + (start + distance - from) * eased, behavior:'instant'});
+      schedule();
+      journeyFrame = t < 1 ? requestAnimationFrame(advance) : 0;
+    }
+    journeyFrame = requestAnimationFrame(advance);
+  }
+  // A guided walk is optional: any deliberate input immediately hands control back.
+  window.addEventListener('wheel', cancelJourney, {passive:true});
+  window.addEventListener('touchstart', cancelJourney, {passive:true});
+  window.addEventListener('pointerdown', cancelJourney, {passive:true});
+  window.addEventListener('keydown', event => {
+    if (['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' ','Escape','Tab'].includes(event.key)) cancelJourney();
+  });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) cancelJourney(); });
   const clamp = value => Math.max(0, Math.min(1, value));
   const ease = value => { const t = clamp(value); return t * t * (3 - 2 * t); };
 
@@ -152,6 +183,7 @@
     if (active) { objectLayer.appendChild(sign); objectOrder=''; }
     else signHome.insertBefore(sign,signNext);
     if (!active) {
+      cancelJourney();
       cancelAnimationFrame(frame);
       frame = 0;
       focusOnArrival = false;
@@ -171,13 +203,13 @@
       event.preventDefault();
       focusOnArrival = event.detail === 0 || link.classList.contains('trail-skip');
       history.replaceState(null, '', '#trail-junction');
-      window.scrollTo({top:start + distance, behavior:'smooth'});
-      schedule();
+      walkToJunction();
     });
   });
   home.querySelector('.trail-return').addEventListener('click', event => {
     if (!active || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
+    cancelJourney();
     focusOnArrival = false;
     history.replaceState(null, '', location.pathname + location.search);
     window.scrollTo({top:0, behavior:'smooth'});

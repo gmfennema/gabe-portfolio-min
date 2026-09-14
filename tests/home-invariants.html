@@ -94,6 +94,8 @@ run.addEventListener('click', async () => {
         doc.querySelector('.trail-return').click();
         await until(() => win.scrollY < 2);
         doc.querySelector('.junction-shortcut').click();
+        await pause(300);
+        check(win.scrollY > 0 && win.scrollY < distance * .1, `${label}: junction shortcut starts gently`);
         await until(() => doc.body.classList.contains('at-junction') && win.scrollY >= distance - 2);
         check(sign === doc.querySelector('.junction-sign') && sign.getBoundingClientRect().width > openingWidth * 4, `${label}: same sign at the destination`);
         check(doc.querySelector('.trail-intro').inert && win.getComputedStyle(doc.querySelector('.arrival-copy')).visibility === 'visible', `${label}: welcome gives way to the junction caption`);
@@ -109,6 +111,12 @@ run.addEventListener('click', async () => {
         doc.querySelector('.trail-return').click();
         await until(() => win.scrollY < 2 && doc.querySelector('.trail-intro').style.opacity === '1.000');
         check(win.scrollY < 2 && !doc.querySelector('.trail-intro').inert, `${label}: return restores the opening view`);
+        doc.querySelector('.junction-shortcut').click();
+        await pause(500);
+        win.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape',bubbles:true}));
+        const stoppedAt = win.scrollY;
+        await pause(250);
+        check(stoppedAt > 0 && Math.abs(win.scrollY-stoppedAt) <= 1, `${label}: user input immediately cancels the guided walk`);
       }
     }
     await load(390,844,true);
