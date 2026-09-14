@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex"><title>Homepage layout checks</title>
+<style>
+body{margin:20px;font:14px/1.5 system-ui;background:#f6f0e4;color:#24382f}h1{font-size:22px}button,select{font:inherit;padding:8px;margin-right:8px}iframe{display:block;border:1px solid #9b9f8b;margin:20px 0;max-width:none}pre{white-space:pre-wrap}#preview-wrap{overflow:auto}label{display:inline-block;margin-right:12px}
+</style>
+</head>
+<body>
+<h1>Homepage layout checks</h1>
+<p>Checks the real homepage in desktop, tablet, phone, short-screen, and JavaScript-disabled frames.</p>
+<button id="run">Run checks</button><label>Preview <select id="size"><option value="390,844">Phone · 390 × 844</option><option value="320,740">Small phone · 320 × 740</option><option value="768,1024">Tablet · 768 × 1024</option><option value="1366,900">Desktop · 1366 × 900</option><option value="844,390">Landscape · 844 × 390</option></select></label>
+<pre id="log" role="status">Ready.</pre>
+<div id="preview-wrap"><iframe id="preview" title="Homepage preview" width="390" height="844" src="../index.html"></iframe></div>
+<script>
+const frame = document.querySelector('#preview');
+const output = document.querySelector('#log');
+const run = document.querySelector('#run');
+const sizes = [[1366,900],[768,1024],[390,844],[320,740],[844,390]];
+const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+async function load(width, height, noScript = false) {
+  frame.width = width; frame.height = height;
+  frame.setAttribute('sandbox', noScript ? 'allow-same-origin' : 'allow-same-origin allow-scripts');
+  await new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error('Homepage did not load')), 15000);
+    frame.onload = () => { clearTimeout(timeout); resolve(); };
+    frame.src = '../index.html';
+  });
+  await pause(150);
+}
+function fits(rect, width) { return rect.left >= -1 && rect.right <= width + 1; }
+run.addEventListener('click', async () => {
+  run.disabled = true;
+  output.textContent = '';
+  let failures = 0;
+  let checks = 0;
+  function check(condition, message) {
+    checks++;
+    if (!condition) failures++;
+    output.textContent += `${condition ? 'PASS' : 'FAIL'} ${message}\n`;
+  }
+  try {
+    for (const [width,height] of sizes) {
+      await load(width,height);
+      const win = frame.contentWindow, doc = frame.contentDocument;
+      const label = `${width}×${height}`;
+      const viewport = doc.documentElement.clientWidth;
+      check(doc.documentElement.scrollWidth <= viewport + 1, `${label}: no horizontal overflow`);
+      const title = doc.querySelector('h1').getBoundingClientRect();
+      check(fits(title, viewport) && title.top >= 0 && title.bottom < height, `${label}: welcome title visible`);
+      const menu = doc.querySelector('.menu-btn');
+      if (width <= 760) {
+        menu.click();
+        check(menu.getAttribute('aria-expanded') === 'true' && win.getComputedStyle(doc.querySelector('.nav')).visibility === 'visible', `${label}: menu opens`);
+        doc.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape',bubbles:true}));
+        check(menu.getAttribute('aria-expanded') === 'false', `${label}: Escape closes menu`);
+      }
+      if (doc.body.classList.contains('journey-motion')) {
+        const walk = doc.querySelector('.trail-walk');
+        const stage = doc.querySelector('.walk-stage');
+        win.scrollTo({top:(walk.offsetHeight-stage.offsetHeight)*.53,behavior:'instant'});
+        await pause(100);
+        const thought = doc.querySelector('.trail-thought');
+        check(Number(thought.style.opacity) > .98 && thought.getBoundingClientRect().bottom < height, `${label}: mid-trail story is readable`);
+        check(doc.querySelector('.trail-intro').inert, `${label}: faded intro leaves keyboard navigation`);
+      } else {
+        check(win.getComputedStyle(doc.querySelector('.trail-thought')).position === 'relative', `${label}: static layout in a short viewport`);
+      }
+      doc.querySelector('#trail-junction').scrollIntoView({behavior:'instant'});
+      await pause(100);
+      const signs = [...doc.querySelectorAll('.trail-sign')];
+      check(signs.length === 4 && signs.every(sign => fits(sign.getBoundingClientRect(), viewport)), `${label}: all four trail signs fit`);
+      signs[0].focus({preventScroll:true});
+      check(doc.querySelector('[data-branch="projects"]').classList.contains('is-active'), `${label}: keyboard focus highlights its route`);
+      check([...doc.images].every(img => img.complete && img.naturalWidth > 0), `${label}: images load`);
+    }
+    await load(390,844,true);
+    const doc = frame.contentDocument;
+    check(!doc.body.classList.contains('journey-motion'), 'No JS: static layout');
+    check(frame.contentWindow.getComputedStyle(doc.querySelector('.trail-thought')).visibility === 'visible', 'No JS: story remains visible');
+    check([...doc.querySelectorAll('.nav a')].every(link => frame.contentWindow.getComputedStyle(link).visibility === 'visible'), 'No JS: primary navigation remains visible');
+    check(doc.querySelectorAll('.trail-sign[href]').length === 4, 'No JS: all destination links remain available');
+    output.textContent += `RESULT ${failures ? 'FAIL' : 'PASS'} · ${checks-failures}/${checks} checks passed\n`;
+  } catch (error) { output.textContent += `ERROR ${error.message}\n`; }
+  finally { run.disabled = false; await load(390,844); }
+});
+document.querySelector('#size').addEventListener('change', event => load(...event.target.value.split(',').map(Number)));
+</script>
+</body>
+</html>

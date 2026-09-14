@@ -74,7 +74,7 @@
 .trail-sign:nth-child(3) { transform: rotate(1deg); }
 .trail-sign:nth-child(4) { transform: translateY(24px) rotate(-1deg); }
 .sign-arrow { font-family: Georgia, serif; font-size: 2.15rem; color: #d5bf8a; flex-shrink: 0; }
-.sign-copy { display: block; position: relative; z-index: 1; }
+.sign-copy { min-width: 0; display: block; position: relative; z-index: 1; }
 .sign-meta { font: 600 .56rem/1.6 var(--utility); letter-spacing: .13em; text-transform: uppercase; color: #d1c29f; }
 .trail-sign h3 { color: #faedcc; font-size: clamp(1.8rem, 2.65vw, 2.55rem); letter-spacing: -.025em; margin: 5px 0 8px; line-height: 1.2; }
 .sign-description { display: block; font-size: .75rem; line-height: 1.55; color: #dfd8bd; max-width: 250px; }
@@ -174,7 +174,8 @@
   .trail-home .trail-footer { flex-wrap: wrap; justify-content: center; gap: 12px 24px; padding: 24px; }
   .trail-footer p { order: 3; width: 100%; text-align: center; }
 }
-@media (max-width: 380px) { .trail-sign { padding: 23px 18px; gap: 15px; } .trail-sign img { display: none; } .walk-progress { display: none; } .trail-thought h2 { font-size: 3.25rem; } }
+@media (max-width: 450px) { .trail-sign img { display: none; } }
+@media (max-width: 380px) { .trail-sign h3 { font-size: 1.8rem; } .trail-sign { padding: 23px 18px; gap: 15px; } .trail-sign img { display: none; } .walk-progress { display: none; } .trail-thought h2 { font-size: 3.25rem; } }
 @media (prefers-reduced-motion: reduce) {
   .trail-home *, .trail-home *::before, .trail-home *::after { animation: none !important; transition: none !important; }
 }

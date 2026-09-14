@@ -94,3 +94,6 @@ with the same content and destinations. The shared field-note reader is unchange
 After changes, check the opening, middle, and junction at desktop and phone
 widths; test the menu, keyboard links, back navigation, and reduced motion.
 Run the asset version and image dimension checks before committing.
+
+`tests/home-invariants.html` provides responsive layout and interaction checks
+and an interactive phone preview against the actual homepage.
