@@ -85,15 +85,22 @@ The rules it lives by:
 
 ## Homepage trail
 
-The homepage uses an inline, layered SVG and a native sticky scroll scene.
-`home.js` only requests a frame when scroll or viewport state changes; it never
-intercepts wheel or touch events. The four destination links are plain HTML.
-Reduced motion, short viewports, and disabled JavaScript get a static layout
-with the same content and destinations. The shared field-note reader is unchanged.
+The homepage is one sticky viewport containing one SVG world. Its signpost
+exists in that world from the opening vista onward; `home.js` changes its
+camera position and scale continuously. The four destination links are native
+SVG anchors: Projects, Field Notes, Photography, and Let’s Connect. About is
+available in the main navigation. Do not split the signpost or contact CTA
+into a separate section.
 
-After changes, check the opening, middle, and junction at desktop and phone
-widths; test the menu, keyboard links, back navigation, and reduced motion.
-Run the asset version and image dimension checks before committing.
+The trail is a filled ribbon that narrows to a vanishing point, with a distance
+mask softening its tip. Do not replace it with a constant-width stroke.
 
-`tests/home-invariants.html` provides responsive layout and interaction checks
-and an interactive phone preview against the actual homepage.
+`home.js` requests frames only on scroll/resize. It does not intercept wheel
+or touch input. The faraway sign leaves the tab order until it is close enough;
+the skip link brings it into view. Reduced motion, short viewports, and no JS
+show a still composition of the same SVG with working sign links.
+
+Run `tests/home-invariants.html` in a visible browser tab to check desktop,
+tablet, phone, landscape, and no-JS layouts. Inspect the opening, approach,
+and final signpost visually. Run the asset version and image dimension checks
+before committing. Shared field-note reader code is independent of this scene.

@@ -7,7 +7,7 @@
   <title>Gabe Fennema · Marketing Data Engineer</title>
   <meta name="description" content="A little curiosity goes a long way. Explore the projects, field notes, and photography of Gabe Fennema, a marketing data engineer in Arizona." />
   <link rel="stylesheet" href="site.css?v=d2a4b267" />
-  <link rel="stylesheet" href="home.css?v=7dae9460" />
+  <link rel="stylesheet" href="home.css?v=719ca9a8" />
   <link rel="icon" href="assets/favicon.png" type="image/png" />
 </head>
 <body class="trail-home">
@@ -20,16 +20,21 @@
     <a class="trail-mark" href="#trail-junction" aria-label="Jump to the trail junction">↗</a>
   </header>
   <main id="main">
-    <section class="trail-walk" aria-label="Welcome to Gabe’s corner of the outdoors">
+    <section class="trail-walk" aria-label="Follow the forest trail to the junction">
       <div class="walk-stage">
-        <svg class="trail-scene" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+        <svg class="trail-scene" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice" role="group" aria-label="A forest trail leading to four destination signs" xmlns="http://www.w3.org/2000/svg">
 <defs>
+ <linearGradient id="trail-distance" x1="0" y1="665" x2="0" y2="720" gradientUnits="userSpaceOnUse"><stop stop-color="white" stop-opacity="0"/><stop offset=".72" stop-color="white"/></linearGradient>
+ <mask id="trail-taper-mask" maskUnits="userSpaceOnUse" x="580" y="660" width="320" height="340"><rect x="580" y="660" width="320" height="340" fill="url(#trail-distance)"/></mask>
+ <linearGradient id="sign-wood" x2="0" y2="1"><stop stop-color="#635737"/><stop offset="1" stop-color="#45472f"/></linearGradient>
+ <linearGradient id="sign-pole" x2="1" y2="0"><stop stop-color="#514631"/><stop offset=".35" stop-color="#9d8355"/><stop offset=".62" stop-color="#7c6644"/><stop offset="1" stop-color="#55472f"/></linearGradient>
+ <pattern id="sign-grain" width="240" height="30" patternUnits="userSpaceOnUse"><path d="M-20 5Q60-3 140 5t120 0M-10 21Q90 13 180 23t100-2" fill="none" stroke="#dec79a" stroke-width=".8" opacity=".1"/></pattern>
  <linearGradient id="trail-sky" x2="0" y2="1"><stop stop-color="#fbf7ed"/><stop offset=".62" stop-color="#e2e6d8"/><stop offset="1" stop-color="#b5c6bb"/></linearGradient>
  <linearGradient id="trail-ground" x2="0" y2="1"><stop stop-color="#8b9776"/><stop offset="1" stop-color="#324c3b"/></linearGradient>
  <pattern id="trail-hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(32)"><path d="M0 0V9" stroke="#f6f0e4" stroke-width="1" opacity=".17"/></pattern>
  <g id="trail-fir"><path d="M-3 0 0-142 4 0Z" fill="#394536"/><path d="M0-155-16-112-8-114-29-77-15-81-41-36-22-42-53-5 0-18 51-5 23-43 39-36 16-83 30-76 9-116 18-110Z"/><path d="M0-138V-23M0-113-13-94M0-94 16-70M-2-78-25-50M0-51 26-29" fill="none" stroke="#e4e3bc" stroke-width="1.2" opacity=".2"/></g>
 </defs>
-<rect width="1440" height="900" fill="url(#trail-sky)"/>
+<g class="forest-art" aria-hidden="true"><rect width="1440" height="900" fill="url(#trail-sky)"/>
 <g data-depth="sky"><circle cx="1135" cy="270" r="66" fill="#d6aa68" opacity=".56"/><circle cx="1135" cy="270" r="77" fill="none" stroke="#ba945b" opacity=".3"/>
 <g fill="none" stroke="#829591" stroke-width="1" opacity=".32"><path d="M77 272c62-16 119 8 183-4m-118 17h76M968 195c64-9 129 7 200-4m38 0h48M1230 344h111M349 207h86"/></g>
 <g stroke="#40574e" stroke-width="2" fill="none" opacity=".7"><path d="M1028 340q9-9 18 0 9-9 18 0m18-21q6-7 13 0 7-7 13 0m-115 40q7-7 14 0 7-7 14 0"/></g></g>
@@ -90,10 +95,11 @@
 </g>
 <g data-depth="meadow"><path d="M-100 725Q185 645 460 707T900 686 1540 737V1060H-100Z" fill="url(#trail-ground)"/>
 <g fill="none" stroke="#d4d2aa" opacity=".18"><path d="M30 753q143-27 330 16m-211 22q116-21 248 9m546-63q162-31 317 12m-344 44q183-29 379 7M70 861q120-26 233-1m737-22q154-24 360 14"/></g>
-<path d="M715 676C849 703 843 733 720 765S578 830 774 940" fill="none" stroke="#9c9771" stroke-width="26"/>
-<path d="M715 676C849 703 843 733 720 765S578 830 774 940" fill="none" stroke="#d9c597" stroke-width="21"/>
-<path d="M715 676C849 703 843 733 720 765S578 830 774 940" fill="none" stroke="#f5e8bc" stroke-width="2" opacity=".8" stroke-dasharray="2 9"/>
-<path class="trail-trace" pathLength="1" d="M774 940C578 830 597 797 720 765S849 703 715 676" fill="none" stroke="#fbecd0" stroke-width="4" stroke-linecap="round"/>
+<g class="ground-trail" mask="url(#trail-taper-mask)">
+<path class="trail-ribbon" d="M735 665C735 687 780 702 791 721C822 744 660 759 646 792C611 833 673 887 723 940L841 940C738 876 660 833 690 805C705 779 864 765 820 721C802 696 737 684 735 665Z" fill="#d5bf8f" stroke="#aa9c72" stroke-width="1.2"/>
+<path d="M730 927C676 873 628 822 659 794" fill="none" stroke="#f4e0b1" stroke-width="2" opacity=".5"/>
+<g fill="#f4e0b1" opacity=".48"><ellipse cx="681" cy="842" rx="2.2" ry="1"/><ellipse cx="676" cy="819" rx="1.5" ry=".8"/><ellipse cx="702" cy="878" rx="2.5" ry="1.2"/><ellipse cx="743" cy="909" rx="3" ry="1.3"/><ellipse cx="727" cy="891" rx="2" ry="1"/></g>
+</g>
 <use href="#trail-fir" x="-50" y="771" transform="translate(-50 785) scale(0.64) translate(50 -785)" fill="#38553e"/>
 <use href="#trail-fir" x="25" y="778" transform="translate(25 785) scale(0.64) translate(-25 -785)" fill="#38553e"/>
 <use href="#trail-fir" x="100" y="784" transform="translate(100 785) scale(0.63) translate(-100 -785)" fill="#38553e"/>
@@ -114,58 +120,91 @@
 <g fill="#a69d77" stroke="#4e6149" stroke-width="2"><path d="m414 793 22-24 36 5 19 22Z"/><path d="m936 822 29-35 40 10 24 32Z"/><path d="m874 722 10-11 23 5 6 12Z"/></g>
 <g stroke="#b8b588" stroke-linecap="round" opacity=".6"><path d="m381 820-6-15m6 15 8-12m-1 59-7-12m7 12 9-15m559-114 2-15m-2 15-7-9m134 58-5-15m5 15 8-11m-640-99-3-11m3 11 8-8"/></g>
 </g>
-<g data-depth="front-left"><use href="#trail-fir" transform="translate(94 1010) scale(3.5)" fill="#203c30"/><use href="#trail-fir" transform="translate(248 932) scale(2)" fill="#284636"/><use href="#trail-fir" transform="translate(-50 905) scale(2.8)" fill="#1c382d"/>
+</g>
+<g id="junction-sign" class="junction-sign" transform="translate(720 840) scale(.9)" role="navigation" aria-label="Choose your next trail">
+ <g aria-hidden="true">
+  <g class="junction-trails" fill="#c8b587" opacity=".78">
+   <path d="M-25 80C-13 28-89-16-238-39S-496-60-595-125C-470-71-381-81-233-60S36 9 25 80Z"/>
+   <path d="M-25 80C-36 9 233-60 379-81S470-71 595-125C496-60 385-59 238-39S13 28 25 80Z"/>
+  </g>
+  <ellipse cx="17" cy="4" rx="108" ry="21" fill="#203d2e" opacity=".28"/>
+  <path d="M-14-625 13-624 17 0-15 4Z" fill="url(#sign-pole)" stroke="#5c5338" stroke-width="2"/>
+  <path d="M-6-611-4-3M6-610 9-25" fill="none" stroke="#c6ab77" stroke-width="1.2" opacity=".6"/>
+  <path d="m-12-625 12-10 13 11Z" fill="#b39a67"/>
+  <text x="0" y="-36" fill="#dcc08c" font-size="14" text-anchor="middle" font-family="Georgia,serif">GF</text>
+ </g>
+ <a class="sign-link" data-trail="projects" href="projects.html" aria-label="Projects" transform="translate(0 -585)">
+  <g class="sign-board">
+    <path class="sign-shadow" d="M-315 55-272 0H288V110H-272Z" transform="translate(5 8)"/>
+    <path class="sign-face" d="M-315 55-272 0H288V110H-272Z"/>
+    <path class="sign-grain" d="M-315 55-272 0H288V110H-272Z" fill="url(#sign-grain)"/>
+    <path class="sign-border" d="M-298 55-264 11H277V99H-264Z"/>
+    <path class="sign-arrow" d="M-241 55h35m-35 0 12-12m-12 12 12 12"/>
+    <text class="sign-title" x="-180" y="53">Projects</text>
+    <text class="sign-subtitle" x="-178" y="83">Things I’ve built</text>
+    <g class="sign-icon" transform="translate(226 55)"><path d="m-24 16 20-37 15 24 9-15 19 29H-24M-11-8l7-13 7 13"/></g>
+    <g class="sign-bolts"><circle cx="-260" cy="15" r="3"/><circle cx="256" cy="94" r="3"/></g>
+  </g>
+</a>
+<a class="sign-link" data-trail="notes" href="field-notes.html" aria-label="Field Notes" transform="translate(0 -459)">
+  <g class="sign-board">
+    <path class="sign-shadow" d="M-288 0H272L315 55 272 110H-288Z" transform="translate(5 8)"/>
+    <path class="sign-face" d="M-288 0H272L315 55 272 110H-288Z"/>
+    <path class="sign-grain" d="M-288 0H272L315 55 272 110H-288Z" fill="url(#sign-grain)"/>
+    <path class="sign-border" d="M-277 11H264L298 55 264 99H-277Z"/>
+    <path class="sign-arrow" d="M-241 55h35m0 0-12-12m12 12-12 12"/>
+    <text class="sign-title" x="-180" y="53">Field Notes</text>
+    <text class="sign-subtitle" x="-178" y="83">Thoughts along the way</text>
+    <g class="sign-icon" transform="translate(226 55)"><path d="M-20-24h35l6 5v42h-41ZM-11-24v47M-5-11h17M-5-2h17M-5 7h12"/></g>
+    <g class="sign-bolts"><circle cx="-260" cy="15" r="3"/><circle cx="256" cy="94" r="3"/></g>
+  </g>
+</a>
+<a class="sign-link" data-trail="photos" href="photography.html" aria-label="Photography" transform="translate(0 -333)">
+  <g class="sign-board">
+    <path class="sign-shadow" d="M-315 55-272 0H288V110H-272Z" transform="translate(5 8)"/>
+    <path class="sign-face" d="M-315 55-272 0H288V110H-272Z"/>
+    <path class="sign-grain" d="M-315 55-272 0H288V110H-272Z" fill="url(#sign-grain)"/>
+    <path class="sign-border" d="M-298 55-264 11H277V99H-264Z"/>
+    <path class="sign-arrow" d="M-241 55h35m-35 0 12-12m-12 12 12 12"/>
+    <text class="sign-title" x="-180" y="53">Photography</text>
+    <text class="sign-subtitle" x="-178" y="83">The scenic route</text>
+    <g class="sign-icon" transform="translate(226 55)"><path d="M-25-13h13l5-9H9l5 9h13v35h-52Z"/><circle r="13" cy="4"/><path d="M17-5h4"/></g>
+    <g class="sign-bolts"><circle cx="-260" cy="15" r="3"/><circle cx="256" cy="94" r="3"/></g>
+  </g>
+</a>
+<a class="sign-link" data-trail="connect" href="mailto:gmfennema@gmail.com" aria-label="Let’s Connect" transform="translate(0 -207)">
+  <g class="sign-board">
+    <path class="sign-shadow" d="M-288 0H272L315 55 272 110H-288Z" transform="translate(5 8)"/>
+    <path class="sign-face" d="M-288 0H272L315 55 272 110H-288Z"/>
+    <path class="sign-grain" d="M-288 0H272L315 55 272 110H-288Z" fill="url(#sign-grain)"/>
+    <path class="sign-border" d="M-277 11H264L298 55 264 99H-277Z"/>
+    <path class="sign-arrow" d="M-241 55h35m0 0-12-12m12 12-12 12"/>
+    <text class="sign-title" x="-180" y="53">Let’s Connect</text>
+    <text class="sign-subtitle" x="-178" y="83">Good work starts with a conversation</text>
+    <g class="sign-icon" transform="translate(226 55)"><path d="M-25-16h50v36h-50Zm0 0L0 4l25-20M-25 20-8 3M25 20 8 3"/></g>
+    <g class="sign-bolts"><circle cx="-260" cy="15" r="3"/><circle cx="256" cy="94" r="3"/></g>
+  </g>
+</a>
+</g>
+<g aria-hidden="true"><g data-depth="front-left"><use href="#trail-fir" transform="translate(94 1010) scale(3.5)" fill="#203c30"/><use href="#trail-fir" transform="translate(248 932) scale(2)" fill="#284636"/><use href="#trail-fir" transform="translate(-50 905) scale(2.8)" fill="#1c382d"/>
 <path d="M-80 921Q130 831 322 941V1030H-80Z" fill="#243d30"/><path d="m96 901 19-35 47-11 53 55Z" fill="#63705a"/></g>
 <g data-depth="front-right"><use href="#trail-fir" transform="translate(1350 1005) scale(3.8)" fill="#203c30"/><use href="#trail-fir" transform="translate(1195 956) scale(2.2)" fill="#284636"/><use href="#trail-fir" transform="translate(1460 925) scale(3)" fill="#1c382d"/>
 <path d="M1120 950Q1300 858 1520 920V1030H1120Z" fill="#243d30"/></g>
-</svg>
-        <div class="walk-shade" aria-hidden="true"></div>
+</g></svg>
         <div class="trail-intro">
           <p class="trail-label"><span class="trail-dot" aria-hidden="true"></span> A personal wilderness · Arizona</p>
           <h1>Hi, I’m <em>Gabe.</em></h1>
           <p class="trail-intro-lead">I solve problems with data and code.<br/>And take the scenic route along the way.</p>
-          <a class="walk-invitation" href="#along-the-way">Take a little walk <span aria-hidden="true">↓</span></a>
+          <a class="walk-invitation" href="#trail-junction">Follow the trail <span aria-hidden="true">↓</span></a>
         </div>
-        <div class="trail-thought" id="along-the-way">
-          <p class="trail-label">01 / Along the way</p>
-          <h2>Follow your<br/><em>curiosity.</em></h2>
-          <p>Useful tools. Ideas worth sitting with.<br/>A few things noticed along the way.</p>
-          <p>This is where I keep mine.</p>
-          <a href="#trail-junction" class="thought-link">See where the trail leads <span aria-hidden="true">↘</span></a>
-        </div>
-        <div class="trail-stamp" aria-hidden="true"><svg viewBox="0 0 90 100"><path d="M9 10Q45-3 81 10v48Q78 79 45 95 12 79 9 58Z"/><path d="m20 57 18-31 12 20 8-11 15 23H20m12 9h29m-20 7h12"/></svg><span>Always<br/>exploring</span></div>
-        <div class="walk-furniture">
-          <div class="walk-mile"><span class="mile-number" aria-hidden="true">00</span><span class="mile-copy">THE TRAILHEAD</span></div>
-          <div class="walk-progress" aria-hidden="true"><span></span></div>
-          <a href="#trail-junction">Jump to the junction <span aria-hidden="true">↗</span></a>
-        </div>
+        <div class="arrival-copy"><p class="trail-label">You made it to the junction</p><h2>Where to next?</h2><p>Pick a sign. Follow your curiosity.</p></div>
+        <div class="walk-furniture"><div class="walk-mile"><span class="mile-number" aria-hidden="true">00</span><span class="mile-copy">THE TRAILHEAD</span></div><div class="walk-progress" aria-hidden="true"><span></span></div><a class="junction-shortcut" href="#trail-junction">Jump to the junction <span aria-hidden="true">↗</span></a><a class="trail-return" href="#main">Back to the trailhead <span aria-hidden="true">↑</span></a></div>
+        <p class="scene-colophon">© <span data-year></span> Gabe Fennema · Built with care in Arizona.</p>
       </div>
+      <div id="trail-junction" class="junction-anchor" tabindex="-1" aria-label="The trail junction"></div>
     </section>
-    <section class="trail-junction" id="trail-junction" tabindex="-1" aria-labelledby="junction-heading">
-      <div class="junction-heading"><p class="trail-label">02 / The junction</p><h2 id="junction-heading">Where to?</h2><p>Four trails. Pick what pulls you in.</p></div>
-      <div class="junction-map">
-        <svg class="junction-paths" viewBox="0 0 1000 590" preserveAspectRatio="none" aria-hidden="true">
-          <g fill="none" stroke-linecap="round"><path class="junction-trunk" d="M500 620C420 534 583 471 500 361V60"/>
-          <path data-branch="projects" d="M500 555C445 490 518 462 500 361S361 294 230 192"/>
-          <path data-branch="notes" d="M500 555C445 490 518 462 500 361S660 275 770 192"/>
-          <path data-branch="photos" d="M500 555C445 490 518 462 500 361S359 437 230 387"/>
-          <path data-branch="about" d="M500 555C445 490 518 462 500 361S661 436 770 387"/></g>
-        </svg>
-        <div class="signpost-pole" aria-hidden="true"><span>GF</span></div>
-        <nav class="trail-signs" aria-label="Choose a trail">
-          <a class="trail-sign sign-left" href="projects.html" data-trail="projects"><span class="sign-arrow" aria-hidden="true">↖</span><div class="sign-copy"><span class="sign-meta">Trail 01 · The workshop</span><h3>Projects</h3><span class="sign-description">Things I’ve built. Problems made smaller.</span></div><img src="assets/sketch-mountain.svg" alt="" width="180" height="130"/></a>
-          <a class="trail-sign sign-right" href="field-notes.html" data-trail="notes"><span class="sign-arrow" aria-hidden="true">↗</span><div class="sign-copy"><span class="sign-meta">Trail 02 · The notebook</span><h3>Field Notes</h3><span class="sign-description">Thoughts on life as I learn more about it.</span></div><img src="assets/sketch-notebook.svg" alt="" width="160" height="130"/></a>
-          <a class="trail-sign sign-left" href="photography.html" data-trail="photos"><span class="sign-arrow" aria-hidden="true">↙</span><div class="sign-copy"><span class="sign-meta">Trail 03 · The scenic route</span><h3>Photography</h3><span class="sign-description">Trying to capture the world around me.</span></div><img src="assets/sketch-camera.svg" alt="" width="170" height="130"/></a>
-          <a class="trail-sign sign-right" href="about.html" data-trail="about"><span class="sign-arrow" aria-hidden="true">↘</span><div class="sign-copy"><span class="sign-meta">Trail 04 · The fellow traveler</span><h3>About</h3><span class="sign-description">A little about the person behind the work.</span></div><img src="assets/sketch-signpost.svg" alt="" width="90" height="90"/></a>
-        </nav>
-        <p class="junction-you"><span aria-hidden="true">⊙</span> You are here. No wrong turns.</p>
-      </div>
-      <div class="junction-bottom"><span>Wander freely.</span><svg viewBox="0 0 36 48" aria-hidden="true"><path d="M18 0v40m0 0L7 29m11 11 11-11"/></svg><span>Stay curious.</span></div>
-    </section>
-    <section class="trail-camp" aria-labelledby="camp-heading"><div class="camp-topline"><span class="trail-label">03 / Back at camp</span><span class="camp-coordinates">Based in Arizona · Open to good ideas</span></div><div class="camp-content"><div><h2 id="camp-heading">Have something<br/><em>in mind?</em></h2><p>I’m a marketing data engineer who likes making<br class="desktop-break"/> complicated things useful. Let’s talk.</p><a class="camp-link" href="mailto:gmfennema@gmail.com">Let’s make something <span aria-hidden="true">↗</span></a></div><div class="camp-art"><img src="assets/sketch-coffee.svg" alt="A hand-drawn mug of coffee" width="150" height="130"/><span>Good work starts<br/>with a conversation.</span></div></div></section>
   </main>
-  <footer class="trail-footer"><a href="index.html">Gabe Fennema</a><p>© <span data-year></span> · Built with care in Arizona.</p><a href="#main">Back to the trailhead ↑</a></footer>
   <script src="site.js?v=35667754" defer></script>
-  <script src="home.js?v=029ff842" defer></script>
+  <script src="home.js?v=673d5194" defer></script>
 </body>
 </html>

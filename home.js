@@ -1,4 +1,4 @@
-/* A native-scroll camera, progressively enhanced over a complete static page. */
+/* The signpost belongs to the SVG world from the first frame to the last. */
 (() => {
   const home = document.querySelector('.trail-home');
   if (!home) return;
@@ -6,13 +6,13 @@
   const walk = home.querySelector('.trail-walk');
   const stage = home.querySelector('.walk-stage');
   const intro = home.querySelector('.trail-intro');
-  const thought = home.querySelector('.trail-thought');
-  const shade = home.querySelector('.walk-shade');
-  const stamp = home.querySelector('.trail-stamp');
+  const arrival = home.querySelector('.arrival-copy');
+  const sign = home.querySelector('.junction-sign');
+  const signs = [...sign.querySelectorAll('.sign-link')];
   const progressBar = home.querySelector('.walk-progress span');
   const mile = home.querySelector('.mile-number');
   const mileCopy = home.querySelector('.mile-copy');
-  const trace = home.querySelector('.trail-trace');
+  const colophon = home.querySelector('.scene-colophon');
   const layers = Object.fromEntries([...home.querySelectorAll('[data-depth]')].map(el => [el.dataset.depth, el]));
   const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const shortScreen = window.matchMedia('(max-height: 580px)');
@@ -20,9 +20,14 @@
   let active = false;
   let start = 0;
   let distance = 1;
-  let currentMile = '';
+  let finalScale = .9;
+  let finalBase = 840;
+  let previousStop = '';
+  let previousReady = null;
+  let focusOnArrival = false;
   const clamp = value => Math.max(0, Math.min(1, value));
   const ease = value => { const t = clamp(value); return t * t * (3 - 2 * t); };
+  const lerp = (a, b, t) => a + (b - a) * t;
 
   function show(el, opacity) {
     el.style.opacity = opacity.toFixed(3);
@@ -31,31 +36,46 @@
     el.inert = hidden;
   }
 
+  function enableSigns(ready) {
+    if (ready === previousReady) return;
+    previousReady = ready;
+    home.classList.toggle('at-junction', ready);
+    // Tiny distant signs are scenery; a skip link always brings them close.
+    // SVG links do not consistently inherit HTML inert across browsers.
+    sign.setAttribute('aria-hidden', String(!ready));
+    signs.forEach(link => link.setAttribute('tabindex', ready ? '0' : '-1'));
+  }
+
   function render() {
     frame = 0;
     if (!active) return;
     const p = clamp((window.scrollY - start) / distance);
-    const forward = ease(p);
-    show(intro, 1 - ease((p - .04) / .22));
-    intro.style.transform = `translateY(${-p * 95}px)`;
-    show(thought, ease((p - .24) / .21));
-    thought.style.transform = `translateY(${(1 - ease((p - .24) / .3)) * 35}px)`;
-    stamp.style.opacity = (1 - ease(p / .25)).toFixed(3);
-    layers.sky.style.transform = `translateY(${-forward * 35}px)`;
-    layers.far.style.transform = `translateY(${-forward * 38}px) scale(${1 + forward * .17})`;
-    layers.ridge.style.transform = `translateY(${-forward * 25}px) scale(${1 + forward * .34})`;
-    layers.wood.style.transform = `translateY(${forward * 18}px) scale(${1 + forward * .62})`;
-    layers.meadow.style.transform = `translateY(${forward * 45}px) scale(${1 + forward * .72})`;
-    layers['front-left'].style.transform = `translate(${-forward * 245}px, ${forward * 80}px) scale(${1 + forward * .8})`;
-    layers['front-right'].style.transform = `translate(${forward * 245}px, ${forward * 80}px) scale(${1 + forward * .8})`;
-    shade.style.opacity = ease((p - .12) / .26).toFixed(3);
-    trace.style.strokeDashoffset = (1 - forward).toFixed(3);
-    progressBar.style.transform = `scaleX(${p})`;
-    const nextMile = p < .25 ? '00' : p < .85 ? '01' : '02';
-    if (nextMile !== currentMile) {
-      currentMile = nextMile;
-      mile.textContent = nextMile;
-      mileCopy.textContent = { '00': 'THE TRAILHEAD', '01': 'ALONG THE WAY', '02': 'THE JUNCTION' }[nextMile];
+    const travel = ease(p / .9);
+    const scale = .065 * Math.pow(finalScale / .065, travel);
+    show(intro, 1 - ease((p - .025) / .2));
+    intro.style.transform = `translateY(${-Math.min(p, .3) * 180}px)`;
+    // Mountains remain in view while nearby trees move past the camera.
+    layers.sky.style.transform = `translateY(${-travel * 50}px)`;
+    layers.far.style.transform = `translateY(${-travel * 60}px) scale(${1 + travel * .13})`;
+    layers.ridge.style.transform = `translateY(${-travel * 38}px) scale(${1 + travel * .3})`;
+    layers.wood.style.transform = `translateY(${travel * 5}px) scale(${1 + travel * .85})`;
+    layers.meadow.style.transform = `translateY(${travel * 70}px) scale(${1 + travel * 1.2})`;
+    layers['front-left'].style.transform = `translate(${-travel * 370}px, ${travel * 100}px) scale(${1 + travel * .65})`;
+    layers['front-right'].style.transform = `translate(${travel * 370}px, ${travel * 100}px) scale(${1 + travel * .65})`;
+    sign.style.transform = `translate(${lerp(775, 720, travel)}px, ${lerp(698, finalBase, travel)}px) scale(${scale})`;
+    show(arrival, ease((p - .7) / .18));
+    colophon.style.opacity = ease((p - .82) / .12).toFixed(3);
+    progressBar.style.transform = `scaleX(${clamp(p / .9)})`;
+    enableSigns(p >= .87);
+    const stop = p < .23 ? '00' : p < .87 ? '01' : '02';
+    if (stop !== previousStop) {
+      previousStop = stop;
+      mile.textContent = stop;
+      mileCopy.textContent = {'00':'THE TRAILHEAD','01':'APPROACHING THE JUNCTION','02':'CHOOSE YOUR TRAIL'}[stop];
+    }
+    if (focusOnArrival && p >= .995) {
+      focusOnArrival = false;
+      signs[0].focus({preventScroll:true});
     }
   }
 
@@ -66,6 +86,15 @@
   function measure() {
     start = walk.getBoundingClientRect().top + window.scrollY;
     distance = Math.max(1, walk.offsetHeight - stage.offsetHeight);
+    // SVG uses xMidYMax slice. Fit the *same* sign into its visible camera
+    // window, instead of swapping in a different mobile/desktop drawing.
+    const pixelsPerUnit = Math.max(stage.clientWidth / 1440, stage.clientHeight / 900);
+    const visibleWidth = stage.clientWidth / pixelsPerUnit;
+    const visibleHeight = stage.clientHeight / pixelsPerUnit;
+    finalScale = Math.min(1.05, visibleWidth * .88 / 640, visibleHeight * .66 / 635);
+    const signHeight = 635 * finalScale * pixelsPerUnit;
+    const basePixels = stage.clientHeight * .6 + signHeight * .5;
+    finalBase = 900 - (stage.clientHeight - basePixels) / pixelsPerUnit;
     schedule();
   }
 
@@ -75,43 +104,45 @@
     if (!active) {
       cancelAnimationFrame(frame);
       frame = 0;
-      [intro, thought, shade, stamp, trace, progressBar, ...Object.values(layers)].forEach(el => el.removeAttribute('style'));
+      focusOnArrival = false;
+      [intro, arrival, sign, colophon, progressBar, ...Object.values(layers)].forEach(el => el.removeAttribute('style'));
       intro.inert = false;
-      thought.inert = false;
+      arrival.inert = false;
+      enableSigns(true);
     }
     measure();
+    // Set the opening immediately; do not flash the large fallback sign.
+    if (active) { cancelAnimationFrame(frame); render(); }
   }
 
-  // Native links work without JS. In the pinned scene, this anchor needs its
-  // story's scroll position, rather than the element's sticky screen position.
-  home.querySelector('.walk-invitation').addEventListener('click', event => {
+  home.querySelectorAll('a[href="#trail-junction"]').forEach(link => {
+    link.addEventListener('click', event => {
+      if (!active || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      focusOnArrival = event.detail === 0 || link.classList.contains('trail-skip');
+      history.replaceState(null, '', '#trail-junction');
+      window.scrollTo({top:start + distance, behavior:'smooth'});
+      schedule();
+    });
+  });
+  home.querySelector('.trail-return').addEventListener('click', event => {
     if (!active || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
-    const destination = start + distance * .53;
-    window.scrollTo({ top: destination, behavior: 'smooth' });
+    focusOnArrival = false;
+    history.replaceState(null, '', location.pathname + location.search);
+    window.scrollTo({top:0, behavior:'smooth'});
+    // The focus target stays available when the sign shrinks back away.
+    home.querySelector('.brand a').focus({preventScroll:true});
   });
-  function restoreStoryAnchor() {
-    if (active && location.hash === '#along-the-way') window.scrollTo({ top: start + distance * .53, behavior: 'instant' });
+  function restoreAnchor() {
+    if (active && location.hash === '#trail-junction') window.scrollTo({top:start + distance, behavior:'instant'});
   }
-  window.addEventListener('scroll', schedule, { passive: true });
-  window.addEventListener('resize', measure, { passive: true });
-  window.addEventListener('pageshow', () => { measure(); restoreStoryAnchor(); });
-  window.addEventListener('hashchange', restoreStoryAnchor);
+  window.addEventListener('scroll', schedule, {passive:true});
+  window.addEventListener('resize', measure, {passive:true});
+  window.addEventListener('pageshow', () => { measure(); restoreAnchor(); });
+  window.addEventListener('hashchange', restoreAnchor);
   motion.addEventListener('change', configure);
   shortScreen.addEventListener('change', configure);
   configure();
-  restoreStoryAnchor();
-
-  // The highlighted route follows both a mouse and a keyboard focus.
-  const junction = home.querySelector('.junction-map');
-  const branches = [...junction.querySelectorAll('[data-branch]')];
-  function highlight(name) {
-    branches.forEach(branch => branch.classList.toggle('is-active', branch.dataset.branch === name));
-  }
-  junction.querySelectorAll('[data-trail]').forEach(sign => {
-    sign.addEventListener('pointerenter', () => highlight(sign.dataset.trail));
-    sign.addEventListener('focus', () => highlight(sign.dataset.trail));
-    sign.addEventListener('pointerleave', () => highlight(document.activeElement?.dataset.trail));
-    sign.addEventListener('blur', () => highlight(''));
-  });
+  restoreAnchor();
 })();

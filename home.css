@@ -1,41 +1,51 @@
-/* The homepage is a self-contained trail; shared pages keep their own layout. */
-.trail-home { --forest: #24382f; --cream: #f6f0e4; --gold: #dcc08c; background: var(--cream); color: var(--forest); }
-.trail-home h1, .trail-home h2, .trail-home h3 { font-family: var(--display); font-weight: 400; }
+/* One world, one camera, one signpost. Shared pages keep their own styles. */
+.trail-home { --forest: #24382f; --cream: #f6f0e4; --gold: #dcc08c; background: #324c3b; color: var(--forest); }
+.trail-home h1, .trail-home h2 { font-family: var(--display); font-weight: 400; }
 .trail-home em { font-weight: 400; }
-.trail-home a:focus-visible { outline: 3px solid #b46635; outline-offset: 7px; }
-.trail-home .trail-header { position: absolute; top: 0; left: 0; width: 100%; padding: 0 5%; min-height: 92px; grid-template-columns: 1fr auto 44px; background: transparent; border-color: rgba(60, 77, 56, .2); backdrop-filter: none; }
+.trail-home a:focus-visible { outline: 3px solid #b46635; outline-offset: 6px; }
+.trail-home .trail-header { position: absolute; top: 0; left: 0; width: 100%; padding: 0 5%; min-height: 92px; grid-template-columns: 1fr auto 44px; background: transparent; border-color: rgba(60,77,56,.2); backdrop-filter: none; }
 .trail-header .brand a { display: flex; align-items: center; gap: 12px; font-size: 1.38rem; }
 .trail-header .brand svg { width: 36px; height: 36px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linejoin: round; }
 .trail-header .trail-mark { border: 1px solid #a5af98; width: 35px; height: 35px; border-radius: 50%; text-decoration: none; font-size: 1.2rem; }
 .trail-skip { position: fixed; z-index: 100; top: 10px; left: 15px; padding: 12px 20px; background: var(--cream); transform: translateY(-150%); }
 .trail-skip:focus { transform: none; }
 .trail-walk { position: relative; }
-.walk-stage { position: relative; height: 900px; height: 100svh; min-height: 740px; overflow: hidden; isolation: isolate; background: #e2e6d8; }
+.walk-stage { position: relative; height: 100svh; height: 100dvh; min-height: 900px; overflow: hidden; isolation: isolate; background: #e2e6d8; }
 .trail-scene { position: absolute; inset: 0; width: 100%; height: 100%; }
-.trail-scene [data-depth] { transform-origin: 50% 78%; }
-.trail-trace { stroke-dasharray: 1; stroke-dashoffset: 1; }
-.walk-shade { position: absolute; inset: 0; background: linear-gradient(0deg, #24382f, transparent 65%), linear-gradient(90deg, rgba(36,56,47,.97), rgba(36,56,47,.85) 45%, rgba(36,56,47,.35)); opacity: 0; pointer-events: none; }
-.trail-intro { position: absolute; top: max(150px, 17%); width: 100%; text-align: center; padding: 0 22px; }
+.trail-scene [data-depth] { transform-origin: 720px 690px; }
+.trail-scene .junction-sign { transform-origin: 0 0; }
+.trail-intro { position: absolute; top: 128px; width: 100%; text-align: center; padding: 0 22px; pointer-events: none; }
+.trail-intro a { pointer-events: auto; }
 .trail-label { display: flex; gap: 12px; align-items: center; font: 600 .66rem/1.6 var(--utility); letter-spacing: .19em; text-transform: uppercase; }
 .trail-intro .trail-label { justify-content: center; margin: 0 0 19px; }
 .trail-dot { width: 6px; height: 6px; border-radius: 50%; background: #b46635; }
-.trail-intro h1 { font-size: clamp(5rem, 8.7vw, 9.5rem); letter-spacing: -.065em; line-height: 1.08; margin: 0; }
+.trail-intro h1 { font-size: clamp(3.7rem, 6vw, 5.5rem); letter-spacing: -.065em; line-height: 1.08; margin: 0; }
 .trail-intro h1 em { color: #4f6750; }
-.trail-intro-lead { font-size: clamp(.96rem, 1.35vw, 1.15rem); line-height: 1.75; margin: 23px 0 0; }
+.trail-intro-lead { font-size: clamp(.96rem, 1.35vw, 1.15rem); line-height: 1.75; margin: 20px 0 0; }
 .walk-invitation { display: inline-flex; gap: 20px; align-items: center; margin-top: 27px; font-size: .72rem; font-weight: 600; text-decoration: none; }
 .walk-invitation span { display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid #8b9a80; border-radius: 50%; font-size: 1rem; transition: transform .25s; }
 .walk-invitation:hover span { transform: translateY(4px); }
-.trail-stamp { position: absolute; right: 6%; top: 46%; width: 76px; height: 88px; color: #4e634d; transform: rotate(9deg); }
-.trail-stamp svg { width: 100%; fill: none; stroke: currentColor; stroke-width: 1.1; }
-.trail-stamp span { position: absolute; top: 15px; left: 0; right: 0; text-align: center; font: 700 7px/1.2 var(--utility); letter-spacing: .09em; text-transform: uppercase; }
-.trail-thought { position: relative; padding: 100px 7%; color: var(--cream); background: var(--forest); }
-.trail-thought .trail-label { color: var(--gold); }
-.trail-thought h2 { margin: 20px 0 27px; font-size: clamp(3.5rem, 6.5vw, 7rem); line-height: 1.02; letter-spacing: -.05em; }
-.trail-thought h2 em { color: var(--gold); }
-.trail-thought p:not(.trail-label) { font-size: 1rem; line-height: 1.8; }
-.thought-link { display: inline-flex; align-items: center; gap: 28px; margin-top: 22px; font-size: .78rem; color: var(--cream); text-decoration: none; border-bottom: 1px solid #c4c5a7; padding-bottom: 8px; }
-.thought-link:hover { color: var(--gold); }
-.walk-furniture { position: absolute; bottom: 34px; left: 5%; right: 5%; display: flex; gap: 23px; align-items: center; color: var(--cream); }
+.arrival-copy { position: absolute; top: 13%; left: 0; right: 0; text-align: center; pointer-events: none; }
+.arrival-copy .trail-label { justify-content: center; font-size: .6rem; margin: 0 0 14px; }
+.arrival-copy h2 { font-size: clamp(2.6rem, 5.5vw, 5rem); line-height: 1; letter-spacing: -.04em; margin: 0; }
+.arrival-copy > p:last-child { font-size: .86rem; margin: 15px 0 0; }
+.sign-board { transform-origin: 0 55px; transition: transform .2s; }
+.sign-link:nth-of-type(odd) .sign-board { transform: rotate(-1.1deg); }
+.sign-link:nth-of-type(even) .sign-board { transform: rotate(1deg); }
+.sign-shadow { fill: #203a2b; opacity: .32; }
+.sign-face { fill: url('#sign-wood'); stroke: #a8915f; stroke-width: 2; transition: fill .2s, stroke .2s; }
+.sign-border { fill: none; stroke: #b9a577; stroke-width: 1.1; opacity: .8; }
+.sign-arrow, .sign-icon { fill: none; stroke: #e4cfa0; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.sign-title { font: 48px var(--display); fill: #fbebc6; letter-spacing: -.8px; }
+.sign-subtitle { font: 18px var(--body); fill: #dfd3b2; }
+.sign-bolts { fill: #b6a16e; stroke: #413c29; stroke-width: 1; }
+.sign-link { cursor: pointer; }
+.sign-link:hover .sign-board, .sign-link:focus-visible .sign-board { transform: translateY(-3px); }
+.sign-link:hover .sign-face, .sign-link:focus-visible .sign-face { fill: #716545; stroke: #f4d595; }
+.sign-link:hover .sign-border, .sign-link:focus-visible .sign-border { opacity: 1; stroke: #ffe6b7; stroke-width: 3; }
+.sign-link:focus-visible { outline: none !important; }
+.junction-trails { pointer-events: none; }
+.walk-furniture { position: absolute; bottom: 46px; left: 5%; right: 5%; display: flex; gap: 23px; align-items: center; color: var(--cream); }
 .walk-mile { display: flex; align-items: center; gap: 12px; flex: 0 0 180px; }
 .mile-number { font-family: var(--display); font-size: 2.5rem; line-height: 1; }
 .mile-copy { font: 600 .6rem/1.5 var(--utility); letter-spacing: .16em; }
@@ -43,78 +53,31 @@
 .walk-progress span { display: block; background: var(--cream); height: 1px; transform: scaleX(0); transform-origin: left; }
 .walk-furniture > a { margin-left: auto; color: var(--cream); text-decoration: none; font-size: .67rem; letter-spacing: .02em; }
 .walk-furniture > a span { margin-left: 14px; }
-/* Without motion (or JS) the welcome and story remain in normal document order. */
-.trail-home:not(.journey-motion) .walk-stage { height: auto; padding-top: max(740px, 100svh); }
-.trail-home:not(.journey-motion) .trail-scene { height: max(740px, 100svh); }
-.trail-home:not(.journey-motion) .trail-intro { top: 155px; }
+.trail-return { display: none; }
+.scene-colophon { position: absolute; bottom: 10px; left: 5%; right: 5%; margin: 0; text-align: center; color: #e3e8d4; font: .55rem/1.4 var(--utility); letter-spacing: .045em; }
+.junction-anchor { position: absolute; top: 330px; left: 0; width: 1px; height: 1px; pointer-events: none; }
+/* A still composition is also the no-JS fallback: the very same SVG signs. */
+.trail-home:not(.journey-motion) .arrival-copy,
+.trail-home:not(.journey-motion) .walk-invitation,
 .trail-home:not(.journey-motion) .walk-furniture { display: none; }
-.journey-motion .trail-walk { height: 280svh; }
+.trail-home:not(.journey-motion) .trail-intro-lead { font-size: .95rem; }
+.journey-motion .trail-walk { height: 290svh; }
 .journey-motion .walk-stage { position: sticky; top: 0; min-height: 0; }
-.journey-motion .trail-thought { position: absolute; left: 8%; top: 23%; padding: 0; background: none; width: 440px; opacity: 0; visibility: hidden; }
-.journey-motion .trail-scene [data-depth] { will-change: transform; }
-.journey-motion .trail-intro, .journey-motion .trail-thought { will-change: transform, opacity; }
-.trail-junction { position: relative; padding: 82px 5% 38px; color: var(--cream); background: var(--forest); scroll-margin-top: 0; overflow: hidden; }
-.trail-junction::before { content: ''; position: absolute; inset: 0; background: url('assets/site-topography.svg') center / 850px; opacity: .095; pointer-events: none; filter: invert(1); }
-.junction-heading { position: relative; text-align: center; }
-.junction-heading .trail-label { color: var(--gold); justify-content: center; }
-.junction-heading h2 { font-size: clamp(4rem, 7.4vw, 7rem); line-height: 1.1; letter-spacing: -.05em; margin: 16px 0; }
-.junction-heading > p:last-child { color: #c5cbbb; font-size: .95rem; }
-.junction-map { position: relative; width: min(1080px, 100%); margin: 40px auto 0; padding: 30px 0 128px; }
-.junction-paths { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.junction-paths path { stroke: #708064; stroke-width: 2; stroke-dasharray: 3 9; vector-effect: non-scaling-stroke; transition: stroke .2s, stroke-width .2s; }
-.junction-paths .junction-trunk { stroke: #9fa487; stroke-width: 2; }
-.junction-paths path.is-active { stroke: #f0cd8d; stroke-width: 4; }
-.signpost-pole { position: absolute; top: 4px; bottom: 72px; width: 18px; left: calc(50% - 9px); background: repeating-linear-gradient(92deg, #755b3b 0 3px, #806648 4px 6px, #745a3b 8px 10px); border: 1px solid #a18b5d; border-radius: 4px; transform: rotate(-1deg); box-shadow: 7px 12px 0 rgba(0,0,0,.13); }
-.signpost-pole span { position: absolute; bottom: 21px; left: 1px; color: #d5c094; font-size: 8px; letter-spacing: 2px; writing-mode: vertical-lr; }
-.trail-signs { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 36px 50px; }
-.trail-sign { display: flex; align-items: center; gap: 20px; min-height: 172px; position: relative; padding: 27px 24px; color: #f5e8c9; border: 1px solid #a99365; background: #4a4c36; border-radius: 3px; box-shadow: 5px 9px 0 rgba(11,26,18,.26); text-decoration: none; transition: transform .25s, background .25s, box-shadow .25s; }
-.trail-sign::before { content: ''; position: absolute; inset: 7px; border: 1px solid rgba(208,192,143,.3); border-radius: 2px; pointer-events: none; }
-.sign-left { transform: rotate(-2deg); }
-.sign-right { transform: translateY(24px) rotate(2deg); }
-.trail-sign:nth-child(3) { transform: rotate(1deg); }
-.trail-sign:nth-child(4) { transform: translateY(24px) rotate(-1deg); }
-.sign-arrow { font-family: Georgia, serif; font-size: 2.15rem; color: #d5bf8a; flex-shrink: 0; }
-.sign-copy { min-width: 0; display: block; position: relative; z-index: 1; }
-.sign-meta { font: 600 .56rem/1.6 var(--utility); letter-spacing: .13em; text-transform: uppercase; color: #d1c29f; }
-.trail-sign h3 { color: #faedcc; font-size: clamp(1.8rem, 2.65vw, 2.55rem); letter-spacing: -.025em; margin: 5px 0 8px; line-height: 1.2; }
-.sign-description { display: block; font-size: .75rem; line-height: 1.55; color: #dfd8bd; max-width: 250px; }
-.trail-sign img { flex-shrink: 0; width: 66px; height: 68px; object-fit: contain; margin-left: auto; filter: sepia(.6) brightness(1.9); opacity: .75; }
-.trail-sign:hover, .trail-sign:focus-visible { background: #606047; color: #fff5d9; transform: translateY(-5px) rotate(0); box-shadow: 5px 14px 0 rgba(11,26,18,.26); }
-.trail-sign:focus-visible { outline-color: #f0cd8d !important; }
-.junction-you { position: absolute; bottom: -7px; left: 0; right: 0; text-align: center; font: .64rem/1.6 var(--utility); letter-spacing: .075em; color: #c2cbb6; }
-.junction-you span { display: block; font-size: 1.6rem; color: #e4c591; margin-bottom: 9px; }
-.junction-bottom { position: relative; display: flex; align-items: center; justify-content: center; gap: 23px; margin-top: 47px; color: #b8c1ae; font: italic .95rem var(--display); }
-.junction-bottom svg { width: 20px; height: 34px; fill: none; stroke: #b8c1ae; stroke-width: 1; }
-.trail-camp { position: relative; padding: 38px 8% 94px; background: linear-gradient(#f6f0e4ec, #f6f0e4ec), url('assets/site-topography.svg') center / 700px; }
-.camp-topline { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding-bottom: 28px; border-bottom: 1px solid #d4c9b5; }
-.camp-topline .trail-label { margin: 0; color: #6c6d51; }
-.camp-coordinates { font: .58rem/1.6 var(--utility); letter-spacing: .12em; text-transform: uppercase; }
-.camp-content { display: grid; grid-template-columns: 1.5fr 1fr; gap: 50px; align-items: center; max-width: 1100px; margin: 68px auto 0; }
-.camp-content h2 { font-size: clamp(3.8rem, 6.6vw, 6.6rem); line-height: 1; letter-spacing: -.05em; margin: 0 0 27px; }
-.camp-content h2 em { color: #6a7756; }
-.camp-content p { font-size: .95rem; line-height: 1.85; }
-.camp-link { display: inline-flex; align-items: center; gap: 60px; padding: 15px 0; margin-top: 14px; border-bottom: 1px solid #849077; font-size: .9rem; font-weight: 600; text-decoration: none; }
-.camp-link span { font-size: 1.6rem; }
-.camp-art { display: grid; justify-items: center; transform: rotate(5deg); }
-.camp-art img { width: 200px; height: auto; mix-blend-mode: multiply; }
-.camp-art span { font: italic 1.3rem/1.4 var(--display); text-align: center; color: #777960; margin-top: 15px; }
-.trail-home .trail-footer { display: flex; justify-content: space-between; align-items: center; gap: 24px; margin: 0; padding: 26px 5%; border-top: 1px solid #d4c9b5; background: var(--cream); font-size: .68rem; }
-.trail-footer a { text-decoration: none; }
-.trail-footer a:first-child { font-family: var(--display); font-size: 1.12rem; }
-.trail-footer p { margin: 0; }
-@media (min-width: 1600px) { .trail-intro { top: 17%; } }
+.journey-motion .junction-anchor { top: auto; bottom: 100svh; bottom: 100dvh; }
+.journey-motion .trail-intro { top: max(135px, 17%); }
+.journey-motion .trail-intro h1 { font-size: clamp(5rem, 8.7vw, 9.5rem); }
+.journey-motion .arrival-copy { opacity: 0; visibility: hidden; }
+.journey-motion .scene-colophon { opacity: 0; }
+.journey-motion .junction-sign, .journey-motion [data-depth] { will-change: transform; }
+.journey-motion:not(.at-junction) .sign-link { pointer-events: none; }
+.at-junction .junction-shortcut { display: none; }
+.at-junction .trail-return { display: inline; }
 @media (max-height: 740px) and (min-width: 761px) {
-  .trail-intro { top: 115px; }
-  .trail-intro h1 { font-size: 6.5rem; }
+  .journey-motion .trail-intro { top: 113px; }
+  .journey-motion .trail-intro h1 { font-size: 6rem; }
   .trail-intro .trail-label { margin-bottom: 10px; }
   .trail-intro-lead { margin-top: 14px; }
   .walk-invitation { margin-top: 15px; }
-}
-@media (max-width: 1000px) {
-  .trail-sign { padding: 26px 22px; gap: 13px; }
-  .trail-sign img { display: none; }
-  .trail-signs { gap: 32px 36px; }
-  .trail-stamp { right: 5%; top: 49%; }
 }
 @media (max-width: 760px) {
   .trail-home .trail-header { min-height: 78px; padding: 0 22px; grid-template-columns: 1fr auto; }
@@ -126,56 +89,26 @@
   .trail-header.menu-open .nav { opacity: 1; visibility: visible; pointer-events: auto; transform: none; }
   .trail-header .nav a { padding: 12px 2px; }
   .trail-header .nav a::after { bottom: 6px; }
-  /* With JS disabled, all four destinations still have a working header. */
   .trail-home:not(.trail-ready) .trail-header .nav { position: static; display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 0 0 14px; grid-column: 1 / -1; opacity: 1; visibility: visible; pointer-events: auto; transform: none; border: 0; background: none; }
-  .trail-intro { top: 140px; }
-  .trail-intro h1 { font-size: clamp(4.2rem, 13vw, 6rem); }
+  .trail-intro, .journey-motion .trail-intro { top: 140px; }
+  .trail-intro h1, .journey-motion .trail-intro h1 { font-size: clamp(3.6rem, 13vw, 6rem); }
   .trail-intro .trail-label { font-size: .5rem; letter-spacing: .14em; gap: 8px; }
   .trail-intro-lead { font-size: .9rem; margin-top: 18px; }
-  .trail-stamp { display: none; }
-  .walk-shade { background: linear-gradient(0deg, #24382f, rgba(36,56,47,.91)); }
-  .trail-scene { width: 150%; max-width: none; left: -25%; }
-  .journey-motion .trail-walk { height: 250svh; }
-  .journey-motion .trail-thought { top: 23%; left: 8%; width: 84%; }
-  .trail-thought h2 { font-size: 3.8rem; }
-  .trail-thought p:not(.trail-label) { font-size: .88rem; }
-  .walk-furniture { bottom: 24px; left: 7%; right: 7%; gap: 8px; }
+  .journey-motion .trail-walk { height: 270svh; }
+  .arrival-copy { top: 19%; }
+  .arrival-copy h2 { font-size: 2.9rem; }
+  .arrival-copy .trail-label { font-size: .48rem; letter-spacing: .13em; }
+  .arrival-copy > p:last-child { font-size: .76rem; }
+  .walk-furniture { bottom: 47px; left: 7%; right: 7%; gap: 8px; }
   .walk-mile { flex-basis: 126px; gap: 8px; }
   .mile-number { font-size: 2rem; }
   .mile-copy { font-size: .48rem; }
   .walk-progress { width: 42px; }
   .walk-furniture > a { font-size: .59rem; }
   .walk-furniture > a span { margin-left: 4px; }
-  .trail-junction { padding: 62px 24px 35px; }
-  .junction-heading h2 { font-size: 4.5rem; }
-  .junction-heading > p:last-child { font-size: .86rem; }
-  .junction-map { padding-top: 20px; padding-bottom: 104px; margin-top: 25px; }
-  .trail-signs { grid-template-columns: 1fr; gap: 24px; padding: 0 4px; }
-  .trail-sign { min-height: 140px; padding: 22px; gap: 22px; }
-  .trail-sign h3 { font-size: 2.1rem; }
-  .trail-sign img { display: block; width: 48px; height: 54px; }
-  .trail-signs .trail-sign { transform: rotate(-1.5deg); }
-  .trail-signs .trail-sign:nth-child(even) { transform: rotate(1.5deg); }
-  .trail-signs .trail-sign:hover, .trail-signs .trail-sign:focus-visible { transform: translateY(-3px); }
-  .sign-arrow { font-size: 1.7rem; }
-  .sign-description { font-size: .72rem; }
-  .sign-meta { font-size: .49rem; }
-  .junction-paths { display: none; }
-  .signpost-pole { bottom: 58px; }
-  .junction-bottom { margin-top: 37px; }
-  .trail-camp { padding: 29px 7% 58px; }
-  .camp-coordinates { display: none; }
-  .camp-content { grid-template-columns: 1fr; margin-top: 43px; gap: 45px; }
-  .camp-content h2 { font-size: 3.8rem; }
-  .camp-content p { font-size: .9rem; }
-  .camp-art { display: flex; gap: 14px; justify-content: center; transform: rotate(-3deg); }
-  .camp-art img { width: 106px; }
-  .camp-art span { font-size: 1rem; }
-  .trail-home .trail-footer { flex-wrap: wrap; justify-content: center; gap: 12px 24px; padding: 24px; }
-  .trail-footer p { order: 3; width: 100%; text-align: center; }
+  .trail-scene .junction-sign { transform: translate(720px, 795px) scale(.52); }
+  .scene-colophon { bottom: 14px; font-size: .47rem; }
 }
-@media (max-width: 450px) { .trail-sign img { display: none; } }
-@media (max-width: 380px) { .trail-sign h3 { font-size: 1.8rem; } .trail-sign { padding: 23px 18px; gap: 15px; } .trail-sign img { display: none; } .walk-progress { display: none; } .trail-thought h2 { font-size: 3.25rem; } }
-@media (prefers-reduced-motion: reduce) {
-  .trail-home *, .trail-home *::before, .trail-home *::after { animation: none !important; transition: none !important; }
-}
+@media (min-width: 500px) and (max-width: 760px) { .trail-scene .junction-sign { transform: translate(720px, 840px) scale(.7); } }
+@media (max-width: 360px) { .trail-scene .junction-sign { transform: translate(720px, 775px) scale(.43); } .walk-progress { display: none; } .arrival-copy h2 { font-size: 2.5rem; } }
+@media (prefers-reduced-motion: reduce) { .trail-home *, .trail-home *::before, .trail-home *::after { animation: none !important; transition: none !important; } }

@@ -19,6 +19,10 @@ const output = document.querySelector('#log');
 const run = document.querySelector('#run');
 const sizes = [[1366,900],[768,1024],[390,844],[320,740],[844,390]];
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+async function until(condition) {
+  const started = Date.now();
+  while (!condition() && Date.now() - started < 6000) await pause(50);
+}
 async function load(width, height, noScript = false) {
   frame.width = width; frame.height = height;
   frame.setAttribute('sandbox', noScript ? 'allow-same-origin' : 'allow-same-origin allow-scripts');
@@ -29,6 +33,7 @@ async function load(width, height, noScript = false) {
   });
   frame.scrollIntoView({behavior:'instant',block:'start'});
   await pause(150);
+  frame.contentWindow.scrollTo({top:0,behavior:'instant'});
 }
 function fits(rect, width) { return rect.left >= -1 && rect.right <= width + 1; }
 run.addEventListener('click', async () => {
@@ -57,32 +62,42 @@ run.addEventListener('click', async () => {
         doc.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape',bubbles:true}));
         check(menu.getAttribute('aria-expanded') === 'false', `${label}: Escape closes menu`);
       }
+      const sign = doc.querySelector('.junction-sign');
+      const links = [...doc.querySelectorAll('.sign-link')];
+      check(doc.querySelectorAll('main > section').length === 1 && doc.querySelectorAll('.trail-scene').length === 1, `${label}: one continuous SVG scene`);
+      check(links.length === 4 && links.every(link => link.closest('svg') === doc.querySelector('.trail-scene')), `${label}: all four links belong to the landscape`);
       if (doc.body.classList.contains('journey-motion')) {
-        const thought = doc.querySelector('.trail-thought');
-        doc.querySelector('.walk-invitation').click();
-        // Wait for the visitor-facing smooth scroll to settle, rather than
-        // assuming background/embedded frames render within a fixed delay.
-        const started = Date.now();
-        while (Number(thought.style.opacity) < .99 && Date.now() - started < 5000) await pause(50);
-        check(Number(thought.style.opacity) > .98 && thought.getBoundingClientRect().bottom < height, `${label}: mid-trail story is readable (scroll ${Math.round(win.scrollY)}, opacity ${thought.style.opacity})`);
-        check(doc.querySelector('.trail-intro').inert, `${label}: faded intro leaves keyboard navigation`);
+        const openingWidth = sign.getBoundingClientRect().width;
+        check(sign.getAttribute('aria-hidden') === 'true' && links.every(link => link.getAttribute('tabindex') === '-1'), `${label}: distant sign is not a tiny keyboard target`);
+        const walk = doc.querySelector('.trail-walk');
+        const distance = walk.offsetHeight - doc.querySelector('.walk-stage').offsetHeight;
+        win.scrollTo({top:distance * .48,behavior:'smooth'});
+        await until(() => sign.getBoundingClientRect().width > openingWidth * 1.6);
+        check(sign === doc.querySelector('.junction-sign') && sign.getBoundingClientRect().width > openingWidth * 1.6, `${label}: the original sign grows during approach`);
+        doc.querySelector('.junction-shortcut').click();
+        await until(() => doc.body.classList.contains('at-junction') && win.scrollY >= distance - 2);
+        check(sign === doc.querySelector('.junction-sign') && sign.getBoundingClientRect().width > openingWidth * 4, `${label}: same sign at the destination`);
+        check(doc.querySelector('.trail-intro').inert && win.getComputedStyle(doc.querySelector('.arrival-copy')).visibility === 'visible', `${label}: welcome gives way to the junction caption`);
+        check(doc.documentElement.scrollHeight - win.innerHeight - win.scrollY <= 3, `${label}: scroll ends in the scene, without another section`);
       } else {
-        check(win.getComputedStyle(doc.querySelector('.trail-thought')).position === 'relative', `${label}: static layout in a short viewport`);
+        check(win.getComputedStyle(doc.querySelector('.walk-stage')).position !== 'sticky', `${label}: short screen uses the still composition`);
       }
-      doc.querySelector('#trail-junction').scrollIntoView({behavior:'instant'});
-      await pause(100);
-      const signs = [...doc.querySelectorAll('.trail-sign')];
-      check(signs.length === 4 && signs.every(sign => fits(sign.getBoundingClientRect(), viewport)), `${label}: all four trail signs fit`);
-      signs[0].focus({preventScroll:true});
-      check(doc.querySelector('[data-branch="projects"]').classList.contains('is-active'), `${label}: keyboard focus highlights its route`);
-      check([...doc.images].every(img => img.complete && img.naturalWidth > 0), `${label}: images load`);
+      check(links.every(link => fits(link.getBoundingClientRect(), viewport)), `${label}: all signboards fit the screen width`);
+      if (height > 580) check(links.every(link => {const box=link.getBoundingClientRect();return box.top >= 0 && box.bottom <= height && box.height >= 44;}), `${label}: every destination is visible and large enough to tap`);
+      check(links.every(link => link.getAttribute('tabindex') !== '-1') && sign.getAttribute('aria-hidden') !== 'true', `${label}: destination links are keyboard accessible`);
+      check(doc.querySelector('[data-trail="connect"]').getAttribute('href') === 'mailto:gmfennema@gmail.com', `${label}: connect sign opens email`);
+      if (doc.body.classList.contains('journey-motion')) {
+        doc.querySelector('.trail-return').click();
+        await until(() => win.scrollY < 2 && doc.querySelector('.trail-intro').style.opacity === '1.000');
+        check(win.scrollY < 2 && !doc.querySelector('.trail-intro').inert, `${label}: return restores the opening view`);
+      }
     }
     await load(390,844,true);
     const doc = frame.contentDocument;
-    check(!doc.body.classList.contains('journey-motion'), 'No JS: static layout');
-    check(frame.contentWindow.getComputedStyle(doc.querySelector('.trail-thought')).visibility === 'visible', 'No JS: story remains visible');
+    check(!doc.body.classList.contains('journey-motion'), 'No JS: still SVG composition');
     check([...doc.querySelectorAll('.nav a')].every(link => frame.contentWindow.getComputedStyle(link).visibility === 'visible'), 'No JS: primary navigation remains visible');
-    check(doc.querySelectorAll('.trail-sign[href]').length === 4, 'No JS: all destination links remain available');
+    const links = [...doc.querySelectorAll('.sign-link')];
+    check(links.length === 4 && links.every(link => link.hasAttribute('href') && fits(link.getBoundingClientRect(),doc.documentElement.clientWidth)), 'No JS: all four SVG links are available and fit');
     output.textContent += `RESULT ${failures ? 'FAIL' : 'PASS'} · ${checks-failures}/${checks} checks passed\n`;
   } catch (error) { output.textContent += `ERROR ${error.message}\n`; }
   finally { run.disabled = false; await load(390,844); }
