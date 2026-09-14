@@ -105,7 +105,7 @@ near-plane clipping, passing-landmark and responsive arrival checks.
 shortcut. The shortcut uses a 1.8–4.8 second quintic scroll, then releases its
 animation frame. Wheel, touch, pointer, scroll keys, Escape, Tab, hidden tabs,
 and reduced motion cancel it immediately. It never prevents native scrolling.
-The mountain panorama contains 27 individually detailed massifs. Regenerate
+The mountain panorama contains 14 broad, individually detailed gray massifs across three overlapping ranges. Regenerate
 its two native SVG assets with `python3 tools/draw-mountains.py`. Their SVG
 image elements stay inside the existing far/ridge camera layers, keeping the
 large illustration out of the interactive DOM. The asset version tool covers
