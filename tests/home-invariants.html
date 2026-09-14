@@ -85,7 +85,7 @@ run.addEventListener('click', async () => {
       check(links.every(link => fits(link.getBoundingClientRect(), viewport)), `${label}: all signboards fit the screen width`);
       if (height > 580) check(links.every(link => {const box=link.getBoundingClientRect();return box.top >= 0 && box.bottom <= height && box.height >= 44;}), `${label}: every destination is visible and large enough to tap`);
       check(links.every(link => link.getAttribute('tabindex') !== '-1') && sign.getAttribute('aria-hidden') !== 'true', `${label}: destination links are keyboard accessible`);
-      check(doc.querySelector('[data-trail="connect"]').getAttribute('href') === 'mailto:gmfennema@gmail.com', `${label}: connect sign opens email`);
+      check(doc.querySelector('[data-trail="connect"]').getAttribute('href') === 'about.html#contact', `${label}: connect sign leads to the contact area`);
       if (doc.body.classList.contains('journey-motion')) {
         doc.querySelector('.trail-return').click();
         await until(() => win.scrollY < 2 && doc.querySelector('.trail-intro').style.opacity === '1.000');

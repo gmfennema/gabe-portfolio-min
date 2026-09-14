@@ -90,8 +90,10 @@
   .trail-header .nav a { padding: 12px 2px; }
   .trail-header .nav a::after { bottom: 6px; }
   .trail-home:not(.trail-ready) .trail-header .nav { position: static; display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 0 0 14px; grid-column: 1 / -1; opacity: 1; visibility: visible; pointer-events: auto; transform: none; border: 0; background: none; }
+  .trail-home:not(.trail-ready) .trail-header { gap: 10px; padding-top: 18px; }
+  .trail-home:not(.trail-ready) .trail-header .nav a { padding: 4px 2px; font-size: .65rem; }
   .trail-intro, .journey-motion .trail-intro { top: 140px; }
-  .trail-intro h1, .journey-motion .trail-intro h1 { font-size: clamp(3.6rem, 13vw, 6rem); }
+  .trail-intro h1, .journey-motion .trail-intro h1 { font-size: clamp(2.7rem, 13vw, 6rem); }
   .trail-intro .trail-label { font-size: .5rem; letter-spacing: .14em; gap: 8px; }
   .trail-intro-lead { font-size: .9rem; margin-top: 18px; }
   .journey-motion .trail-walk { height: 270svh; }
