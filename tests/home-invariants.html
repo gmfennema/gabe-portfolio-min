@@ -70,6 +70,8 @@ run.addEventListener('click', async () => {
       check(links.length === 4 && links.every(link => link.closest('svg') === doc.querySelector('.trail-scene')), `${label}: all four links belong to the landscape`);
       if (doc.body.classList.contains('journey-motion')) {
         const openingWidth = sign.getBoundingClientRect().width;
+        const openingTree = [...doc.querySelectorAll('.walking-objects use')].at(-1);
+        const openingTreeVisible = openingTree.style.display !== 'none';
         check(sign.getAttribute('aria-hidden') === 'true' && links.every(link => link.getAttribute('tabindex') === '-1'), `${label}: distant sign is not a tiny keyboard target`);
         const walk = doc.querySelector('.trail-walk');
         const distance = walk.offsetHeight - doc.querySelector('.walk-stage').offsetHeight;
@@ -77,7 +79,6 @@ run.addEventListener('click', async () => {
         await until(() => sign.getBoundingClientRect().width > openingWidth * 1.6);
         check(sign === doc.querySelector('.junction-sign') && sign.getBoundingClientRect().width > openingWidth * 1.6, `${label}: the original sign grows during approach`);
         const road = doc.querySelector('.world-road');
-        const openingTree = doc.querySelector('.walking-objects use');
         let grounded = true, opaque = true;
         for (const phase of [0,.25,.5,.75,1]) {
           win.scrollTo({top:distance * phase,behavior:'instant'});
@@ -89,7 +90,7 @@ run.addEventListener('click', async () => {
         }
         check(grounded && road === doc.querySelector('.world-road'), `${label}: same road stays beneath the walker through every bend`);
         check(opaque && win.getComputedStyle(doc.querySelector('.junction-trails')).display === 'none', `${label}: no road fade or destination-path handoff`);
-        check(openingTree.style.display === 'none', `${label}: opening trees pass behind the walker`);
+        check(openingTreeVisible && openingTree.style.display === 'none', `${label}: opening trees pass behind the walker`);
         doc.querySelector('.trail-return').click();
         await until(() => win.scrollY < 2);
         doc.querySelector('.junction-shortcut').click();

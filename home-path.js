@@ -36,9 +36,10 @@ const TrailWorld = (() => {
     const heading = Math.atan(slope(z));
     const base = 900 - vh * .4 + 635 * finalScale * .5;
     const horizon = base - EYE * finalScale / SIGN_UNIT;
+    // Look down into the trail during the walk, then lift toward the sign.
     // Small, scroll-bound footfalls taper away at both ends; no idle animation.
     const envelope = Math.sin(Math.PI * clamp(progress)) ** 2;
-    return {x,z,s,heading,focal, horizon:horizon + Math.sin(s * Math.PI / 1.7) * 1.1 * envelope,
+    return {x,z,s,heading,focal, horizon:horizon - 140 * envelope + Math.sin(s * Math.PI / 1.7) * 1.1 * envelope,
       eye:EYE, sin:Math.sin(heading), cos:Math.cos(heading), vw,vh,stop};
   }
   function relative(point, cam) {

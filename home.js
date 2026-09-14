@@ -14,7 +14,6 @@
   const mileCopy = home.querySelector('.mile-copy');
   const colophon = home.querySelector('.scene-colophon');
   const world = TrailWorld;
-  const scene = home.querySelector('.trail-scene');
   const objectLayer = home.querySelector('.walking-objects');
   const signHome = sign.parentNode;
   const signNext = sign.nextSibling;
@@ -123,7 +122,7 @@
     intro.style.transform = `translateY(${-Math.min(p, .3) * 180}px)`;
     show(arrival, ease((p - .8) / .14));
     colophon.style.opacity = ease((p - .82) / .12).toFixed(3);
-    progressBar.style.transform = `scaleX(${clamp(p / .9)})`;
+    progressBar.style.transform = `scaleX(${travel})`;
     enableSigns(p >= .94);
     const stop = p < .23 ? '00' : p < .94 ? '01' : '02';
     if (stop !== previousStop) {
