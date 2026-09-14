@@ -58,12 +58,13 @@ run.addEventListener('click', async () => {
         check(menu.getAttribute('aria-expanded') === 'false', `${label}: Escape closes menu`);
       }
       if (doc.body.classList.contains('journey-motion')) {
-        const walk = doc.querySelector('.trail-walk');
-        const stage = doc.querySelector('.walk-stage');
-        win.scrollTo({top:(walk.offsetHeight-stage.offsetHeight)*.53,behavior:'instant'});
-        await pause(250);
         const thought = doc.querySelector('.trail-thought');
-        check(Number(thought.style.opacity) > .98 && thought.getBoundingClientRect().bottom < height, `${label}: mid-trail story is readable`);
+        doc.querySelector('.walk-invitation').click();
+        // Wait for the visitor-facing smooth scroll to settle, rather than
+        // assuming background/embedded frames render within a fixed delay.
+        const started = Date.now();
+        while (Number(thought.style.opacity) < .99 && Date.now() - started < 5000) await pause(50);
+        check(Number(thought.style.opacity) > .98 && thought.getBoundingClientRect().bottom < height, `${label}: mid-trail story is readable (scroll ${Math.round(win.scrollY)}, opacity ${thought.style.opacity})`);
         check(doc.querySelector('.trail-intro').inert, `${label}: faded intro leaves keyboard navigation`);
       } else {
         check(win.getComputedStyle(doc.querySelector('.trail-thought')).position === 'relative', `${label}: static layout in a short viewport`);
