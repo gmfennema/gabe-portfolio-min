@@ -105,8 +105,11 @@ near-plane clipping, passing-landmark and responsive arrival checks.
 shortcut. The shortcut uses a 1.8–4.8 second quintic scroll, then releases its
 animation frame. Wheel, touch, pointer, scroll keys, Escape, Tab, hidden tabs,
 and reduced motion cancel it immediately. It never prevents native scrolling.
-The mountains remain an SVG panorama with snow cornices, granite fractures,
-layered distant summits, and engraved foothills. The faraway sign leaves the tab order until it is close enough;
+The mountain panorama contains 27 individually detailed massifs. Regenerate
+its two native SVG assets with `python3 tools/draw-mountains.py`. Their SVG
+image elements stay inside the existing far/ridge camera layers, keeping the
+large illustration out of the interactive DOM. The asset version tool covers
+both SVGs as well as scripts and styles. The faraway sign leaves the tab order until it is close enough;
 the skip link brings it into view. Reduced motion, short viewports, and no JS
 show a still composition of the same SVG with working sign links.
 
