@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Point every page at the current site.css and site.js by content hash.
+"""Point every page at the current shared and homepage assets by content hash.
 
 Pages request the stylesheet and script with a ?v= token. When that token is
 edited by hand it gets forgotten, and browsers keep serving the copy they
@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-ASSETS = ("site.css", "site.js")
+ASSETS = ("site.css", "site.js", "home.css", "home.js")
 
 
 def digest(path):
@@ -54,7 +54,7 @@ def main():
             print("stale asset links in: " + ", ".join(str(p) for p in stale))
             print("run: python3 tools/version-assets.py")
             return 1
-        print("all pages point at the current site.css and site.js")
+        print("all pages point at the current shared and homepage assets")
         return 0
 
     summary = ", ".join(f"{asset} -> {version}" for asset, version in versions.items())

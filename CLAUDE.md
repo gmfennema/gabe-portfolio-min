@@ -1,8 +1,9 @@
 # gabefen.com
 
 A hand-written static site. No build step, no dependencies: `index.html` and
-friends are served as they are, with one stylesheet (`site.css`) and one script
-(`site.js`). GitHub Pages deploys `main` on push.
+friends are served as they are. Shared styles and behavior live in `site.css`
+and `site.js`; the scroll-driven homepage adds `home.css` and `home.js`.
+GitHub Pages deploys `main` on push.
 
 ## Working on it
 
@@ -22,7 +23,7 @@ take `--check` and exit non-zero, so they can gate a deploy.
 
 | Command | What it does |
 | --- | --- |
-| `python3 tools/version-assets.py` | Rewrites the `?v=` on `site.css`/`site.js` links to the files' content hash. **Run this whenever either file changes** — otherwise browsers keep the copy they already have and the change never reaches anyone. |
+| `python3 tools/version-assets.py` | Rewrites the `?v=` on shared and homepage asset links to the files' content hash. **Run this whenever any CSS or JS file changes** — otherwise browsers keep the copy they already have and the change never reaches anyone. |
 | `python3 tools/size-images.py` | Stamps `width`/`height` on every `<img>` from the file on disk. Run after adding pictures: the field-note reader measures pages before images load, and unsized pictures make it lay out pages for a document that has none. |
 | `tools/check-reader.sh` | Runs the reader's invariants in headless Chrome across every post at four screen sizes. Needs Chrome or Chromium (`CHROME=/path/to/chrome` to point at one). |
 
@@ -81,3 +82,15 @@ The rules it lives by:
   furniture (page number, running head) and with picture heights fixed in
   pixels, because a footer that grows or an image that loads after measuring
   pushes content under the page's clip, invisibly.
+
+## Homepage trail
+
+The homepage uses an inline, layered SVG and a native sticky scroll scene.
+`home.js` only requests a frame when scroll or viewport state changes; it never
+intercepts wheel or touch events. The four destination links are plain HTML.
+Reduced motion, short viewports, and disabled JavaScript get a static layout
+with the same content and destinations. The shared field-note reader is unchanged.
+
+After changes, check the opening, middle, and junction at desktop and phone
+widths; test the menu, keyboard links, back navigation, and reduced motion.
+Run the asset version and image dimension checks before committing.
