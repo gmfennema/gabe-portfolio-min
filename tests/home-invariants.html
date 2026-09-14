@@ -70,7 +70,7 @@ run.addEventListener('click', async () => {
       check(links.length === 4 && links.every(link => link.closest('svg') === doc.querySelector('.trail-scene')), `${label}: all four links belong to the landscape`);
       if (doc.body.classList.contains('journey-motion')) {
         const openingWidth = sign.getBoundingClientRect().width;
-        const openingTree = [...doc.querySelectorAll('.walking-objects use')].at(-1);
+        const openingTree = [...doc.querySelectorAll('.walking-tree')].at(-1);
         const openingTreeVisible = openingTree.style.display !== 'none';
         check(sign.getAttribute('aria-hidden') === 'true' && links.every(link => link.getAttribute('tabindex') === '-1'), `${label}: distant sign is not a tiny keyboard target`);
         const walk = doc.querySelector('.trail-walk');

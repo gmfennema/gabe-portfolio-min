@@ -101,7 +101,12 @@ Do not split the signpost or contact CTA into a separate section.
 Run `node tests/trail-world.cjs` for centerline, arc length, heading continuity,
 near-plane clipping, passing-landmark and responsive arrival checks.
 
-`home.js` requests frames on scroll/resize and during the optional junction
+`home.js` gives each walking tree a rooted bend and a separate flexible crown.
+World-space gusts travel across the grove, with individual branch flutter.
+Wind updates only visible trees without reprojecting the road or camera; its
+frame loop stops for hidden tabs, offscreen scenes, reduced motion, short
+screens, and the Pause wind button. The still fallback remains motionless.
+Camera drawing requests frames on scroll/resize and during the optional junction
 shortcut. The shortcut uses a 1.8–4.8 second quintic scroll, then releases its
 animation frame. Wheel, touch, pointer, scroll keys, Escape, Tab, hidden tabs,
 and reduced motion cancel it immediately. It never prevents native scrolling.

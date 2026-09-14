@@ -21,6 +21,8 @@
   const road = home.querySelector('.world-road');
   const roadEdge = home.querySelector('.world-road-edge');
   const objects = [];
+  const trees = [];
+  let visibleTrees = [];
   const groundDetails = [];
   const svg = (tag, attrs, parent) => {
     const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
@@ -35,8 +37,18 @@
       for (let row=0; row<2; row++) {
         const seed=Math.sin(i*17.3+side*6+row*13)*.5+.5;
         const x=world.center(z)+side*(4.5+seed*2+row*9);
-        const el=svg('use',{href:'#trail-fir',fill:row ? '#52715a' : '#355940','aria-hidden':'true'},objectLayer);
-        objects.push({el,x,z:z+side*.7,height:5.3+seed*3.7});
+        // Camera placement and wind deformation have separate coordinate spaces.
+        const el=svg('g',{'class':'walking-tree',fill:row ? '#52715a' : '#355940','aria-hidden':'true'},objectLayer);
+        const bend=svg('g',{},el);
+        svg('path',{d:'M-3 0 0-142 4 0Z',fill:'#394536'},bend);
+        svg('path',{d:'M-15-81-41-36-22-42-53-5 0-18 51-5 23-43 39-36 16-83 0-98Z'},bend);
+        svg('path',{d:'M0-94V-23M0-94 16-70M-2-78-25-50M0-51 26-29',fill:'none',stroke:'#e4e3bc','stroke-width':'1.2',opacity:'.2'},bend);
+        const crown=svg('g',{},bend);
+        svg('path',{d:'M0-155-16-112-8-114-29-77-15-81 0-87 16-83 30-76 9-116 18-110Z'},crown);
+        svg('path',{d:'M0-138V-87M0-113-13-94',fill:'none',stroke:'#e4e3bc','stroke-width':'1.2',opacity:'.2'},crown);
+        const tree={el,bend,crown,x,z:z+side*.7,height:5.3+seed*3.7,phase:seed*6.28,flex:.7+seed*.5};
+        objects.push(tree);
+        trees.push(tree);
       }
     }
   }
@@ -55,6 +67,7 @@
   let objectOrder='';
   function drawWorld(p) {
     const cam=world.camera(p,stage.clientWidth,stage.clientHeight);
+    visibleTrees=[];
     floor.setAttribute('d',`M-400 ${cam.horizon}H1840V1200H-400Z`);
     roadEdge.setAttribute('d',world.road(cam,.045));
     road.setAttribute('d',world.road(cam));
@@ -71,6 +84,7 @@
       if (q.depth>world.NEAR) {
         item.el.style.transform=`translate(${q.x}px, ${q.y}px) scale(${scale})`;
         if (!item.sign) item.el.style.opacity=String(Math.max(.55,1-q.depth/310));
+        if (!item.sign && q.x+65*scale>720-cam.vw/2 && q.x-65*scale<720+cam.vw/2 && q.y-165*scale<900) visibleTrees.push(item);
       }
       return {item,id,depth:q.depth};
     }).sort((a,b)=>b.depth-a.depth);
@@ -85,6 +99,50 @@
   const layers = Object.fromEntries([...home.querySelectorAll('[data-depth]')].map(el => [el.dataset.depth, el]));
   const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const shortScreen = window.matchMedia('(max-height: 580px)');
+  const windButton = home.querySelector('.wind-toggle');
+  let windPaused = false;
+  let stageVisible = true;
+  let windFrame = 0;
+  let windTime = 0;
+  let windLast = 0;
+  // Shared world-space gusts travel through neighboring trees. Individual
+  // branch frequencies keep the forest from moving like a synchronized loop.
+  function animateWind(now) {
+    windFrame = 0;
+    if (windLast) windTime += Math.min(now-windLast,64)/1000;
+    windLast = now;
+    visibleTrees.forEach(tree => {
+      const t=windTime-tree.x*.12-tree.z*.035;
+      const gust=Math.pow(.5+.5*Math.sin(t*.62),3);
+      const breeze=.22+gust*1.35+Math.sin(t*1.17+tree.phase)*.3;
+      const bend=breeze*tree.flex;
+      const flutter=Math.sin(t*2.7+tree.phase)*(.12+gust*.22);
+      tree.bend.setAttribute('transform',`skewX(${(-bend).toFixed(3)})`);
+      tree.crown.setAttribute('transform',`rotate(${(bend*.55+flutter).toFixed(3)} 0 -87)`);
+    });
+    windFrame=requestAnimationFrame(animateWind);
+  }
+  function configureWind() {
+    cancelAnimationFrame(windFrame);
+    windFrame=0;
+    windLast=0;
+    windButton.hidden=!active;
+    if (!active || windPaused) trees.forEach(tree => {
+      tree.bend.removeAttribute('transform');
+      tree.crown.removeAttribute('transform');
+    });
+    if (active && !windPaused && stageVisible && !document.hidden) windFrame=requestAnimationFrame(animateWind);
+  }
+  windButton.addEventListener('click', () => {
+    windPaused=!windPaused;
+    windButton.textContent=windPaused ? 'Resume wind' : 'Pause wind';
+    configureWind();
+  });
+  new IntersectionObserver(entries => {
+    stageVisible=entries[0].isIntersecting;
+    configureWind();
+  }).observe(stage);
+  document.addEventListener('visibilitychange', configureWind);
   let frame = 0;
   let active = false;
   let start = 0;
@@ -195,6 +253,7 @@
     measure();
     // Set the opening immediately; do not flash the large fallback sign.
     if (active) { cancelAnimationFrame(frame); render(); }
+    configureWind();
   }
 
   home.querySelectorAll('a[href="#trail-junction"]').forEach(link => {
