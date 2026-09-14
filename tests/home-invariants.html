@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex"><title>Homepage layout checks</title>
 <style>
-body{margin:20px;font:14px/1.5 system-ui;background:#f6f0e4;color:#24382f}h1{font-size:22px}button,select{font:inherit;padding:8px;margin-right:8px}iframe{display:block;border:1px solid #9b9f8b;margin:20px 0;max-width:none}pre{white-space:pre-wrap}#preview-wrap{overflow:auto}label{display:inline-block;margin-right:12px}
+body{margin:20px;font:14px/1.5 system-ui;background:#f6f0e4;color:#24382f}h1{font-size:22px}button,select{font:inherit;padding:8px;margin-right:8px}iframe{display:block;border:1px solid #9b9f8b;margin:20px 0;max-width:none}pre{white-space:pre-wrap;max-height:200px;overflow:auto}#preview-wrap{overflow:auto}label{display:inline-block;margin-right:12px}
 </style>
 </head>
 <body>
@@ -27,6 +27,7 @@ async function load(width, height, noScript = false) {
     frame.onload = () => { clearTimeout(timeout); resolve(); };
     frame.src = '../index.html';
   });
+  frame.scrollIntoView({behavior:'instant',block:'start'});
   await pause(150);
 }
 function fits(rect, width) { return rect.left >= -1 && rect.right <= width + 1; }
@@ -60,7 +61,7 @@ run.addEventListener('click', async () => {
         const walk = doc.querySelector('.trail-walk');
         const stage = doc.querySelector('.walk-stage');
         win.scrollTo({top:(walk.offsetHeight-stage.offsetHeight)*.53,behavior:'instant'});
-        await pause(100);
+        await pause(250);
         const thought = doc.querySelector('.trail-thought');
         check(Number(thought.style.opacity) > .98 && thought.getBoundingClientRect().bottom < height, `${label}: mid-trail story is readable`);
         check(doc.querySelector('.trail-intro').inert, `${label}: faded intro leaves keyboard navigation`);
