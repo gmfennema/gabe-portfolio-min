@@ -45,8 +45,13 @@
 .sign-link:hover .sign-border, .sign-link:focus-visible .sign-border { opacity: 1; stroke: #ffe6b7; stroke-width: 3; }
 .sign-link:focus-visible { outline: none !important; }
 .junction-trails { pointer-events: none; }
-.journey-motion .junction-incoming { opacity: 0; }
-.trail-home:not(.journey-motion) .ground-trail { opacity: 0; }
+/* The still illustration is a fallback. During the walk every nearby object
+   and every road edge is projected from the same world coordinates. */
+.walking-ground, .walking-objects { display: none; }
+.journey-motion .walking-ground, .journey-motion .walking-objects { display: block; }
+.journey-motion [data-depth="wood"], .journey-motion [data-depth="meadow"],
+.journey-motion [data-depth="front-left"], .journey-motion [data-depth="front-right"],
+.journey-motion .junction-trails { display: none; }
 .walk-furniture { position: absolute; bottom: 46px; left: 5%; right: 5%; display: flex; gap: 23px; align-items: center; color: var(--cream); }
 .walk-mile { display: flex; align-items: center; gap: 12px; flex: 0 0 180px; }
 .mile-number { font-family: var(--display); font-size: 2.5rem; line-height: 1; }
@@ -63,14 +68,14 @@
 .trail-home:not(.journey-motion) .walk-invitation,
 .trail-home:not(.journey-motion) .walk-furniture { display: none; }
 .trail-home:not(.journey-motion) .trail-intro-lead { font-size: .95rem; }
-.journey-motion .trail-walk { height: 290svh; }
+.journey-motion .trail-walk { height: 420svh; }
 .journey-motion .walk-stage { position: sticky; top: 0; min-height: 0; }
 .journey-motion .junction-anchor { top: auto; bottom: 100svh; bottom: 100dvh; }
 .journey-motion .trail-intro { top: max(135px, 17%); }
 .journey-motion .trail-intro h1 { font-size: clamp(5rem, 8.7vw, 9.5rem); }
 .journey-motion .arrival-copy { opacity: 0; visibility: hidden; }
 .journey-motion .scene-colophon { opacity: 0; }
-.journey-motion .junction-sign, .journey-motion [data-depth] { will-change: transform; }
+.journey-motion .junction-sign { will-change: transform; }
 .journey-motion:not(.at-junction) .sign-link { pointer-events: none; }
 .at-junction .junction-shortcut { display: none; }
 .at-junction .trail-return { display: inline; }
@@ -98,7 +103,7 @@
   .trail-intro h1, .journey-motion .trail-intro h1 { font-size: clamp(2.7rem, 13vw, 6rem); }
   .trail-intro .trail-label { font-size: .5rem; letter-spacing: .14em; gap: 8px; }
   .trail-intro-lead { font-size: .9rem; margin-top: 18px; }
-  .journey-motion .trail-walk { height: 270svh; }
+  .journey-motion .trail-walk { height: 390svh; }
   .arrival-copy { top: 19%; }
   .arrival-copy h2 { font-size: 2.9rem; }
   .arrival-copy .trail-label { font-size: .48rem; letter-spacing: .13em; }

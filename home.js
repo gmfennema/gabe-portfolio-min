@@ -13,8 +13,76 @@
   const mile = home.querySelector('.mile-number');
   const mileCopy = home.querySelector('.mile-copy');
   const colophon = home.querySelector('.scene-colophon');
-  const distantTrail = home.querySelector('.ground-trail');
-  const arrivingTrail = home.querySelector('.junction-incoming');
+  const world = TrailWorld;
+  const scene = home.querySelector('.trail-scene');
+  const objectLayer = home.querySelector('.walking-objects');
+  const signHome = sign.parentNode;
+  const signNext = sign.nextSibling;
+  const floor = home.querySelector('.world-floor');
+  const road = home.querySelector('.world-road');
+  const roadEdge = home.querySelector('.world-road-edge');
+  const objects = [];
+  const groundDetails = [];
+  const svg = (tag, attrs, parent) => {
+    const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    Object.entries(attrs).forEach(([key,value]) => el.setAttribute(key,value));
+    parent.appendChild(el);
+    return el;
+  };
+  // Fixed landmarks, planted once. They pass the walker and stay behind them.
+  for (let i=0; i<42; i++) {
+    const z=8+i*3.5;
+    for (const side of [-1,1]) {
+      for (let row=0; row<2; row++) {
+        const seed=Math.sin(i*17.3+side*6+row*13)*.5+.5;
+        const x=world.center(z)+side*(4.5+seed*2+row*9);
+        const el=svg('use',{href:'#trail-fir',fill:row ? '#52715a' : '#355940','aria-hidden':'true'},objectLayer);
+        objects.push({el,x,z:z+side*.7,height:5.3+seed*3.7});
+      }
+    }
+  }
+  for (let i=0; i<120; i++) {
+    const z=2+i*.83, x=world.center(z)+Math.sin(i*9.4)*.86;
+    const el=svg('ellipse',{rx:'.07',ry:'.028'},home.querySelector('.world-gravel'));
+    groundDetails.push({el,x,z});
+  }
+  const patches=[];
+  for (let i=0;i<22;i++) {
+    const z=i*7, side=i%2 ? 1 : -1, x=world.center(z)+side*6;
+    const points=Array.from({length:18},(_,j) => {const t=j*Math.PI/9;return {x:x+Math.cos(t)*4,z:z+Math.sin(t)*5};});
+    patches.push({el:svg('path',{},home.querySelector('.world-clearings')),points});
+  }
+  objects.push({el:sign,x:0,z:world.JUNCTION,sign:true});
+  let objectOrder='';
+  function drawWorld(p) {
+    const cam=world.camera(p,stage.clientWidth,stage.clientHeight);
+    floor.setAttribute('d',`M-400 ${cam.horizon}H1840V1200H-400Z`);
+    roadEdge.setAttribute('d',world.road(cam,.045));
+    road.setAttribute('d',world.road(cam));
+    patches.forEach(patch => patch.el.setAttribute('d',world.polygon(patch.points,cam)));
+    groundDetails.forEach(item => {
+      const q=world.project(item,cam);
+      item.el.style.display=q.depth>world.NEAR ? '' : 'none';
+      if (q.depth>world.NEAR) item.el.setAttribute('transform',`translate(${q.x} ${q.y}) scale(${q.scale})`);
+    });
+    const sorted=objects.map((item,id) => {
+      const q=world.project(item,cam);
+      const scale=q.scale*(item.sign ? world.SIGN_UNIT : item.height/155);
+      item.el.style.display=q.depth>world.NEAR ? '' : 'none';
+      if (q.depth>world.NEAR) {
+        item.el.style.transform=`translate(${q.x}px, ${q.y}px) scale(${scale})`;
+        if (!item.sign) item.el.style.opacity=String(Math.max(.55,1-q.depth/310));
+      }
+      return {item,id,depth:q.depth};
+    }).sort((a,b)=>b.depth-a.depth);
+    const order=sorted.map(o=>o.id).join(',');
+    if (order!==objectOrder) { sorted.forEach(o=>objectLayer.appendChild(o.item.el)); objectOrder=order; }
+    // The horizon panorama rotates with our heading, at a much greater distance.
+    for (const name of ['sky','far','ridge']) {
+      const factor={sky:.55,far:.8,ridge:1}[name];
+      layers[name].style.transform=`translate(${-Math.tan(cam.heading)*cam.focal*factor}px, ${cam.horizon-655}px)`;
+    }
+  }
   const layers = Object.fromEntries([...home.querySelectorAll('[data-depth]')].map(el => [el.dataset.depth, el]));
   const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const shortScreen = window.matchMedia('(max-height: 580px)');
@@ -22,14 +90,11 @@
   let active = false;
   let start = 0;
   let distance = 1;
-  let finalScale = .9;
-  let finalBase = 840;
   let previousStop = '';
   let previousReady = null;
   let focusOnArrival = false;
   const clamp = value => Math.max(0, Math.min(1, value));
   const ease = value => { const t = clamp(value); return t * t * (3 - 2 * t); };
-  const lerp = (a, b, t) => a + (b - a) * t;
 
   function show(el, opacity) {
     el.style.opacity = opacity.toFixed(3);
@@ -52,29 +117,15 @@
     frame = 0;
     if (!active) return;
     const p = clamp((window.scrollY - start) / distance);
-    const travel = ease(p / .9);
-    const scale = .065 * Math.pow(finalScale / .065, travel);
+    const travel = clamp(p / .94);
+    drawWorld(travel);
     show(intro, 1 - ease((p - .025) / .2));
     intro.style.transform = `translateY(${-Math.min(p, .3) * 180}px)`;
-    // Mountains remain in view while nearby trees move past the camera.
-    layers.sky.style.transform = `translateY(${-travel * 50}px)`;
-    layers.far.style.transform = `translateY(${-travel * 60}px) scale(${1 + travel * .13})`;
-    layers.ridge.style.transform = `translateY(${-travel * 38}px) scale(${1 + travel * .3})`;
-    layers.wood.style.transform = `translateY(${travel * 5}px) scale(${1 + travel * .85})`;
-    layers.meadow.style.transform = `translateY(${travel * 70}px) scale(${1 + travel * 1.2})`;
-    layers['front-left'].style.transform = `translate(${-travel * 370}px, ${travel * 100}px) scale(${1 + travel * .65})`;
-    layers['front-right'].style.transform = `translate(${travel * 370}px, ${travel * 100}px) scale(${1 + travel * .65})`;
-    sign.style.transform = `translate(${lerp(775, 720, travel)}px, ${lerp(698, finalBase, travel)}px) scale(${scale})`;
-    // The close foreground joins the fork and continues below the viewport.
-    // Blend the two depth planes while the camera passes the last bend.
-    const nearTrail = ease((p - .62) / .24);
-    distantTrail.style.opacity = (1 - nearTrail).toFixed(3);
-    arrivingTrail.style.opacity = nearTrail.toFixed(3);
-    show(arrival, ease((p - .7) / .18));
+    show(arrival, ease((p - .8) / .14));
     colophon.style.opacity = ease((p - .82) / .12).toFixed(3);
     progressBar.style.transform = `scaleX(${clamp(p / .9)})`;
-    enableSigns(p >= .87);
-    const stop = p < .23 ? '00' : p < .87 ? '01' : '02';
+    enableSigns(p >= .94);
+    const stop = p < .23 ? '00' : p < .94 ? '01' : '02';
     if (stop !== previousStop) {
       previousStop = stop;
       mile.textContent = stop;
@@ -93,26 +144,19 @@
   function measure() {
     start = walk.getBoundingClientRect().top + window.scrollY;
     distance = Math.max(1, walk.offsetHeight - stage.offsetHeight);
-    // SVG uses xMidYMax slice. Fit the *same* sign into its visible camera
-    // window, instead of swapping in a different mobile/desktop drawing.
-    const pixelsPerUnit = Math.max(stage.clientWidth / 1440, stage.clientHeight / 900);
-    const visibleWidth = stage.clientWidth / pixelsPerUnit;
-    const visibleHeight = stage.clientHeight / pixelsPerUnit;
-    finalScale = Math.min(1.05, visibleWidth * .88 / 640, visibleHeight * .66 / 635);
-    const signHeight = 635 * finalScale * pixelsPerUnit;
-    const basePixels = stage.clientHeight * .6 + signHeight * .5;
-    finalBase = 900 - (stage.clientHeight - basePixels) / pixelsPerUnit;
     schedule();
   }
 
   function configure() {
     active = !motion.matches && !shortScreen.matches;
     home.classList.toggle('journey-motion', active);
+    if (active) { objectLayer.appendChild(sign); objectOrder=''; }
+    else signHome.insertBefore(sign,signNext);
     if (!active) {
       cancelAnimationFrame(frame);
       frame = 0;
       focusOnArrival = false;
-      [intro, arrival, sign, colophon, progressBar, distantTrail, arrivingTrail, ...Object.values(layers)].forEach(el => el.removeAttribute('style'));
+      [intro, arrival, sign, colophon, progressBar, ...Object.values(layers)].forEach(el => el.removeAttribute('style'));
       intro.inert = false;
       arrival.inert = false;
       enableSigns(true);

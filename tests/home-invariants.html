@@ -11,6 +11,7 @@ body{margin:20px;font:14px/1.5 system-ui;background:#f6f0e4;color:#24382f}h1{fon
 <h1>Homepage layout checks</h1>
 <p>Checks the real homepage in desktop, tablet, phone, short-screen, and JavaScript-disabled frames.</p>
 <button id="run">Run checks</button><label>Preview <select id="size"><option value="390,844">Phone · 390 × 844</option><option value="320,740">Small phone · 320 × 740</option><option value="768,1024">Tablet · 768 × 1024</option><option value="1366,900">Desktop · 1366 × 900</option><option value="844,390">Landscape · 844 × 390</option></select></label>
+<p id="steps"><button data-step="0">Trailhead</button><button data-step=".25">First bend</button><button data-step=".5">Halfway</button><button data-step=".75">Last bend</button><button data-step="1">Junction</button></p>
 <pre id="log" role="status">Ready.</pre>
 <div id="preview-wrap"><iframe id="preview" title="Homepage preview" width="390" height="844" src="../index.html"></iframe></div>
 <script>
@@ -75,6 +76,22 @@ run.addEventListener('click', async () => {
         win.scrollTo({top:distance * .48,behavior:'smooth'});
         await until(() => sign.getBoundingClientRect().width > openingWidth * 1.6);
         check(sign === doc.querySelector('.junction-sign') && sign.getBoundingClientRect().width > openingWidth * 1.6, `${label}: the original sign grows during approach`);
+        const road = doc.querySelector('.world-road');
+        const openingTree = doc.querySelector('.walking-objects use');
+        let grounded = true, opaque = true;
+        for (const phase of [0,.25,.5,.75,1]) {
+          win.scrollTo({top:distance * phase,behavior:'instant'});
+          await pause(100);
+          const point = doc.querySelector('.trail-scene').createSVGPoint();
+          point.x = viewport / 2; point.y = height - 3;
+          grounded &&= road.isPointInFill(point.matrixTransform(road.getScreenCTM().inverse()));
+          opaque &&= win.getComputedStyle(road).opacity === '1';
+        }
+        check(grounded && road === doc.querySelector('.world-road'), `${label}: same road stays beneath the walker through every bend`);
+        check(opaque && win.getComputedStyle(doc.querySelector('.junction-trails')).display === 'none', `${label}: no road fade or destination-path handoff`);
+        check(openingTree.style.display === 'none', `${label}: opening trees pass behind the walker`);
+        doc.querySelector('.trail-return').click();
+        await until(() => win.scrollY < 2);
         doc.querySelector('.junction-shortcut').click();
         await until(() => doc.body.classList.contains('at-junction') && win.scrollY >= distance - 2);
         check(sign === doc.querySelector('.junction-sign') && sign.getBoundingClientRect().width > openingWidth * 4, `${label}: same sign at the destination`);
@@ -103,6 +120,10 @@ run.addEventListener('click', async () => {
   } catch (error) { output.textContent += `ERROR ${error.message}\n`; }
   finally { run.disabled = false; await load(390,844); }
 });
+document.querySelectorAll('[data-step]').forEach(button => button.addEventListener('click', () => {
+  const doc=frame.contentDocument;
+  frame.contentWindow.scrollTo({top:(doc.querySelector('.trail-walk').offsetHeight-doc.querySelector('.walk-stage').offsetHeight)*Number(button.dataset.step),behavior:'instant'});
+}));
 document.querySelector('#size').addEventListener('change', event => load(...event.target.value.split(',').map(Number)));
 </script>
 </body>

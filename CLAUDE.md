@@ -85,15 +85,21 @@ The rules it lives by:
 
 ## Homepage trail
 
-The homepage is one sticky viewport containing one SVG world. Its signpost
-exists in that world from the opening vista onward; `home.js` changes its
-camera position and scale continuously. The four destination links are native
-SVG anchors: Projects, Field Notes, Photography, and Let’s Connect. About is
-available in the main navigation. Do not split the signpost or contact CTA
-into a separate section.
+The homepage is one sticky viewport containing one SVG world. `home-path.js`
+defines a world-space trail and a perspective camera that walks its centerline
+at constant arc-length speed. Heading follows the trail tangent. Trees, gravel,
+the continuous road and both forks, and the original signpost all use that same
+projection. Nearby trees pass behind the camera; road polygons are near-plane
+clipped. Never replace this with a zoom or crossfade between separate paths.
 
-The trail is a filled ribbon that narrows to a vanishing point, with a distance
-mask softening its tip. Do not replace it with a constant-width stroke.
+The four destination links are native SVG anchors: Projects, Field Notes,
+Photography, and Let’s Connect. About stays in the main navigation. The signpost
+is depth-sorted with the trees during travel, then moved back into the still
+composition for reduced motion and short screens. Its DOM node never changes.
+Do not split the signpost or contact CTA into a separate section.
+
+Run `node tests/trail-world.cjs` for centerline, arc length, heading continuity,
+near-plane clipping, passing-landmark and responsive arrival checks.
 
 `home.js` requests frames only on scroll/resize. It does not intercept wheel
 or touch input. The faraway sign leaves the tab order until it is close enough;
