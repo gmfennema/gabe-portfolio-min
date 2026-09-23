@@ -1,0 +1,167 @@
+/* The woods: a full-bleed WebGL walk with HTML on top for everything readable.
+   Without JavaScript or WebGL the same page is a still landscape with links. */
+.woods-home { --forest: #24382f; --cream: #f6f0e4; --gold: #dcc08c; --rust: #b46635; background: #1c2b23; color: var(--cream); }
+.woods-home h1, .woods-home h2 { font-family: var(--display); font-weight: 400; }
+.woods-home em { font-weight: 400; }
+.woods-home a:focus-visible, .woods-home button:focus-visible { outline: 3px solid #f0c77f; outline-offset: 4px; }
+.woods-skip { position: fixed; z-index: 100; top: 10px; left: 15px; padding: 12px 20px; color: var(--forest); background: var(--cream); transform: translateY(-150%); }
+.woods-skip:focus { transform: none; }
+
+/* The header floats over the scene; a soft shade keeps it legible over sky or canopy. */
+.woods-home .woods-header { position: absolute; top: 0; left: 0; width: 100%; padding: 0 5%; min-height: 88px; grid-template-columns: 1fr auto; background: transparent; border: 0; backdrop-filter: none; }
+.woods-header .brand a { display: flex; align-items: center; gap: 12px; font-size: 1.38rem; color: var(--cream); text-shadow: 0 1px 12px rgba(10, 18, 13, .45); }
+.woods-header .brand svg { width: 36px; height: 36px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linejoin: round; }
+.woods-header .nav a { color: rgba(246, 240, 228, .9); text-shadow: 0 1px 10px rgba(10, 18, 13, .5); }
+.woods-header .nav a:hover, .woods-header .nav a.active { color: #fff; }
+.woods-header .menu-icon, .woods-header .menu-icon::before, .woods-header .menu-icon::after { background: var(--cream); }
+.woods-header.menu-open .menu-icon { background: transparent; }
+
+.woods-walk { position: relative; }
+.woods-stage { position: relative; height: 100svh; height: 100dvh; min-height: 300px; overflow: hidden; isolation: isolate; touch-action: pan-y;
+  background: #b9c2a8 url("assets/site-landscape.svg") center bottom / cover no-repeat; }
+.woods-js .woods-stage { background: radial-gradient(ellipse at 50% 32%, #6f7b5d, #2a3a2f 62%, #1c2b23); }
+.woods-failed .woods-stage { background: #b9c2a8 url("assets/site-landscape.svg") center bottom / cover no-repeat; }
+.woods-canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; opacity: 0; transition: opacity 1.6s ease; }
+.woods-live .woods-canvas { opacity: 1; }
+.woods-look { cursor: grab; }
+.woods-look.is-dragging { cursor: grabbing; }
+.woods-shade { position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(rgba(14, 22, 17, .5), rgba(14, 22, 17, 0) 150px),
+    linear-gradient(0deg, rgba(14, 22, 17, .62), rgba(14, 22, 17, 0) 170px),
+    radial-gradient(ellipse at 50% 46%, rgba(0, 0, 0, 0) 55%, rgba(8, 14, 10, .34) 100%); }
+
+.woods-controls { position: absolute; z-index: 3; top: 96px; right: 5%; display: flex; gap: 8px; }
+.woods-toggle { display: inline-flex; align-items: center; gap: 7px; padding: 8px 12px; color: var(--cream); background: rgba(20, 32, 25, .42); border: 1px solid rgba(246, 240, 228, .28); border-radius: 20px; font: 600 .62rem/1 var(--utility); letter-spacing: .06em; cursor: pointer; backdrop-filter: blur(6px); }
+.woods-toggle:hover { background: rgba(20, 32, 25, .62); }
+.woods-toggle[hidden] { display: none; }
+.woods-toggle-icon { position: relative; width: 12px; height: 10px; }
+.woods-toggle-icon::before { position: absolute; left: 0; top: 2px; width: 5px; height: 6px; content: ""; background: currentColor; clip-path: polygon(0 20%, 40% 20%, 100% -20%, 100% 120%, 40% 80%, 0 80%); }
+.woods-toggle-icon::after { position: absolute; right: 0; top: 0; width: 5px; height: 10px; content: ""; border: 1.5px solid currentColor; border-left: 0; border-radius: 0 10px 10px 0; opacity: .35; }
+.woods-sound[aria-pressed="true"] .woods-toggle-icon::after { opacity: 1; }
+
+.woods-intro { position: absolute; z-index: 2; top: max(128px, 16%); width: 100%; padding: 0 22px; text-align: center; pointer-events: none; text-shadow: 0 2px 22px rgba(10, 18, 13, .55); }
+.woods-intro a { pointer-events: auto; }
+.woods-label { display: flex; gap: 12px; align-items: center; margin: 0; font: 600 .66rem/1.6 var(--utility); letter-spacing: .19em; text-transform: uppercase; }
+.woods-intro .woods-label { justify-content: center; margin: 0 0 18px; }
+.woods-dot { width: 6px; height: 6px; border-radius: 50%; background: #e0894e; }
+.woods-intro h1 { margin: 0; font-size: clamp(3.4rem, 8.4vw, 8.8rem); line-height: 1.02; letter-spacing: -.06em; }
+.woods-intro h1 em { color: #f1d9a4; }
+.woods-lead { margin: 20px 0 0; font-size: clamp(.96rem, 1.35vw, 1.15rem); line-height: 1.75; }
+.woods-begin { display: inline-flex; gap: 18px; align-items: center; margin-top: 26px; color: var(--cream); font-size: .74rem; font-weight: 600; text-decoration: none; }
+.woods-begin span { display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid rgba(246, 240, 228, .6); border-radius: 50%; font-size: 1rem; transition: transform .25s; }
+.woods-begin:hover { color: #fff; }
+.woods-begin:hover span { transform: translateY(4px); }
+.woods-loading { display: none; margin: 22px 0 0; font: 600 .62rem/1.5 var(--utility); letter-spacing: .16em; text-transform: uppercase; opacity: .8; }
+.woods-js:not(.woods-live):not(.woods-failed) .woods-loading { display: block; }
+.woods-js:not(.woods-live):not(.woods-failed) .woods-begin { visibility: hidden; }
+
+.woods-arrival { position: absolute; z-index: 2; top: 12%; left: 0; right: 0; padding: 0 22px; text-align: center; pointer-events: none; opacity: 0; visibility: hidden; text-shadow: 0 2px 20px rgba(10, 18, 13, .6); }
+.woods-arrival .woods-label { justify-content: center; margin: 0 0 12px; font-size: .6rem; }
+.woods-arrival h2 { margin: 0; font-size: clamp(2.5rem, 5.4vw, 4.8rem); line-height: 1; letter-spacing: -.04em; }
+.woods-arrival > p:last-child { margin: 13px 0 0; font-size: .86rem; }
+
+.woods-hint { position: absolute; z-index: 2; bottom: 104px; left: 0; right: 0; margin: 0; text-align: center; font: 600 .6rem/1.4 var(--utility); letter-spacing: .16em; text-transform: uppercase; opacity: 0; pointer-events: none; text-shadow: 0 1px 10px rgba(10, 18, 13, .7); }
+
+.woods-furniture { position: absolute; z-index: 2; bottom: 44px; left: 5%; right: 5%; display: none; gap: 23px; align-items: center; }
+.woods-mile { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; min-width: 190px; }
+.woods-mile-number { font-family: var(--display); font-size: 2.5rem; line-height: 1; }
+.woods-mile-copy { font: 600 .6rem/1.5 var(--utility); letter-spacing: .16em; }
+.woods-progress { width: 110px; height: 1px; background: rgba(246, 240, 228, .35); }
+.woods-progress span { display: block; height: 1px; background: var(--cream); transform: scaleX(0); transform-origin: left; }
+.woods-furniture > a { margin-left: auto; color: var(--cream); text-decoration: none; font-size: .67rem; letter-spacing: .02em; }
+.woods-furniture > a span { margin-left: 12px; }
+.woods-return { display: none; }
+.woods-colophon { position: absolute; z-index: 2; bottom: 10px; left: 5%; right: 5%; margin: 0; text-align: center; color: rgba(236, 234, 220, .85); font: .55rem/1.4 var(--utility); letter-spacing: .045em; }
+.woods-colophon a { color: inherit; }
+.woods-anchor { position: absolute; bottom: 0; left: 0; width: 1px; height: 1px; pointer-events: none; }
+
+/* The signs. As plain links they are four wooden boards; over the live scene
+   they are invisible hit areas laid exactly over the boards drawn in 3D. */
+.woods-signs { position: absolute; z-index: 2; left: 50%; bottom: 92px; display: grid; gap: 10px; width: min(560px, calc(100% - 44px)); transform: translateX(-50%); }
+.woods-sign { display: grid; gap: 2px; padding: 14px 26px 15px 44px; color: #fbebc6; background: linear-gradient(#6b5b3a, #4a4a31); border: 2px solid #a8915f; border-radius: 4px; text-decoration: none; clip-path: polygon(22px 0, 100% 0, 100% 100%, 22px 100%, 0 50%); box-shadow: 0 10px 24px rgba(20, 30, 22, .3); }
+.woods-sign:nth-child(even) { padding: 14px 44px 15px 26px; clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 50%, calc(100% - 22px) 100%, 0 100%); }
+.woods-sign strong { font: 400 1.7rem/1.1 var(--display); letter-spacing: -.02em; }
+.woods-sign span { color: #dfd3b2; font-size: .8rem; }
+.woods-sign:hover { color: #fff; background: linear-gradient(#7a6844, #555437); }
+.woods-js:not(.woods-live):not(.woods-failed) .woods-signs { visibility: hidden; }
+
+.woods-live .woods-signs { inset: 0; bottom: auto; left: 0; width: auto; height: 100%; display: block; transform: none; pointer-events: none; }
+.woods-live .woods-sign { position: absolute; top: 0; left: 0; width: 0; height: 0; padding: 0; background: none; border: 0; border-radius: 6px; box-shadow: none; clip-path: none; color: transparent; pointer-events: auto; visibility: hidden; }
+.woods-live .woods-sign > * { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.woods-live.at-junction .woods-sign { visibility: visible; }
+.woods-live .woods-sign:focus-visible { outline: 3px solid #f4d595; outline-offset: 3px; }
+
+.woods-live .woods-furniture { display: flex; }
+.woods-live.at-junction .woods-shortcut { display: none; }
+.woods-live.at-junction .woods-return { display: inline; }
+.woods-walking .woods-walk { height: 820svh; }
+.woods-walking .woods-stage { position: sticky; top: 0; }
+.woods-walking .woods-colophon { opacity: 0; }
+
+/* Reduced motion: the camera stands at the junction and nothing sways. */
+.woods-still .woods-intro { top: 104px; }
+.woods-still .woods-intro h1 { font-size: clamp(2.6rem, 5vw, 4rem); }
+.woods-still .woods-lead, .woods-still .woods-begin, .woods-still .woods-hint, .woods-still .woods-furniture { display: none; }
+
+/* No WebGL or no JavaScript: the still landscape keeps every destination,
+   laid out as a plain column so nothing can overlap. */
+:root:not(.woods-live) .woods-hint, :root:not(.woods-live) .woods-arrival { display: none; }
+:root:not(.woods-js) .woods-stage, .woods-failed .woods-stage { display: flex; flex-direction: column; align-items: center; height: auto; min-height: 100svh; padding: 112px 0 40px; }
+:root:not(.woods-js) .woods-intro, .woods-failed .woods-intro { position: relative; top: auto; text-shadow: none; color: var(--forest); }
+:root:not(.woods-js) .woods-intro h1, .woods-failed .woods-intro h1 { font-size: clamp(2.8rem, 6vw, 4.6rem); }
+:root:not(.woods-js) .woods-intro h1 em, .woods-failed .woods-intro h1 em { color: #4f6750; }
+:root:not(.woods-js) .woods-begin, .woods-failed .woods-begin { display: none; }
+:root:not(.woods-js) .woods-signs, .woods-failed .woods-signs { position: relative; left: auto; bottom: auto; margin: 30px 0 0; transform: none; }
+:root:not(.woods-js) .woods-colophon, .woods-failed .woods-colophon { position: relative; bottom: auto; margin: auto 0 0; padding-top: 28px; color: var(--cream); }
+:root:not(.woods-js) .woods-shade, .woods-failed .woods-shade { background: linear-gradient(rgba(14, 22, 17, .35), rgba(14, 22, 17, 0) 120px); }
+
+@media (max-width: 760px) {
+  .woods-home .woods-header { min-height: 76px; padding: 0 22px; }
+  .woods-header .brand a { font-size: 1.16rem; gap: 8px; }
+  .woods-header .brand svg { width: 29px; }
+  .woods-header .menu-btn { position: relative; display: block; }
+  .woods-header .nav { position: absolute; top: 66px; right: 14px; left: 14px; display: grid; padding: 14px 20px; border: 1px solid var(--line); border-radius: 6px; background: var(--cream); opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(-8px); }
+  .woods-header.menu-open .nav { opacity: 1; visibility: visible; pointer-events: auto; transform: none; }
+  .woods-header .nav a { padding: 12px 2px; color: var(--ink-soft); text-shadow: none; }
+  .woods-header .nav a::after { bottom: 6px; }
+  :root:not(.woods-js) .woods-header .nav { position: static; display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 0 0 14px; grid-column: 1 / -1; opacity: 1; visibility: visible; pointer-events: auto; transform: none; border: 0; background: none; }
+  :root:not(.woods-js) .woods-header { gap: 10px; padding-top: 18px; }
+  :root:not(.woods-js) .woods-header .nav a { padding: 4px 2px; font-size: .65rem; color: var(--cream); }
+  .woods-controls { top: 82px; right: 16px; }
+  .woods-intro { top: 150px; }
+  .woods-intro .woods-label { font-size: .5rem; letter-spacing: .14em; gap: 8px; }
+  .woods-lead { font-size: .9rem; margin-top: 16px; }
+  .woods-walking .woods-walk { height: 760svh; }
+  .woods-arrival { top: 17%; }
+  .woods-arrival h2 { font-size: 2.8rem; }
+  .woods-arrival .woods-label { font-size: .48rem; letter-spacing: .13em; }
+  .woods-arrival > p:last-child { font-size: .76rem; }
+  .woods-hint { bottom: 96px; font-size: .5rem; }
+  .woods-hint-walk::before { content: "Swipe up to walk"; }
+  .woods-hint-walk { font-size: 0; }
+  .woods-hint-walk::before { font-size: .5rem; }
+  .woods-furniture { bottom: 46px; left: 6%; right: 6%; gap: 10px; }
+  .woods-mile { min-width: 0; gap: 8px; }
+  .woods-mile-number { font-size: 2rem; }
+  .woods-mile-copy { font-size: .48rem; }
+  .woods-progress { width: 42px; flex: 0 0 auto; }
+  .woods-furniture > a { font-size: .59rem; white-space: nowrap; }
+  .woods-furniture > a span { margin-left: 4px; }
+  .woods-colophon { bottom: 14px; font-size: .47rem; }
+  .woods-sign strong { font-size: 1.35rem; }
+}
+@media (max-width: 360px) { .woods-progress { display: none; } .woods-arrival h2 { font-size: 2.4rem; } }
+@media (max-height: 560px) {
+  .woods-intro { top: 84px; }
+  .woods-intro h1 { font-size: 3rem; }
+  .woods-lead { margin-top: 8px; }
+  .woods-intro .woods-label { margin-bottom: 8px; }
+  .woods-begin { margin-top: 10px; }
+  .woods-arrival { top: 76px; }
+  .woods-arrival h2 { font-size: 2.2rem; }
+  .woods-arrival .woods-label, .woods-arrival > p:last-child { display: none; }
+  .woods-controls { top: 76px; }
+  .woods-furniture { bottom: 30px; }
+  .woods-hint { bottom: 70px; }
+}
+@media (prefers-reduced-motion: reduce) { .woods-home *, .woods-home *::before, .woods-home *::after { transition: none !important; } }

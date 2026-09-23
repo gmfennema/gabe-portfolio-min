@@ -2,7 +2,9 @@
 
 A hand-written static site. No build step, no dependencies: `index.html` and
 friends are served as they are. Shared styles and behavior live in `site.css`
-and `site.js`; the scroll-driven homepage adds `home.css` and `home.js`.
+and `site.js`; the scroll-driven homepage adds `home.css` and `home.js`. The
+3D alternate homepage, `woods.html`, adds `woods.css`, `woods-path.js`,
+`woods-sound.js`, `woods.js` and a vendored copy of three.js.
 GitHub Pages deploys `main` on push.
 
 ## Working on it
@@ -122,3 +124,42 @@ Run `tests/home-invariants.html` in a visible browser tab to check desktop,
 tablet, phone, landscape, and no-JS layouts. Inspect the opening, approach,
 and final signpost visually. Run the asset version and image dimension checks
 before committing. Shared field-note reader code is independent of this scene.
+
+## The woods (3D homepage)
+
+`woods.html` is an alternate homepage: the same welcome, navigation and four
+destinations, as a first-person walk through a ponderosa and aspen forest drawn
+with three.js. three is vendored and pinned in `vendor/three-0.180.0/` — no CDN,
+no build — and imported by relative path from `woods.js`, an ES module.
+
+- **One world, described once.** `woods-path.js` holds the trail spline
+  (resampled by arc length), its elevation, the creek and bridge, the two forks,
+  the terrain height function and every planting rule. `woods.js` only draws
+  what it describes. Nothing is planted on the tread, in the creek, in the
+  junction clearing, or in the arrival's view over the ridge to the peaks.
+  `node tests/woods-world.cjs` checks that, plus even steps, feet on the ground,
+  one creek crossing, smooth heading and the sign's framing at six screen shapes.
+- **Scroll is the walk.** The section is about eight screens tall around a
+  sticky stage; scroll progress maps to distance along the trail and the camera
+  eases toward it. Head bob, sway and footsteps come from distance travelled, so
+  they stop when the walker does. Drag or ←/→ looks around; walking eases the
+  head back to the trail. "Take a walk" strolls at hiking pace; "Jump to the
+  junction" uses the classic trail's quintic shortcut; both give way to input.
+- **The signs are real links.** The boards are drawn in 3D and four HTML
+  anchors are laid over their projected outlines every frame at the junction.
+  They stay hidden until arrival; the skip link and `#woods-junction` go
+  straight there and focus the first sign. `?at=0.4` opens the walk that far on.
+- **Everything is made at load.** Bark, needles, leaves, ground and sign faces
+  are painted on canvases; sound is synthesised by `woods-sound.js` with Web
+  Audio and stays off until the visitor turns it on.
+- **One wind.** Trees, grass and ferns sway in the vertex shader (`woodsSway`);
+  `WoodsWorld.gust` is the same gust in JS, so the wind you hear swells with the
+  gusts you see. Pause wind stills the water, dust and falling leaves as well.
+- **Frames only when needed.** Instances are grouped in patches of a few dozen
+  metres so frustum culling works. Coarse pointers and small screens get fewer
+  blades and trees, smaller shadows and no MSAA, and resolution drops when
+  frames run slow. The loop idles once nothing moves.
+- **Fallbacks.** Reduced motion stands the walker at the junction with nothing
+  swaying. No WebGL, no JavaScript, or a module that never starts (a 15 second
+  timer in the page head) shows a still landscape with the four signs as plain
+  wooden links.
