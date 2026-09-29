@@ -1,9 +1,9 @@
 /* The sound of the woods, synthesised: nothing to download and silent until
    the walker asks for it. Wind follows the same gusts the trees sway to,
-   footsteps follow the walk, and the creek is loudest on the bridge. */
+   birds call from the ridge, and the creek is loudest on the bridge. */
 const WoodsSound = (() => {
   let ctx = null, master = null, reverb = null, noise = null, wind = null, rustle = null, creek = [];
-  let enabled = false, birdTimer = 0, lastUpdate = 0, foot = 1;
+  let enabled = false, birdTimer = 0, lastUpdate = 0;
 
   function noiseBuffer(seconds) {
     const buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * seconds), ctx.sampleRate), data = buffer.getChannelData(0);
@@ -140,29 +140,6 @@ const WoodsSound = (() => {
       creek[2].gain.gain.setTargetAtTime(near * .16, t, .5);
       creek[0].filter.frequency.setTargetAtTime(480 + Math.random() * 520, t, .04);
       creek[1].filter.frequency.setTargetAtTime(1300 + Math.random() * 1100, t, .03);
-    },
-    step(surface, strength) {
-      if (!enabled || ctx.state !== 'running') return;
-      const t = ctx.currentTime + .004, wood = surface === 'wood', place = pan((foot = -foot) * .12);
-      place.connect(master);
-      const source = ctx.createBufferSource(), band = ctx.createBiquadFilter(), gain = ctx.createGain();
-      source.buffer = noise;
-      band.type = 'bandpass'; band.frequency.value = (wood ? 330 : 1050) * (.85 + Math.random() * .3); band.Q.value = wood ? 1.8 : .75;
-      gain.gain.setValueAtTime(0, t);
-      gain.gain.linearRampToValueAtTime((wood ? .5 : .42) * strength, t + .014);
-      gain.gain.exponentialRampToValueAtTime(.0005, t + (wood ? .19 : .15));
-      source.connect(band).connect(gain).connect(place);
-      source.start(t, Math.random() * 4, .22);
-      if (wood) tone(t, 150, 85, .12, .35 * strength, place);
-      else {
-        // Grit under the boot: a brief bright crunch after the heel.
-        const grit = ctx.createBufferSource(), high = ctx.createBiquadFilter(), g = ctx.createGain();
-        grit.buffer = noise; high.type = 'highpass'; high.frequency.value = 2600;
-        g.gain.setValueAtTime(0, t + .03); g.gain.linearRampToValueAtTime(.09 * strength, t + .045); g.gain.exponentialRampToValueAtTime(.0005, t + .12);
-        grit.connect(high).connect(g).connect(place);
-        grit.start(t + .03, Math.random() * 4, .1);
-      }
-      setTimeout(() => place.disconnect(), 600);
     },
   };
 })();

@@ -2,18 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex"><title>Woods layout checks</title>
+<meta name="robots" content="noindex"><title>Homepage woods checks</title>
 <style>
 body{margin:20px;font:14px/1.5 system-ui;background:#f6f0e4;color:#24382f}h1{font-size:22px}button,select{font:inherit;padding:8px;margin-right:8px}iframe{display:block;border:1px solid #9b9f8b;margin:20px 0;max-width:none}pre{white-space:pre-wrap;max-height:260px;overflow:auto}label{display:inline-block;margin-right:12px}
 </style>
 </head>
 <body>
-<h1>Woods layout checks</h1>
-<p>Checks the 3D woods page in desktop, tablet, phone, landscape, and JavaScript-disabled frames. Run it in a visible tab on a machine with a GPU.</p>
+<h1>Homepage woods checks</h1>
+<p>Checks the 3D woods homepage in desktop, tablet, phone, landscape, and JavaScript-disabled frames. Run it in a visible tab on a machine with a GPU.</p>
 <button id="run">Run checks</button><label>Preview <select id="size"><option value="390,844">Phone · 390 × 844</option><option value="320,740">Small phone · 320 × 740</option><option value="768,1024">Tablet · 768 × 1024</option><option value="1366,900">Desktop · 1366 × 900</option><option value="844,390">Landscape · 844 × 390</option></select></label>
 <p id="steps"><button data-at="0">Trailhead</button><button data-at=".3">Into the woods</button><button data-at=".52">Bridge</button><button data-at=".8">The ridge</button><button data-at="1">Junction</button></p>
 <pre id="log" role="status">Ready.</pre>
-<iframe id="preview" title="Woods preview" width="390" height="844" src="../woods.html"></iframe>
+<iframe id="preview" title="Woods preview" width="390" height="844" src="../index.html"></iframe>
 <script>
 const frame = document.querySelector('#preview');
 const output = document.querySelector('#log');
@@ -31,7 +31,7 @@ async function load(width, height, noScript = false) {
   await new Promise((resolve, reject) => {
     const timeout = setTimeout(() => reject(new Error('Woods did not load')), 20000);
     frame.onload = () => { clearTimeout(timeout); resolve(); };
-    frame.src = '../woods.html?preview=' + Date.now();
+    frame.src = '../index.html?preview=' + Date.now();
   });
   frame.scrollIntoView({behavior:'instant',block:'start'});
   if (!noScript) await until(() => /woods-(live|failed)/.test(frame.contentDocument.documentElement.className), 30000);
@@ -99,7 +99,7 @@ run.addEventListener('click', async () => {
   finally { run.disabled = false; await load(390,844); }
 });
 document.querySelectorAll('[data-at]').forEach(button => button.addEventListener('click', () => {
-  frame.src = `../woods.html?at=${button.dataset.at}&preview=${Date.now()}`;
+  frame.src = `../index.html?at=${button.dataset.at}&preview=${Date.now()}`;
 }));
 document.querySelector('#size').addEventListener('change', event => load(...event.target.value.split(',').map(Number)));
 </script>

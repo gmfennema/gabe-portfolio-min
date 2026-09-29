@@ -87,4 +87,30 @@ for (const aspect of [390 / 844, 320 / 740, 768 / 1024, 1366 / 900, 1920 / 1080,
 const a = W.arrival(1.5), mark = W.trail(40), tree = {x: mark.x - mark.tz * 3, y: W.rise(40) + 2, z: mark.z + mark.tx * 3};
 assert(project(W.pose(30, 1.5), tree, a.fov, 1.5).depth > 0, 'a trailside tree starts ahead');
 assert(project(W.pose(50, 1.5), tree, a.fov, 1.5).depth < 0, 'and ends up behind');
-console.log(`PASS: even tread, one creek crossing and a bridge on its banks, ${forest.trees.length} trees clear of the walk, smooth heading, framed arrival and an open view`);
+// The gait: a walk, then a run with a real bound in it, then a glide. Going
+// faster lengthens the stride instead of playing the same walk faster, and a
+// fling floats rather than jittering.
+const still = W.stride(0);
+assert(still.walk === 0 && still.run === 0 && still.float === 0, 'standing still has no gait');
+assert(W.stride(2.8).walk > .95, 'an easy scroll walks');
+assert(W.stride(10).run > .95, 'a brisk scroll runs');
+assert(W.stride(30).float === 1 && W.stride(30).walk === 0 && W.stride(30).run === 0, 'a fling glides');
+for (let v = 0; v <= 80; v += .25) {
+  const g = W.stride(v);
+  assert(g.cadence <= 3.1, `cadence stays a runner's, never a sped-up walk (${v} m/s: ${g.cadence.toFixed(2)} steps/s)`);
+  assert(Math.abs(g.walk + g.run + g.float - W.smooth(.2, 1.1, v) * (1 - g.float) - g.float) < 1e-9, 'the gaits hand over without a gap');
+}
+assert(W.stride(12).cadence / W.stride(2.8).cadence < 1.6, 'running four times as fast takes well under twice the steps');
+let rise = 0, fall = 0, last = W.bob(0, W.stride(10));
+for (let t = .001; t <= 4; t += .001) {
+  const run = W.bob(t, W.stride(10)), walk = W.bob(t, W.stride(2.8)), glide = W.bob(t, W.stride(40));
+  assert(Math.abs(run.y - last.y) < .0015, 'the running bound is smooth, with no jolt at landing');
+  rise = Math.max(rise, run.y); fall = Math.min(fall, run.y);
+  assert(walk.y <= 1e-9 && walk.y >= -.031, 'a walk dips at each heel strike and no more');
+  assert(glide.y === 0 && glide.x === 0 && glide.roll === 0, 'a glide carries no footfall at all');
+  last = run;
+}
+assert(rise > .03 && fall < -.03, `a run leaves the ground and sinks into each landing (${fall.toFixed(3)} to ${rise.toFixed(3)} m)`);
+assert(W.bob(0, W.stride(40)).lift > .4, 'a glide lifts the walker off the tread');
+
+console.log(`PASS: even tread, one creek crossing and a bridge on its banks, ${forest.trees.length} trees clear of the walk, smooth heading, framed arrival and an open view, and a walk that runs and glides`);

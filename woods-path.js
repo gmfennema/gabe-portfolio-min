@@ -3,7 +3,7 @@
    it, so the trail, the creek, the planting and the arrival framing can never
    disagree about where anything is. */
 const WoodsWorld = (() => {
-  const DEG = Math.PI / 180, EYE = 1.65, STEP = .74, TREAD = .62;
+  const DEG = Math.PI / 180, EYE = 1.65, TREAD = .62;
   const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
   const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); };
   const mix = (a, b, t) => a + (b - a) * t;
@@ -136,8 +136,8 @@ const WoodsWorld = (() => {
   }), 1);
   const creekDistance = (x, z) => nearest(creekLine, x, z, 8).dist;
 
-  // ---- Two trails leave the junction, left and right along the ridge.
-  const forks = [[[-5, -6], [-31, -11]], [[5.5, -5], [29, -17]]].map(([c, e]) => resample(Array.from({length: 61}, (_, k) => {
+  // ---- Two trails leave the junction, left and right along the rim.
+  const forks = [[[-6, -2.2], [-31, 3]], [[6.5, -2], [29, 1.5]]].map(([c, e]) => resample(Array.from({length: 61}, (_, k) => {
     const t = k / 60, b = 2 * t * (1 - t), q = t * t;
     return [J.x + b * c[0] + q * e[0], J.z + b * c[1] + q * e[1]];
   }), .5));
@@ -173,8 +173,16 @@ const WoodsWorld = (() => {
       const bank = WATER - .4 + (DECK - WATER + .4) * smooth(1.2, 4.3, t.creek);
       h = mix(bank, h, smooth(4.3, 9, t.creek));
     }
-    // Past the clearing the ridge falls away into a wide valley and the peaks beyond.
-    return h - smooth(13, 75, t.beyond) * 32;
+    // A few steps past the sign the ridge breaks over into the valley. The
+    // slope steepens smoothly to a steep wall, and woods-vista.js carries it
+    // on down from the edge of this ground.
+    return h - brink(t.beyond);
+  }
+
+  const BRINK = 1.1, BRINK_CURVE = .1, BRINK_SLOPE = 1.25;
+  function brink(beyond) {
+    const x = Math.max(0, beyond - BRINK) * 2 * BRINK_CURVE / BRINK_SLOPE;
+    return BRINK_SLOPE * BRINK_SLOPE / (2 * BRINK_CURVE) * (x + Math.log1p(Math.exp(-2 * x)) - Math.LN2);
   }
 
   // ---- The walker. Distances are along the tread, so scroll maps to steps.
@@ -206,7 +214,7 @@ const WoodsWorld = (() => {
   }
 
   // ---- Planting. Every rule that keeps the walk clear lives here.
-  const BOUNDS = {x0: -150, x1: 150, z0: -340, z1: 80};
+  const BOUNDS = {x0: -150, x1: 150, z0: J.z - 60, z1: 80};
   const FIELD = {x0: -64, x1: 64, z0: -176, z1: 72, cell: .5};
   function inView(s, x) {
     // The arrival looks over the ridge to the peaks: keep that window open.
@@ -285,6 +293,8 @@ const WoodsWorld = (() => {
       if (x < FIELD.x0 || x > FIELD.x1 || z < FIELD.z0 || z > FIELD.z1) continue;
       const s = site(x, z);
       if (s.path < .78 || s.creek < 2.7 || Math.hypot(x - SIGN.x, z - SIGN.z) < .5) continue;
+      // Nothing grows on the lip of the drop, where it would hide the valley floor.
+      if (s.beyond > .4 && Math.abs(x - J.x) < 9 + s.beyond * 1.2) continue;
       const edge = smooth(.78, 1.3, s.path) * (1 - smooth(1.6, 3.4, s.path));
       const chance = Math.max(s.meadow, edge * .75, .16 * smooth(.45, .7, fbm(x * .09, z * .09, 2, 90)));
       if (rand() > chance) continue;
@@ -293,14 +303,46 @@ const WoodsWorld = (() => {
     return out;
   }
 
+  // ---- The gait. Speed is how fast the walker covers trail, in m/s. A scroll
+  // covers ground faster than legs could, so the bands follow how people
+  // scroll: an easy scroll walks, a brisk one runs with a bound in every
+  // stride, and a fling lifts the walker off the ground into a glide. Cadence
+  // rises only a little with pace — the stride lengthens instead, as it does —
+  // so going faster never looks like the same walk played fast.
+  function stride(speed) {
+    const v = Math.abs(speed), moving = smooth(.2, 1.1, v), run = smooth(4.5, 8.5, v), float = smooth(16, 26, v);
+    const cadence = mix(1.7 + .07 * Math.min(v, 4.5), 2.55 + .03 * clamp(v - 4.5, 0, 12), run);
+    return {walk: moving * (1 - run) * (1 - float), run: run * (1 - float), float, cadence};
+  }
+  // The head through a stride. phase counts steps; each whole number is a foot
+  // landing. A walk vaults over a stiff leg, highest mid-stride and lowest as
+  // the heel strikes. A run is a spring: it sinks through the stance, then
+  // flies, and the two halves meet with matching slopes so the bound is smooth.
+  const STANCE = .38, WALK_BOB = .03, RUN_SINK = .036, RUN_FLIGHT = RUN_SINK * Math.PI * (1 - STANCE) / (4 * STANCE);
+  function bob(phase, gait) {
+    const p = phase - Math.floor(phase), side = Math.sin(phase * Math.PI);
+    const walk = -WALK_BOB * Math.pow((1 + Math.cos(2 * Math.PI * p)) / 2, 1.5);
+    let run, nod;
+    if (p < STANCE) { nod = Math.sin(Math.PI * p / STANCE); run = -RUN_SINK * nod; }
+    else { const u = (p - STANCE) / (1 - STANCE); run = RUN_FLIGHT * 4 * u * (1 - u); nod = 0; }
+    return {
+      y: walk * gait.walk + run * gait.run,
+      x: side * (.017 * gait.walk + .009 * gait.run),
+      roll: side * (.0045 * gait.walk + .0075 * gait.run),
+      pitch: -(nod * .012 + .022) * gait.run,
+      surge: Math.sin(2 * Math.PI * p) * .025 * gait.run,
+      lift: .42 * gait.float,
+    };
+  }
+
   // Wind is shared with the shaders so the sound of a gust matches the sway.
   function gust(x, z, time) {
     const g = .5 + .5 * Math.sin(time * .62 - x * .12 - z * .035);
     return g * g * g;
   }
 
-  return {DEG, EYE, STEP, TREAD, BEGIN, JUNCTION, CREEK, BRIDGE, DECK, WATER, JY, J, SIGN, BOUNDS, FIELD,
+  return {DEG, EYE, TREAD, BEGIN, JUNCTION, CREEK, BRIDGE, DECK, WATER, JY, J, SIGN, BOUNDS, FIELD,
     clamp, smooth, mix, random, hash, noise, fbm, trail, rise, nearestTrail, creekDistance, forkDistance, site, meadow,
-    height, lens, arrival, pose, inView, plant, grass, gust, creekLine, forks, crossing};
+    height, brink, lens, arrival, pose, inView, plant, grass, gust, stride, bob, creekLine, forks, crossing};
 })();
 if (typeof module !== 'undefined') module.exports = WoodsWorld;

@@ -17,8 +17,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-ASSETS = ("site.css", "site.js", "home.css", "home-path.js", "home.js", "assets/mountains-far.svg", "assets/mountains-ridge.svg",
-          "woods.css", "woods-path.js", "woods-sound.js", "woods.js")
+ASSETS = ("site.css", "site.js", "woods.css", "woods-path.js", "woods-sound.js", "woods-render.js", "woods-vista.js", "woods.js")
 
 
 def digest(path):

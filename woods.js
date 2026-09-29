@@ -28,41 +28,55 @@ async function start() {
   const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
   const LOW = !fine || Math.min(screen.width, screen.height) < 700 || (navigator.hardwareConcurrency || 8) <= 4;
   const Q = LOW
-    ? {dpr: 1.35, shadow: 1024, grass: 5000, grid: 1.6, motes: 220, rays: 16, bark: 128, aa: false}
-    : {dpr: 1.75, shadow: 2048, grass: 11000, grid: 1.25, motes: 480, rays: 28, bark: 256, aa: true};
+    ? {dpr: 1.35, shadow: 1536, shadowReach: 34, grass: 5000, grid: 1.6, motes: 220, rays: 16, bark: 256, samples: 0, bloom: 5}
+    : {dpr: 1.6, shadow: 4096, shadowReach: 50, grass: 11000, grid: 1.25, motes: 480, rays: 28, bark: 512, samples: (devicePixelRatio || 1) > 1.3 ? 2 : 4, bloom: 6};
 
-  const renderer = new THREE.WebGLRenderer({canvas, antialias: Q.aa, powerPreference: 'high-performance'});
+  // The frame is rendered in HDR and developed by WoodsRender's darkroom, which
+  // does its own antialiasing, tone curve and output encoding.
+  const renderer = new THREE.WebGLRenderer({canvas, antialias: false, powerPreference: 'high-performance'});
   let pixelRatio = Math.min(devicePixelRatio || 1, Q.dpr);
   renderer.setPixelRatio(pixelRatio);
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.1;
+  renderer.autoClear = false;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const maxAniso = renderer.capabilities.getMaxAnisotropy();
 
-  // ---- Light: late afternoon, the sun low over the left shoulder.
-  const HAZE = new THREE.Color('#dcd2b2');
-  const SUN = new THREE.Vector3(-.84, .38, .1).normalize();
-  const SUN_COLOR = new THREE.Color('#ffd6a0');
-  const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(HAZE, .0118);
-  renderer.setClearColor(HAZE);
-  const camera = new THREE.PerspectiveCamera(56, 1, .08, 5200);
+  // ---- Light: late afternoon, the sun low over the left shoulder and a little behind.
+  const SUN = new THREE.Vector3(-.92, .26, .26).normalize();
+  const SUN_COLOR = new THREE.Color('#ffbf80'), SUN_POWER = 10.5;
+  const sunLight = SUN_COLOR.clone().multiplyScalar(SUN_POWER);
+  const air = WoodsRender.atmosphere({
+    sun: SUN.toArray(), sunLight: sunLight.toArray(),
+    rayBeta: [5.8e-6 * 1.35, 13.5e-6 * 1.35, 33.1e-6 * 1.35], rayH: 8000,
+    hazeBeta: 1.3e-5, hazeH: 1500, mistBeta: 5e-5, mistBase: -620, mistH: 260,
+    skyLight: [1.45, 1.45, 1.45], hazeLight: [.56, .59, .64], mieG: .78, mieGain: .1, cloudBase: 2900,
+  });
+  WoodsRender.installFog(THREE, air);
+  const scene = new THREE.Scene(), far = new THREE.Scene();
+  // Built-in materials take their air from the fog chunk; fog.near is the haze among the trunks.
+  scene.fog = new THREE.Fog(0xffffff, 0, 1);
+  const camera = new THREE.PerspectiveCamera(56, 1, .08, 900), farCamera = new THREE.PerspectiveCamera(56, 1, 20, 90000);
   camera.rotation.order = 'YXZ';
-  const sun = new THREE.DirectionalLight(SUN_COLOR, 3.1);
-  const SHADOW = 36;
+  const sun = new THREE.DirectionalLight(SUN_COLOR, SUN_POWER);
+  const SHADOW = Q.shadowReach;
+  // Soft shadows that widen with distance from their caster, where the GPU can afford them.
+  if (!LOW && WoodsRender.installSoftShadows(THREE, {range: 219, span: 2 * SHADOW, spread: .011, search: .9, blockers: 12, samples: 20})) renderer.shadowMap.type = THREE.PCFShadowMap;
   sun.castShadow = true;
   sun.shadow.mapSize.set(Q.shadow, Q.shadow);
-  Object.assign(sun.shadow.camera, {left: -SHADOW, right: SHADOW, top: SHADOW, bottom: -SHADOW, near: 1, far: 190});
-  sun.shadow.bias = -.0004;
-  sun.shadow.normalBias = .05;
-  scene.add(sun, sun.target, new THREE.HemisphereLight('#cbdbe2', '#5d5436', 1.35));
+  Object.assign(sun.shadow.camera, {left: -SHADOW, right: SHADOW, top: SHADOW, bottom: -SHADOW, near: 1, far: 220});
+  sun.shadow.bias = -.0003;
+  sun.shadow.normalBias = .04;
+  sun.shadow.radius = 2;
+  // Open ground sees the whole sky; under the crowns the environment does the work.
+  const openSky = new THREE.HemisphereLight('#a9c3e6', '#6b5a3c', 0);
+  scene.add(sun, sun.target, openSky);
 
   const rnd = W.random(20260923), R = (a, b) => a + (b - a) * rnd(), pick = list => list[Math.floor(rnd() * list.length)];
   const UP = new THREE.Vector3(0, 1, 0);
 
   // ---- Wind, shared by every swaying thing and by the sound of it.
-  const shared = {uTime: {value: 0}, uWindAmp: {value: 1}, uWindDir: {value: new THREE.Vector2(.88, .47)}, uSunDir: {value: SUN}, uSunColor: {value: SUN_COLOR}};
+  const shared = {uTime: {value: 0}, uWindAmp: {value: 1}, uWindDir: {value: new THREE.Vector2(.88, .47)}, uSunDir: {value: SUN},
+    uSunColor: {value: SUN_COLOR.clone().multiplyScalar(SUN_POWER / Math.PI)}, woodsNoise: {value: null}, woodsClock: {value: 0}};
   const f = x => Number(x).toFixed(4);
   const WIND = `
     uniform float uTime; uniform float uWindAmp; uniform vec2 uWindDir;
@@ -74,14 +88,14 @@ async function start() {
   // Bend grows with height (geometry is built one unit tall), applied in world
   // space after instancing so every tree leans the same way in a gust.
   function sway(material, options = {}) {
-    const {bend = 0, flutter = 0, sprite = false, glow = 0, upright = false} = options;
+    const {bend = 0, flutter = 0, sprite = false, glow = 0, upright = false, char = 0} = options;
     material.onBeforeCompile = shader => {
       Object.assign(shader.uniforms, shared);
       shader.vertexShader = shader.vertexShader
         .replace('#include <common>', `#include <common>
           ${WIND}
           ${sprite ? 'attribute vec4 aSprite;' : ''}
-          varying vec3 vWorld;`)
+          varying vec3 vWorld; varying vec2 vRoot;`)
         .replace('#include <project_vertex>', `
           vec4 wp = vec4(transformed, 1.0);
           vec2 origin = vec2(0.0);
@@ -100,16 +114,31 @@ async function start() {
           ${sprite ? `float sc = cos(aSprite.w), ss = sin(aSprite.w);
           mvPosition.xy += mat2(sc, ss, -ss, sc) * aSprite.xy * aSprite.z * girth;` : ''}
           gl_Position = projectionMatrix * mvPosition;
-          vWorld = wp.xyz;`)
+          vWorld = wp.xyz;
+          vRoot = vec2(position.y * span, woodsHash(origin));`)
         .replace('#include <worldpos_vertex>', 'vec4 worldPosition = wp;');
+      // Old ponderosas carry the black of past ground fires a metre or two up the trunk.
+      if (char) shader.fragmentShader = shader.fragmentShader
+        .replace('#include <common>', '#include <common>\nvarying vec2 vRoot;')
+        .replace('#include <map_fragment>', `#include <map_fragment>
+          float scorch = .5 + vRoot.y * 1.9 + .35 * sin(vMapUv.x * 18.85 + vRoot.y * 40.0) + .18 * sin(vMapUv.x * 50.3 + vMapUv.y * 3.0);
+          diffuseColor.rgb *= mix(1.0, .14, (1.0 - smoothstep(scorch - .25, scorch + .35, vRoot.x)) * ${f(char)} * step(.3, vRoot.y));`);
       // Blades and fronds are lit like the ground they grow from, on both faces.
       if (upright) shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_begin>', '#include <normal_fragment_begin>\nnormal = normalize(vNormal);');
       if (glow) shader.fragmentShader = shader.fragmentShader
         .replace('#include <common>', '#include <common>\nuniform vec3 uSunDir; uniform vec3 uSunColor; varying vec3 vWorld;')
         .replace('#include <lights_fragment_end>', `#include <lights_fragment_end>
-          // Light through leaves: foliage between the eye and the sun glows.
-          float back = pow(max(dot(normalize(vWorld - cameraPosition), uSunDir), 0.0), 4.0);
-          reflectedLight.indirectDiffuse += diffuseColor.rgb * uSunColor * (back * ${f(glow)} + ${f(glow * .1)});`);
+          ${sprite ? `// A clump turned away from the eye shows its shaded underside, however
+          // brightly its far face is lit; the crown in front of it shades it too.
+          float away = smoothstep(-.1, .75, -dot(normal, normalize(vViewPosition)));
+          reflectedLight.directDiffuse *= 1.0 - away * .82;
+          reflectedLight.indirectDiffuse *= 1.0 - away * .35;` : ''}
+          // Needles, leaves and blades scatter light; they barely mirror the sky.
+          reflectedLight.directSpecular *= .25;
+          reflectedLight.indirectSpecular *= .08;
+          // Light through leaves: foliage between the eye and the sun glows, green.
+          float back = pow(max(dot(normalize(vWorld - cameraPosition), uSunDir), 0.0), 6.0);
+          reflectedLight.indirectDiffuse += diffuseColor.rgb * diffuseColor.rgb * 2.2 * uSunColor * (back * ${f(glow)} + ${f(glow * .06)});`);
     };
     material.customProgramCacheKey = () => 'woods' + JSON.stringify(options);
     return material;
@@ -207,127 +236,199 @@ async function start() {
     texture.needsUpdate = true;
     return texture;
   })();
+  shared.woodsNoise.value = noiseTexture;
 
-  // Ponderosa bark: orange plates split by dark fissures, like jigsaw pieces.
-  const pineBark = paint(Q.bark, Q.bark * 2, (g, w, h) => {
-    const cols = 8, rows = 19, cw = w / cols, ch = h / rows, palette = [[160, 98, 58], [180, 116, 70], [142, 88, 54], [190, 132, 84], [128, 80, 50], [170, 108, 66]];
-    const cells = Array.from({length: cols * rows}, () => [R(.12, .88), R(.12, .88), pick(palette), R(.84, 1.08)]);
-    const image = g.createImageData(w, h), px = image.data, scale = 256 / w;
-    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-      const gx = Math.floor(x / cw), gy = Math.floor(y / ch);
-      let d1 = Infinity, d2 = Infinity, near = cells[0];
+  // ---- Bark, grown from height fields so each has a normal map to match.
+  // Periodic value noise, for textures that wrap round a trunk without a seam.
+  function tileNoise(x, y, px, py, seed) {
+    const ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy, u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy);
+    const h = (i, j) => W.hash(((i % px) + px) % px, ((j % py) + py) % py, seed);
+    const a = h(ix, iy), b = h(ix + 1, iy), c = h(ix, iy + 1), d = h(ix + 1, iy + 1);
+    return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+  }
+  function tileFbm(x, y, px, py, octaves, seed) {
+    let sum = 0, amp = .5, total = 0;
+    for (let i = 0; i < octaves; i++) { sum += tileNoise(x, y, px, py, seed + i * 17) * amp; total += amp; x *= 2; y *= 2; px *= 2; py *= 2; amp *= .5; }
+    return sum / total;
+  }
+  // Worley cells on a wrapping grid, stretched along the trunk: distance to the
+  // nearest seed and to the next, and a value for the cell that won.
+  function cells(cols, rows, stretch, seed) {
+    const r = W.random(seed), pts = Array.from({length: cols * rows}, () => [r(), r(), r()]);
+    return (x, y) => {
+      const gx = Math.floor(x), gy = Math.floor(y);
+      let d1 = 9, d2 = 9, id = 0;
       for (let oy = -1; oy <= 1; oy++) for (let ox = -1; ox <= 1; ox++) {
-        const i = (gx + ox + cols) % cols, j = (gy + oy + rows) % rows, c = cells[j * cols + i];
-        const dx = (gx + ox + c[0]) * cw - x, dy = (gy + oy + c[1]) * ch - y, dd = dx * dx + dy * dy * .45;
-        if (dd < d1) { d2 = d1; d1 = dd; near = c; } else if (dd < d2) d2 = dd;
+        const i = gx + ox, j = gy + oy, p = pts[(((j % rows) + rows) % rows) * cols + (((i % cols) + cols) % cols)];
+        const dx = i + p[0] - x, dy = (j + p[1] - y) * stretch, dd = dx * dx + dy * dy;
+        if (dd < d1) { d2 = d1; d1 = dd; id = p[2]; } else if (dd < d2) d2 = dd;
       }
-      const edge = (Math.sqrt(d2) - Math.sqrt(d1)) * scale, bevel = W.smooth(.8, 5, edge);
-      const flake = .84 + .26 * W.hash(x >> 1, y >> 2, 7), k = (y * w + x) * 4;
-      for (let c = 0; c < 3; c++) px[k + c] = W.mix([44, 30, 21][c], near[2][c] * near[3] * flake, bevel);
-      px[k + 3] = 255;
+      return [Math.sqrt(d1), Math.sqrt(d2), id];
+    };
+  }
+  // A height field becomes a tangent-space normal map.
+  function normalMap(heights, w, h, strength) {
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const g = c.getContext('2d'), image = g.createImageData(w, h), px = image.data, at = (i, j) => heights[((j + h) % h) * w + ((i + w) % w)];
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const dx = (at(x + 1, y) - at(x - 1, y)) * strength, dy = (at(x, y + 1) - at(x, y - 1)) * strength, l = Math.hypot(dx, dy, 1), k = (y * w + x) * 4;
+      px[k] = (-dx / l * .5 + .5) * 255; px[k + 1] = (dy / l * .5 + .5) * 255; px[k + 2] = (.5 / l + .5) * 255; px[k + 3] = 255;
     }
     g.putImageData(image, 0, 0);
-  }, {wrap: true});
-  const firBark = paint(Q.bark, Q.bark * 2, (g, w, h) => {
-    g.fillStyle = '#5c5249'; g.fillRect(0, 0, w, h);
-    g.lineCap = 'round';
-    for (let i = 0; i < 220; i++) {
-      const x = R(0, w), y = R(0, h), len = R(.1, .45) * h, dark = rnd() < .6;
-      g.strokeStyle = dark ? `rgba(34,28,24,${R(.4, .8)})` : `rgba(130,118,104,${R(.3, .6)})`;
-      g.lineWidth = R(1, dark ? 4 : 2) * w / 256;
-      for (const ox of [0, -w, w]) for (const oy of [0, -h, h]) {
-        g.beginPath(); g.moveTo(x + ox, y + oy);
-        g.bezierCurveTo(x + ox + R(-6, 6), y + oy + len * .33, x + ox + R(-6, 6), y + oy + len * .66, x + ox + R(-4, 4), y + oy + len);
-        g.stroke();
+    const texture = new THREE.CanvasTexture(c);
+    texture.colorSpace = THREE.NoColorSpace;
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.anisotropy = Math.min(maxAniso, 8);
+    return texture;
+  }
+  // shade(u, v) gives [r, g, b, height] for a texel; u runs round the trunk, v up it.
+  function bark(w, h, relief, shade) {
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const g = c.getContext('2d'), image = g.createImageData(w, h), px = image.data, heights = new Float32Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const out = shade(x / w, y / h), k = (y * w + x) * 4;
+      px[k] = out[0]; px[k + 1] = out[1]; px[k + 2] = out[2]; px[k + 3] = 255;
+      heights[y * w + x] = out[3];
+    }
+    g.putImageData(image, 0, 0);
+    const map = new THREE.CanvasTexture(c);
+    map.colorSpace = THREE.SRGBColorSpace;
+    map.wrapS = map.wrapT = THREE.RepeatWrapping;
+    map.anisotropy = Math.min(maxAniso, 8);
+    return {map, normal: normalMap(heights, w, h, relief)};
+  }
+  const BW = Q.bark, BH = Q.bark * 2;
+  // Ponderosa: long cinnamon plates, each built of thin flakes like a jigsaw,
+  // split by black fissures that wander rather than run straight.
+  const pineBark = (() => {
+    const plates = cells(8, 17, .45, 11), flakes = cells(28, 56, .75, 12);
+    return bark(BW, BH, BW / 80, (u, v) => {
+      const warp = tileFbm(u * 8, v * 16, 8, 16, 2, 3) - .5;
+      const x = (((u + warp * .06) % 1) + 1) % 1, y = (((v + warp * .035) % 1) + 1) % 1;
+      const [a1, a2, id] = plates(x * 8, y * 17), edge = a2 - a1;
+      const width = .035 + .075 * tileNoise(u * 16, v * 32, 16, 32, 5);
+      const fissure = (1 - W.smooth(width * .2, width, edge)) * (.62 + .38 * tileNoise(u * 24, v * 48, 24, 48, 8));
+      const [f1, f2] = flakes(u * 28, v * 56), seam = W.smooth(0, .12, f2 - f1);
+      const grain = tileFbm(u * 48, v * 96, 48, 96, 2, 6), grey = W.smooth(.35, .95, id) * .7;
+      const tone = (.8 + .28 * id) * (.72 + .36 * grain) * (.76 + .24 * seam) * (.66 + .34 * W.smooth(0, .25, edge));
+      const r = W.mix(150, 122, grey) * tone, gg = W.mix(92, 104, grey) * tone, b = W.mix(60, 88, grey) * tone;
+      return [W.mix(r, 38, fissure), W.mix(gg, 29, fissure), W.mix(b, 22, fissure), (1 - fissure) * (.6 + .25 * W.smooth(0, .3, edge) + .15 * seam)];
+    });
+  })();
+  // Fir: grey-brown corky ridges running up the trunk, furrowed and cross-cracked.
+  const firBark = bark(BW, BH, BW / 110, (u, v) => {
+    const warp = tileFbm(u * 4, v * 5, 4, 5, 2, 21) * 1.6;
+    const ridge = W.smooth(.36, .62, tileFbm(u * 12 + warp, v * 3, 12, 3, 4, 22));
+    const crack = W.smooth(.66, .86, tileFbm(u * 7, v * 30, 7, 30, 2, 23)) * ridge, fleck = tileNoise(u * 60, v * 120, 60, 120, 24);
+    const tone = (.72 + .3 * fleck) * (.55 + .45 * ridge) * (1 - crack * .45);
+    return [W.mix(44, 124, ridge) * tone + 10, W.mix(36, 108, ridge) * tone + 8, W.mix(30, 94, ridge) * tone + 7, ridge * .8 - crack * .35 + fleck * .08];
+  });
+  // Aspen: chalky white with lenticels, a greener cast in the light, and the
+  // dark eyes where branches once grew.
+  const aspenBark = (() => {
+    const eyes = Array.from({length: 7}, () => [rnd(), rnd(), R(.04, .09), R(.012, .022)]);
+    return bark(BW, BH, BW / 160, (u, v) => {
+      const chalk = tileFbm(u * 6, v * 12, 6, 12, 3, 31), dash = W.smooth(.72, .82, tileFbm(u * 40, v * 180, 40, 180, 2, 32));
+      let eye = 0;
+      for (const [ex, ey, ew, eh] of eyes) {
+        let dx = Math.abs(u - ex); dx = Math.min(dx, 1 - dx);
+        let dy = Math.abs(v - ey); dy = Math.min(dy, 1 - dy);
+        const d = (dx / ew) ** 2 + ((dy + dx * dx * 1.8) / eh) ** 2;
+        eye = Math.max(eye, 1 - W.smooth(.55, 1, d));
       }
-    }
-  }, {wrap: true});
-  const aspenBark = paint(Q.bark, Q.bark * 2, (g, w, h) => {
-    g.fillStyle = '#e8e4d4'; g.fillRect(0, 0, w, h);
-    const k = w / 256;
-    for (let i = 0; i < 40; i++) {
-      const x = R(0, w), y = R(0, h), rw = R(10, 40) * k, rh = R(40, 140) * k;
-      g.fillStyle = pick(['rgba(200,204,186,.5)', 'rgba(236,234,222,.6)', 'rgba(180,186,168,.35)']);
-      for (const ox of [0, -w, w]) for (const oy of [0, -h, h]) g.fillRect(x + ox, y + oy, rw, rh);
-    }
-    g.lineCap = 'round';
-    for (let i = 0; i < 320; i++) {
-      const x = R(0, w), y = R(0, h), len = R(3, 12) * k;
-      g.strokeStyle = `rgba(90,86,74,${R(.35, .8)})`; g.lineWidth = R(1, 2) * k;
-      for (const ox of [0, -w, w]) for (const oy of [0, -h, h]) { g.beginPath(); g.moveTo(x + ox, y + oy); g.lineTo(x + ox + len, y + oy + R(-.6, .6)); g.stroke(); }
-    }
-    // The dark "eyes" where branches once grew.
-    for (let i = 0; i < 6; i++) {
-      const x = R(0, w), y = R(0, h), ew = R(22, 46) * k, eh = R(6, 12) * k;
-      g.fillStyle = '#2d2a25';
-      for (const ox of [0, -w, w]) for (const oy of [0, -h, h]) {
-        g.beginPath(); g.moveTo(x + ox - ew, y + oy); g.quadraticCurveTo(x + ox, y + oy - eh * 1.8, x + ox + ew, y + oy); g.quadraticCurveTo(x + ox, y + oy + eh * .9, x + ox - ew, y + oy); g.fill();
-      }
-    }
-  }, {wrap: true});
+      const dark = Math.max(dash * .75, eye);
+      const tone = .86 + .18 * chalk;
+      return [W.mix(232 * tone, 44, dark), W.mix(229 * tone, 41, dark), W.mix(212 * tone, 36, dark), .6 - dark * .5 + chalk * .1];
+    });
+  })();
 
   // Foliage sprites: each clump of a crown is a camera-facing card of these.
+  // Fir sprays: twigs thick with short needles set all round them, so a spray
+  // reads as a dense bottlebrush rather than a flat fern, darkest at its heart.
   const firSprite = paint(256, 256, g => {
     g.lineCap = 'round';
-    const tones = ['#1b2c1a', '#243a23', '#2f4a2b', '#3b5a33', '#4b6c3c', '#5e8047', '#779a55'];
-    // Flat sprays of needles along drooping twigs, stacked darkest first.
+    const twigs = [];
+    for (let b = 0; b < 12; b++) {
+      const side = rnd() < .5 ? -1 : 1, len = R(60, 120);
+      let x = 128 - side * R(0, 26), y = 128 + R(-50, 40), dir = side > 0 ? R(-.4, .25) : Math.PI + R(-.25, .4);
+      const droop = R(.1, .45), path = [];
+      for (let k = 0, steps = Math.round(len / 3); k < steps; k++) { dir += side * droop / steps; x += Math.cos(dir) * 3; y += Math.sin(dir) * 3; path.push([x, y, dir, k / steps]); }
+      twigs.push(path);
+      for (let k = 7; k < path.length; k += 6 + Math.floor(rnd() * 5)) {
+        const [bx, by, bd] = path[k], twig = bd + (rnd() < .5 ? -1 : 1) * R(.5, .9), tl = R(12, 30), sub = [];
+        for (let q = 0; q < tl / 3; q++) sub.push([bx + Math.cos(twig) * q * 3, by + Math.sin(twig) * q * 3, twig, .5 + q / tl * 1.5]);
+        twigs.push(sub);
+      }
+    }
+    const tones = ['#101b10', '#152414', '#1b2e18', '#22391d', '#2b4524', '#36532b', '#466536'];
     tones.forEach((tone, layer) => {
-      for (let b = 0; b < 5; b++) {
-        const side = rnd() < .5 ? -1 : 1, len = R(70, 118) * (1 - layer * .035), droop = R(.15, .5);
-        let x = 128 - side * R(0, 30), y = 128 + R(-44, 36), dir = side > 0 ? R(-.35, .2) : Math.PI + R(-.2, .35);
-        const steps = Math.round(len / 3.5);
-        for (let k = 0; k < steps; k++) {
-          const t = k / steps;
-          dir += side * droop / steps; x += Math.cos(dir) * 3.5; y += Math.sin(dir) * 3.5;
-          g.strokeStyle = t > .7 && layer < tones.length - 1 ? tones[layer + 1] : tone;
-          const needle = (13 - t * 6) * R(.75, 1.2);
-          for (const turn of [-1, 1]) {
-            g.lineWidth = R(1.1, 1.9);
-            const a = dir + turn * R(.5, 1.05) + R(-.1, .1);
-            g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * needle, y + Math.sin(a) * needle + needle * .25); g.stroke();
-          }
-          // Side twigs make the spray broad rather than a single frond.
-          if (k % 7 === 3 && t < .7) {
-            const twig = dir + (rnd() < .5 ? -1 : 1) * R(.5, .8), tl = R(14, 26);
-            for (let q = 1; q < tl / 3; q++) {
-              const qx = x + Math.cos(twig) * q * 3, qy = y + Math.sin(twig) * q * 3;
-              for (const turn of [-1, 1]) { const a = twig + turn * .8; g.beginPath(); g.moveTo(qx, qy); g.lineTo(qx + Math.cos(a) * 8, qy + Math.sin(a) * 8 + 2); g.stroke(); }
-            }
-          }
+      g.strokeStyle = tone;
+      for (const path of twigs) for (const [x, y, dir, t] of path) {
+        if (rnd() > .55 + layer * .05) continue;
+        for (let n = 0; n < 3; n++) {
+          const a = dir + (rnd() < .5 ? -1 : 1) * R(.35, 1.4), len = R(4, 10) * (1.1 - Math.min(t, 1) * .35);
+          g.lineWidth = R(.9, 1.6);
+          g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * len, y + Math.sin(a) * len + 1.2); g.stroke();
         }
       }
     });
   });
   const pineSprite = paint(256, 256, g => {
     g.lineCap = 'round';
-    const tufts = Array.from({length: 7}, () => [128 + R(-62, 62), 128 + R(-58, 52)]);
-    g.strokeStyle = '#4e3b28'; g.lineWidth = 4;
-    for (const [x, y] of tufts) { g.beginPath(); g.moveTo(128 + R(-20, 20), 200); g.quadraticCurveTo(128, y + 20, x, y); g.stroke(); }
-    for (const tone of ['#2a4224', '#37552e', '#466836', '#587b40', '#6e8f4c', '#88a45d']) {
+    // Fascicles of long needles on a few twigs: dark in the heart of the tuft, lighter at the tips.
+    const tufts = Array.from({length: 6}, () => [128 + R(-58, 58), 128 + R(-54, 46), R(0, 6.283)]);
+    g.strokeStyle = '#3a2b1e'; g.lineWidth = 3.4;
+    for (const [x, y] of tufts) { g.beginPath(); g.moveTo(128 + R(-18, 18), 206); g.quadraticCurveTo(128 + R(-10, 10), y + 26, x, y); g.stroke(); }
+    ['#0e1709', '#13200d', '#192a11', '#203417', '#293f1c', '#344b23', '#435a2c'].forEach((tone, layer) => {
       g.strokeStyle = tone;
-      for (const [x, y] of tufts) for (let k = 0; k < 14; k++) {
-        const a = R(0, 6.283), len = R(26, 56);
-        g.lineWidth = R(1.1, 1.9);
+      for (const [x, y, turn] of tufts) for (let k = 0; k < 17; k++) {
+        const a = turn + R(-2.7, 2.7), len = R(24, 54) * (1 - layer * .045), bend = R(-.35, .35);
+        g.lineWidth = R(.8, 1.5);
         g.beginPath(); g.moveTo(x, y);
-        g.quadraticCurveTo(x + Math.cos(a) * len * .5, y + Math.sin(a) * len * .5 - 5, x + Math.cos(a) * len, y + Math.sin(a) * len + len * .14);
+        g.quadraticCurveTo(x + Math.cos(a + bend) * len * .55, y + Math.sin(a + bend) * len * .55, x + Math.cos(a) * len, y + Math.sin(a) * len + len * .14);
         g.stroke();
       }
-    }
+    });
   });
+  // A leaf with a short point and a slim stalk, shaded across its blade.
+  function leaf(g, x, y, size, turn, tone, warm, stalk = true) {
+    g.save(); g.translate(x, y); g.rotate(turn);
+    const s = size, light = g.createLinearGradient(-s, -s, s, s);
+    light.addColorStop(0, `rgb(${tone | 0}, ${tone * .95 | 0}, ${tone * warm | 0})`);
+    light.addColorStop(1, `rgb(${tone * .66 | 0}, ${tone * .62 | 0}, ${tone * warm * .6 | 0})`);
+    g.fillStyle = light;
+    g.beginPath(); g.moveTo(s * 1.2, 0);
+    g.bezierCurveTo(s * .8, s * .78, -s * .25, s * 1.02, -s * .82, s * .42);
+    g.bezierCurveTo(-s * 1.06, 0, -s * 1.06, 0, -s * .82, -s * .42);
+    g.bezierCurveTo(-s * .25, -s * 1.02, s * .8, -s * .78, s * 1.2, 0);
+    g.fill();
+    g.strokeStyle = 'rgba(60,52,28,.28)'; g.lineWidth = .7;
+    g.beginPath(); g.moveTo(-s * .8, 0); g.lineTo(s * 1.05, 0); g.stroke();
+    if (stalk) { g.strokeStyle = 'rgba(96,82,48,.85)'; g.lineWidth = 1; g.beginPath(); g.moveTo(-s * .85, 0); g.lineTo(-s * 1.6, R(-2, 2)); g.stroke(); }
+    g.restore();
+  }
+  // Aspen: round quaking leaves, overlapping, lit and shaded across the clump.
   const leafSprite = paint(256, 256, g => {
-    const leaves = Array.from({length: 110}, () => {
-      const r = Math.sqrt(rnd()) * 102, a = R(0, 6.283);
-      return {x: 128 + Math.cos(a) * r, y: 128 + Math.sin(a) * r * .92, size: R(8, 13), turn: R(0, 6.283), light: rnd()};
+    const leaves = Array.from({length: 150}, () => {
+      const r = Math.sqrt(rnd()) * 104, a = R(0, 6.283);
+      return {x: 128 + Math.cos(a) * r, y: 128 + Math.sin(a) * r * .92, size: R(6.5, 11.5), turn: R(0, 6.283), light: rnd() * .7 + (1 - r / 104) * .3};
     }).sort((a, b) => a.light - b.light);
-    for (const leaf of leaves) {
-      g.save(); g.translate(leaf.x, leaf.y); g.rotate(leaf.turn);
-      const tone = Math.round(W.mix(150, 255, leaf.light));
-      g.fillStyle = `rgb(${tone}, ${Math.round(tone * .93)}, ${Math.round(tone * .6)})`;
-      g.beginPath(); g.ellipse(0, 0, leaf.size, leaf.size * .8, 0, 0, 6.283); g.fill();
-      g.strokeStyle = 'rgba(96,84,40,.55)'; g.lineWidth = 1; g.stroke();
-      g.beginPath(); g.moveTo(leaf.size * .9, 0); g.lineTo(leaf.size * 1.6, 0); g.strokeStyle = '#7a6a3a'; g.stroke();
-      g.restore();
+    for (const l of leaves) leaf(g, l.x, l.y, l.size, l.turn, W.mix(110, 255, l.light), .6);
+  });
+  // Understory shrubs: small leaves crowded along twigs, dark between.
+  const shrubSprite = paint(256, 256, g => {
+    g.lineCap = 'round';
+    const twigs = Array.from({length: 13}, () => [128 + R(-24, 24), 168 + R(-16, 30), -Math.PI / 2 + R(-1.3, 1.3), R(56, 112)]);
+    for (const [x, y, a, len] of twigs) { g.strokeStyle = 'rgba(64,46,32,.95)'; g.lineWidth = R(1.1, 2); g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * len, y + Math.sin(a) * len); g.stroke(); }
+    const leaves = [];
+    for (const [x, y, a, len] of twigs) for (let k = 0; k < 17; k++) {
+      const t = R(.2, 1.05);
+      leaves.push({x: x + Math.cos(a) * len * t + R(-9, 9), y: y + Math.sin(a) * len * t + R(-9, 9), size: R(3.6, 6.8), turn: a + R(-1.5, 1.5), light: rnd() * .75 + t * .25});
     }
+    leaves.sort((a, b) => a.light - b.light);
+    for (const l of leaves) leaf(g, l.x, l.y, l.size, l.turn, W.mix(80, 235, l.light), .55, false);
   });
   const frondSprite = paint(128, 512, g => {
     g.lineCap = 'round';
@@ -588,20 +689,28 @@ async function start() {
     return shape.geometry(false, 1.1);
   }
   function rockShape(seed) {
-    const geometry = new THREE.IcosahedronGeometry(1, 2), p = geometry.attributes.position, v = new THREE.Vector3();
+    const geometry = new THREE.IcosahedronGeometry(1, 2), p = geometry.attributes.position, v = new THREE.Vector3(), flat = new THREE.Vector3(.6, .3, .74);
+    const keys = [];
     for (let i = 0; i < p.count; i++) {
       v.fromBufferAttribute(p, i).normalize();
-      const k = .7 + .55 * W.fbm(v.x * 1.6 + seed * 3, v.y * 1.6 + v.z * 1.3 - seed, 3, seed);
+      keys.push(`${v.x.toFixed(4)},${v.y.toFixed(4)},${v.z.toFixed(4)}`);
+      // Weathered boulders: broad lumps, a few flatter fracture faces, a buried base.
+      const k = .72 + .5 * W.fbm(v.x * 1.5 + seed * 3, v.y * 1.5 + v.z * 1.3 - seed, 4, seed) - .32 * Math.max(0, v.dot(flat) - .55);
       v.multiplyScalar(k); v.y *= .62;
       if (v.y < -.12) v.y = -.12 + (v.y + .12) * .3;
       p.setXYZ(i, v.x, v.y, v.z);
     }
     geometry.computeVertexNormals();
-    const n = geometry.attributes.normal, colors = [];
+    // The icosphere's triangles are separate; average their normals where they
+    // meet so the stone is shaded round instead of cut into facets.
+    const n = geometry.attributes.normal, sum = new Map();
+    keys.forEach((key, i) => { const s = sum.get(key) || [0, 0, 0]; s[0] += n.getX(i); s[1] += n.getY(i); s[2] += n.getZ(i); sum.set(key, s); });
+    keys.forEach((key, i) => { const s = sum.get(key), l = Math.hypot(...s) || 1; n.setXYZ(i, s[0] / l, s[1] / l, s[2] / l); });
+    const colors = [];
     for (let i = 0; i < p.count; i++) {
       const grain = .82 + .3 * W.fbm(p.getX(i) * 4 + seed, p.getZ(i) * 4 + p.getY(i) * 3, 2, 40 + seed);
-      const moss = W.smooth(.55, .85, n.getY(i)) * W.smooth(.4, .6, W.fbm(p.getX(i) * 3, p.getZ(i) * 3, 2, 50 + seed));
-      colors.push(W.mix(.2 * grain, .085, moss), W.mix(.19 * grain, .11, moss), W.mix(.17 * grain, .045, moss));
+      const moss = W.smooth(.55, .85, n.getY(i)) * W.smooth(.45, .62, W.fbm(p.getX(i) * 3, p.getZ(i) * 3, 2, 50 + seed));
+      colors.push(W.mix(.2 * grain, .075, moss), W.mix(.19 * grain, .1, moss), W.mix(.175 * grain, .04, moss));
     }
     geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
     geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1.3);
@@ -633,12 +742,12 @@ async function start() {
       scene.add(mesh);
     }
   }
-  const barkMaterial = (map, bend) => sway(new THREE.MeshStandardMaterial({map, vertexColors: true, roughness: .95}), {bend});
-  const leafMaterial = (map, bend, glow, flutter = .035) => sway(new THREE.MeshStandardMaterial({map, vertexColors: true, alphaTest: .5, roughness: .8, alphaToCoverage: Q.aa}), {bend, flutter, sprite: true, glow});
+  const barkMaterial = (bark, bend, char = 0) => sway(new THREE.MeshStandardMaterial({map: bark.map, normalMap: bark.normal, normalScale: new THREE.Vector2(1.4, 1.4), vertexColors: true, roughness: .93}), {bend, char});
+  const leafMaterial = (map, bend, glow, flutter = .035) => sway(new THREE.MeshStandardMaterial({map, vertexColors: true, alphaTest: .5, roughness: .8, alphaToCoverage: Q.samples > 0}), {bend, flutter, sprite: true, glow});
   const leafDepth = (map, bend, flutter = .035) => sway(new THREE.MeshDepthMaterial({depthPacking: THREE.RGBADepthPacking, map, alphaTest: .5}), {bend, flutter, sprite: true});
   const hex = list => list.map(c => new THREE.Color(c));
   const SPECIES = {
-    pine: {shape: pineTree(), bark: pineBark, leaves: pineSprite, bend: .011, glow: .28, tints: hex(['#ffffff', '#f2f5e6', '#e7ecd9', '#fbf5e4', '#dfe6cf'])},
+    pine: {shape: pineTree(), bark: pineBark, leaves: pineSprite, bend: .011, glow: .5, tints: hex(['#ffffff', '#f2f5e6', '#e7ecd9', '#fbf5e4', '#dfe6cf'])},
     fir: {shape: firTree(false), bark: firBark, leaves: firSprite, bend: .012, glow: .22, tints: hex(['#ffffff', '#e8efe1', '#dce6d6', '#f1f2e4'])},
     young: {shape: firTree(true), bark: firBark, leaves: firSprite, bend: .02, glow: .22, tints: hex(['#ffffff', '#e6f0de', '#f4f4e2'])},
     // Late September: most aspens have turned, a few are still holding green.
@@ -648,13 +757,13 @@ async function start() {
   for (const [name, kind] of Object.entries(SPECIES)) {
     const trees = forest.trees.filter(t => (t.height < 5 ? 'young' : t.kind) === name);
     const transform = t => place(t, t.height * (name === 'young' ? 1.35 : t.girth), t.height, t.height * (name === 'young' ? 1.35 : t.girth));
-    patches(trees, kind.shape.wood, barkMaterial(kind.bark, kind.bend), transform, {});
+    patches(trees, kind.shape.wood, barkMaterial(kind.bark, kind.bend, name === 'pine' ? 1 : 0), transform, {});
     patches(trees, kind.shape.crown, leafMaterial(kind.leaves, kind.bend, kind.glow), transform,
       {depth: leafDepth(kind.leaves, kind.bend), color: (t, c) => c.copy(kind.tints[Math.floor(t.tint * kind.tints.length)])});
   }
   const shrubTints = hex(['#6c8a3c', '#7a8d42', '#8e8a3e', '#a17a3a', '#5f7d36']);
-  patches(forest.shrubs, shrubShape(), leafMaterial(leafSprite, .03, .45, .05), s => place(s, s.size * 1.5, s.size, s.size * 1.5),
-    {depth: leafDepth(leafSprite, .03, .05), color: (s, c) => c.copy(shrubTints[Math.floor(s.tint * shrubTints.length)])});
+  patches(forest.shrubs, shrubShape(), leafMaterial(shrubSprite, .03, .45, .05), s => place(s, s.size * 1.5, s.size, s.size * 1.5),
+    {depth: leafDepth(shrubSprite, .03, .05), color: (s, c) => c.copy(shrubTints[Math.floor(s.tint * shrubTints.length)])});
 
   const grass = W.grass(Q.grass);
   const grassTints = hex(['#d6c07e', '#c8ad69', '#b9ab66', '#a6a35d', '#dccb8e']), wetGrass = new THREE.Color('#93a857');
@@ -680,7 +789,36 @@ async function start() {
     const a = i / 7 * 6.283 + R(-.3, .3), r = R(.22, .4), x = W.SIGN.x + Math.cos(a) * r, z = W.SIGN.z + Math.sin(a) * r;
     rocks.push({x, z, y: W.JY, size: R(.13, .22), turn: R(0, 6.28), tilt: rnd(), shape: i % 3});
   }
-  const rockMaterial = new THREE.MeshStandardMaterial({vertexColors: true, roughness: .92, flatShading: true});
+  // Granite, speckled and crazed, with crusts of pale lichen on the tops.
+  const rockMaterial = new THREE.MeshStandardMaterial({vertexColors: true, roughness: .88});
+  rockMaterial.onBeforeCompile = shader => {
+    shader.uniforms.uNoise = {value: noiseTexture};
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vStone; varying vec3 vStoneNormal;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvStone = position * vec3(length(instanceMatrix[0].xyz), length(instanceMatrix[1].xyz), length(instanceMatrix[2].xyz)); vStoneNormal = objectNormal;');
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', `#include <common>
+        uniform sampler2D uNoise; varying vec3 vStone; varying vec3 vStoneNormal;
+        vec3 stone(float scale) {
+          vec3 w = abs(normalize(vStoneNormal)); w = pow(w, vec3(4.0)); w /= w.x + w.y + w.z;
+          vec3 p = vStone * scale;
+          return texture2D(uNoise, p.yz).rgb * w.x + texture2D(uNoise, p.xz).rgb * w.y + texture2D(uNoise, p.xy).rgb * w.z;
+        }
+        float stoneBump;`)
+      .replace('#include <map_fragment>', `#include <map_fragment>
+        vec3 s1 = stone(.9), s2 = stone(3.6), s3 = stone(13.0);
+        float lichen = smoothstep(.56, .7, s1.r * .55 + s2.g * .45) * smoothstep(.1, .7, normalize(vStoneNormal).y);
+        diffuseColor.rgb *= (.72 + .55 * s2.b) * (.82 + .36 * s3.r);
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(.34, .35, .25) * (.8 + .4 * s3.g), lichen * .75);
+        stoneBump = s2.r * .5 + s3.b * .5 - smoothstep(.62, .7, s2.g) * .4;`)
+      .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+        {
+          vec3 sx = dFdx(-vViewPosition), sy = dFdy(-vViewPosition), r1 = cross(sy, normal), r2 = cross(normal, sx);
+          float det = dot(sx, r1) * faceDirection;
+          vec2 dh = vec2(dFdx(stoneBump), dFdy(stoneBump)) * .035;
+          normal = normalize(abs(det) * normal - sign(det) * (dh.x * r1 + dh.y * r2));
+        }`);
+  };
   [0, 1, 2].forEach(shape => {
     patches(rocks.filter(r => r.shape === shape), rockShape(shape * 7 + 3), rockMaterial,
       r => place(r, r.size * (1 + r.tilt * .35), r.size * (.75 + r.tilt * .3), r.size * (1.25 - r.tilt * .3), (r.tilt - .5) * .25, (r.tilt - .5) * .2, -r.size * .22), {cell: 40});
@@ -688,8 +826,9 @@ async function start() {
 
   // Logs, stumps and the footbridge share a unit cylinder, scaled per piece.
   const cylinder = new THREE.CylinderGeometry(1, 1, 1, 10, 1);
-  const logBark = pineBark.clone(); logBark.repeat.set(1, 2.4);
-  const woodMaterials = [new THREE.MeshStandardMaterial({map: logBark, color: '#9a8c7a', roughness: .95}), new THREE.MeshStandardMaterial({map: endGrain, roughness: .9}), new THREE.MeshStandardMaterial({map: endGrain, roughness: .9})];
+  const logBark = pineBark.map.clone(), logRelief = pineBark.normal.clone();
+  logBark.repeat.set(1, 2.4); logRelief.repeat.set(1, 2.4);
+  const woodMaterials = [new THREE.MeshStandardMaterial({map: logBark, normalMap: logRelief, color: '#8a7c6c', roughness: .95}), new THREE.MeshStandardMaterial({map: endGrain, roughness: .9}), new THREE.MeshStandardMaterial({map: endGrain, roughness: .9})];
   function beam(a, b, radius, list) {
     const dir = new THREE.Vector3().subVectors(b, a), length = dir.length();
     list.push(new THREE.Matrix4().compose(new THREE.Vector3().addVectors(a, b).multiplyScalar(.5), new THREE.Quaternion().setFromUnitVectors(UP, dir.normalize()), new THREE.Vector3(radius, length, radius)));
@@ -759,7 +898,7 @@ async function start() {
     const material = new THREE.ShaderMaterial({
       fog: true, transparent: true, depthWrite: false, side: THREE.DoubleSide,
       uniforms: {...THREE.UniformsUtils.clone(THREE.UniformsLib.fog), uNoise: {value: noiseTexture}, uTime: flowTime, uSunDir: {value: SUN}, uSunColor: {value: SUN_COLOR},
-        uSky: {value: new THREE.Color('#9eb0aa')}, uDeep: {value: new THREE.Color('#273226')}, uShallow: {value: new THREE.Color('#5d6549')}},
+        uSky: {value: new THREE.Color('#9eb0aa')}, uDeep: {value: new THREE.Color('#141a13')}, uShallow: {value: new THREE.Color('#353b2b')}},
       vertexShader: `varying vec2 vUv; varying vec3 vWorld;
         #include <fog_pars_vertex>
         void main() { vUv = uv; vec4 world = modelMatrix * vec4(position, 1.0); vWorld = world.xyz; vec4 mvPosition = viewMatrix * world; gl_Position = projectionMatrix * mvPosition;
@@ -770,12 +909,17 @@ async function start() {
         void main() {
           vec2 flow = vec2(vUv.x - uTime * .32, vUv.y * .7);
           float a = texture2D(uNoise, flow * vec2(.6, .5)).g, b = texture2D(uNoise, flow * vec2(1.7, 1.1) + vec2(uTime * .05, .31)).b;
-          vec3 normal = normalize(vec3((a - .5) * .9, 1.0, (b - .5) * .9));
+          vec3 normal = normalize(vec3((a - .5) * .32, 1.0, (b - .5) * .32));
           vec3 view = normalize(cameraPosition - vWorld);
           float fresnel = pow(1.0 - max(dot(normal, view), 0.0), 3.0);
           float middle = 1.0 - abs(vUv.y - .5) * 2.0;
           vec3 color = mix(uShallow, uDeep, smoothstep(.1, .8, middle));
-          color = mix(color, uSky, .12 + .5 * fresnel);
+          // The sky mirrored through the gap in the crowns above the creek.
+          vec3 sky = uSky * .35;
+          #ifdef USE_FOG
+            sky = woodsClearSky(reflect(-view, normal), 2.0) * .22;
+          #endif
+          color = mix(color, sky, .05 + .45 * fresnel);
           color += uSunColor * pow(max(dot(reflect(-view, normal), uSunDir), 0.0), 70.0) * 1.6;
           color += smoothstep(.72, .82, b) * smoothstep(.2, .9, middle) * .06;
           gl_FragColor = vec4(color, .82 + fresnel * .15);
@@ -857,58 +1001,14 @@ async function start() {
     });
   })();
 
-  // ---- Far away: three ranges of peaks in the haze beyond the ridge.
-  (() => {
-    const bump = (a, at, width, height) => height * Math.exp(-(((a - at) / width) ** 2));
-    const ranges = [
-      {radius: 1500, color: '#8e9fa7', haze: .42, top: a => 70 + bump(a, .42, .19, 340) + bump(a, .68, .08, 150) + bump(a, -.62, .26, 120) + (W.fbm(a * 9 + 3, 1.7, 5, 61) - .5) * 110},
-      {radius: 960, color: '#6a7f7c', haze: .32, top: a => 30 + 95 * W.fbm(a * 4 + 11, 3.1, 4, 62) + bump(a, -.3, .3, 70) + bump(a, .95, .25, 60)},
-      {radius: 580, color: '#4b6154', haze: .2, top: a => 8 + 52 * W.fbm(a * 6 - 4, 5.3, 4, 63)},
-    ];
-    for (const range of ranges) {
-      const pos = [], col = [], idx = [], steps = 260, base = new THREE.Color(range.color), top = new THREE.Color(), low = new THREE.Color();
-      for (let i = 0; i <= steps; i++) {
-        const a = -1.75 + 3.5 * i / steps, y = -40 + range.top(a), slope = (range.top(a + .004) - range.top(a - .004)) / .008;
-        const x = W.J.x + Math.sin(a) * range.radius, z = W.J.z - Math.cos(a) * range.radius;
-        // Faces turned toward the low sun on the left catch a little light.
-        top.copy(base).multiplyScalar(1 + W.clamp(slope / range.radius * 3.5, -.16, .2)).lerp(HAZE, range.haze);
-        low.copy(base).lerp(HAZE, Math.min(1, range.haze + .42));
-        pos.push(x, y, z, x, -140, z);
-        col.push(top.r, top.g, top.b, low.r, low.g, low.b);
-        if (i) { const v = (i - 1) * 2; idx.push(v, v + 1, v + 2, v + 1, v + 3, v + 2); }
-      }
-      const geometry = new THREE.BufferGeometry();
-      geometry.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-      geometry.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
-      geometry.setIndex(idx);
-      scene.add(new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({vertexColors: true, fog: false, side: THREE.DoubleSide})));
-    }
-  })();
-
-  // ---- Sky: a warm haze at the horizon, high cloud, the sun low on the left.
-  const skyDome = new THREE.Mesh(new THREE.SphereGeometry(4600, 32, 16), new THREE.ShaderMaterial({
-    side: THREE.BackSide, depthWrite: false, fog: false,
-    uniforms: {uSun: {value: SUN}, uZenith: {value: new THREE.Color('#7aa2c4')}, uHorizon: {value: HAZE}, uGlow: {value: new THREE.Color('#ffcf8f')}, uNoise: {value: noiseTexture}, uTime: shared.uTime},
-    vertexShader: 'varying vec3 vDir; void main() { vDir = position; vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_Position = p.xyww; }',
-    fragmentShader: `uniform vec3 uSun, uZenith, uHorizon, uGlow; uniform sampler2D uNoise; uniform float uTime; varying vec3 vDir;
-      void main() {
-        vec3 d = normalize(vDir);
-        float h = max(d.y, 0.0), s = max(dot(d, uSun), 0.0), above = smoothstep(-.01, .14, d.y);
-        vec3 color = mix(uHorizon, uZenith, pow(smoothstep(0.0, .8, h), .7));
-        color += uGlow * (pow(s, 7.0) * .38 + pow(s, 60.0) * .7) * above;
-        vec2 cloudUv = d.xz / (d.y + .2) * .11 + vec2(uTime * .0012, 0.0);
-        float cloud = texture2D(uNoise, cloudUv).r * .62 + texture2D(uNoise, cloudUv * 2.9).g * .38;
-        cloud = smoothstep(.56, .8, cloud) * smoothstep(.04, .32, d.y);
-        color = mix(color, mix(vec3(1.0, .97, .91), uGlow * 1.3, pow(s, 3.0) * .7), cloud * .5);
-        color = mix(color, vec3(1.0, .93, .78) * 7.0, smoothstep(.99955, .99975, s) * above);
-        gl_FragColor = vec4(color, 1.0);
-        #include <tonemapping_fragment>
-        #include <colorspace_fragment>
-      }`,
-  }));
-  skyDome.renderOrder = -10;
-  skyDome.frustumCulled = false;
-  scene.add(skyDome);
+  // ---- Far away: the valley and the range, and the sky over them, in their own pass.
+  const vista = WoodsVista.build(THREE, renderer, {W, glsl: air, shared, low: LOW});
+  const skyDome = WoodsRender.skyDome(THREE, air, shared);
+  far.add(skyDome, vista.group);
+  // Light from the forest itself: sky through the gaps, crowns all round, litter below.
+  scene.environment = WoodsRender.environment(THREE, renderer, air, shared, {gapLow: .1, gapHigh: .72, crowns: [.016, .024, .013], crownSun: .006, floor: [.04, .032, .022]});
+  scene.environmentIntensity = 1;
+  const darkroom = WoodsRender.darkroom(THREE, renderer, {samples: Q.samples, levels: Q.bloom, look: {exposure: 1.15, bloom: .045, vignette: .24, aberration: .0016, grain: .016, saturation: 1.2, contrast: 1.1}});
 
   // ---- Shafts of low sun slanting through the trunks.
   (() => {
@@ -970,8 +1070,8 @@ async function start() {
         vec3 offset = p - uCenter;
         float edge = 1.0 - smoothstep(.34, .5, max(abs(offset.x), abs(offset.z)) / box.x);
         float lit = pow(max(dot(normalize(p - cameraPosition), uSunDir), 0.0), 3.0);
-        vAlpha = edge * smoothstep(.8, 2.5, -mv.z) * (.06 + lit * .8) * (.5 + .5 * sin(uTime * .8 + position.z * 60.0));
-        gl_PointSize = min(14.0, uScale * .045 / -mv.z);
+        vAlpha = edge * smoothstep(1.5, 4.0, -mv.z) * (.03 + lit * .45) * (.5 + .5 * sin(uTime * .8 + position.z * 60.0));
+        gl_PointSize = min(5.0, uScale * .018 / -mv.z);
         gl_Position = projectionMatrix * mv;
       }`,
     fragmentShader: `uniform sampler2D uMap; varying float vAlpha;
@@ -1042,8 +1142,9 @@ async function start() {
   // ===================================================================
   // The walk. Scroll is the only thing that moves the walker forward.
   let width = 1, height = 1, aspect = 1, framing = W.arrival(1), start = 0, distance = 1;
-  let walking = false, still = false, d = 0, speed = 0, footfall = 0, first = true, windOn = true, windClock = 0, arrived = null, stop = '';
+  let walking = false, still = false, d = 0, velocity = 0, speed = 0, stride = 0, first = true, windOn = true, windClock = 0, arrived = null, stop = '';
   let dragYaw = 0, dragPitch = 0, lookYaw = 0, lookPitch = 0, hoverX = 0, hoverY = 0, turning = 0, dragging = null, looked = false, clock = 0, heading = null, lean = 0;
+  let push = 0, held = 0, pushSpeed = 0, carry = 0, lens = 56;
   const progress = () => still ? 1 : W.clamp((scrollY - start) / distance);
   const ease = x => { const t = W.clamp(x); return t * t * (3 - 2 * t); };
 
@@ -1071,26 +1172,35 @@ async function start() {
 
   const shadowRight = new THREE.Vector3().crossVectors(UP, SUN).normalize(), shadowUp = new THREE.Vector3().crossVectors(SUN, shadowRight), focus = new THREE.Vector3();
   function update(dt) {
+    // ↑ and ↓ walk on and back by scrolling, so scroll stays the one source of the walk.
+    held = push ? held + dt : 0;
+    const goal = push * (held < 1.4 ? 2.8 : W.mix(2.8, 10.5, W.smooth(1.4, 4.4, held)));
+    pushSpeed += (goal - pushSpeed) * (1 - Math.exp(-dt / (push ? .45 : .22)));
+    if (walking && Math.abs(pushSpeed) > .02) {
+      carry += pushSpeed * dt * distance / framing.d;
+      const whole = Math.trunc(carry);
+      if (whole) { scrollTo({top: scrollY + whole, behavior: 'instant'}); carry -= whole; }
+    } else { pushSpeed = push ? pushSpeed : 0; carry = 0; }
+
     const p = progress(), target = W.mix(0, framing.d, p);
-    if (first) { d = target; first = false; }
-    const before = d;
-    d += (target - d) * (1 - Math.exp(-dt / .42));
-    if (Math.abs(target - d) < 1e-4) d = target;
-    const pace = dt ? Math.abs(d - before) / dt : 0;
-    speed += (pace - speed) * (1 - Math.exp(-dt / .22));
+    if (first) { d = target; velocity = 0; first = false; }
+    // A critically damped follow: the walker picks up and sheds pace smoothly
+    // however the page is scrolled, so the gait below reads true speeds.
+    const spring = 5.2, e = Math.exp(-spring * dt), offset = d - target, carryOn = (velocity + spring * offset) * dt;
+    d = target + (offset + carryOn) * e;
+    velocity = (velocity - spring * carryOn) * e;
+    if (Math.abs(target - d) < 1e-4 && Math.abs(velocity) < 1e-3) { d = target; velocity = 0; }
+    speed += (Math.abs(velocity) - speed) * (1 - Math.exp(-dt / .3));
     clock += dt;
 
-    // Gait: a dip at each heel strike, a sway from foot to foot, fading when
-    // standing still or when a fast scroll turns the walk into a glide.
-    const pose = W.pose(d, aspect), gait = still ? 0 : W.smooth(.12, 1.1, speed) * (1 - W.smooth(6, 13, speed));
-    const phase = d / W.STEP * Math.PI * 2;
-    const dip = -.028 * gait * (1 + Math.cos(phase)) / 2, lateral = .016 * gait * Math.sin(phase / 2);
-    const breathe = still ? 0 : .0035 * Math.sin(clock * 1.6) * (1 - gait);
-    const step = Math.floor(d / W.STEP);
-    if (step !== footfall) {
-      if (gait > .2 && Math.abs(step - footfall) < 3) WoodsSound.step(Math.abs(d - W.CREEK) < W.BRIDGE ? 'wood' : 'dirt', Math.min(1, .45 + gait * .55));
-      footfall = step;
-    }
+    // Gait: a walk, a bounding run, then a glide once the walker is flung faster
+    // than feet could carry them. Cadence barely rises; the stride lengthens.
+    const pose = W.pose(d, aspect), gait = W.stride(still ? 0 : speed);
+    stride += gait.cadence * dt * W.smooth(0, .8, speed);
+    const body = W.bob(stride, gait), moving = gait.walk + gait.run;
+    const glide = gait.float * .05 * Math.sin(clock * .8), bank = gait.float * .014 * Math.sin(clock * .53 + 1);
+    const dip = body.y + body.lift + glide, lateral = body.x;
+    const breathe = still ? 0 : .0035 * Math.sin(clock * 1.6) * (1 - moving) * (1 - gait.float);
 
     // Looking around: drag and arrow keys add to the heading, a walk eases it back.
     dragYaw += turning * 1.5 * dt;
@@ -1101,17 +1211,31 @@ async function start() {
     lookYaw += (dragYaw - hoverX * .07 - lookYaw) * follow;
     lookPitch += (dragPitch - hoverY * .045 - lookPitch) * follow;
 
-    // Lean a little into the bends, as anyone walking a curving path does.
+    // Lean a little into the bends, as anyone walking a curving path does; a
+    // glide banks through them like a bird.
     if (heading !== null && dt) {
       let turn = pose.yaw - heading;
       if (turn > Math.PI) turn -= 2 * Math.PI; else if (turn < -Math.PI) turn += 2 * Math.PI;
-      lean += (W.clamp(turn / dt * .05, -.025, .025) * gait - lean) * (1 - Math.exp(-dt / .5));
+      const into = W.clamp(turn / dt * .05, -.025, .025) * (moving + gait.float * 2.2);
+      lean += (into - lean) * (1 - Math.exp(-dt / .5));
     }
     heading = pose.yaw;
-    const cosY = Math.cos(pose.yaw), sinY = Math.sin(pose.yaw);
-    camera.position.set(pose.x + cosY * lateral, pose.y + dip, pose.z - sinY * lateral);
-    camera.rotation.set(pose.pitch + lookPitch + breathe, pose.yaw + lookYaw, lateral * .22 + lean);
+    const cosY = Math.cos(pose.yaw), sinY = Math.sin(pose.yaw), surge = body.surge;
+    camera.position.set(pose.x + cosY * lateral - sinY * surge, pose.y + dip, pose.z - sinY * lateral - cosY * surge);
+    camera.rotation.set(pose.pitch + lookPitch + breathe + body.pitch + gait.float * .045, pose.yaw + lookYaw, body.roll + lean + bank);
+    // A run widens the view a touch and a glide more, as speed does to the eye.
+    const wide = W.lens(aspect) + gait.run * 3 + gait.float * 7;
+    if (Math.abs(wide - lens) > .01) { lens = wide; camera.fov = farCamera.fov = lens; camera.updateProjectionMatrix(); farCamera.updateProjectionMatrix(); }
+    camera.updateMatrixWorld();
+    farCamera.position.copy(camera.position);
+    farCamera.quaternion.copy(camera.quaternion);
     skyDome.position.copy(camera.position);
+
+    // Among the trunks the air holds a little haze; out in the open it clears.
+    const open = Math.max(W.meadow(camera.position.x, camera.position.z), 1 - W.smooth(8, 26, Math.hypot(camera.position.x - W.J.x, camera.position.z - W.J.z)));
+    scene.fog.near = vista.local.value = W.mix(.0019, .0002, open);
+    vista.detail.value = W.mix(1, vista.full, W.smooth(framing.d - 70, framing.d - 30, d));
+    openSky.intensity = W.mix(.15, .75, open);
 
     // The sun's shadow box travels ahead of the walker, snapped to its texels
     // so shadow edges hold still instead of crawling with every step.
@@ -1125,7 +1249,7 @@ async function start() {
     shared.uWindAmp.value += ((windOn && !still ? 1 : 0) - shared.uWindAmp.value) * (1 - Math.exp(-dt / .7));
     const ambient = shared.uWindAmp.value > .002;
     if (ambient) { windClock += dt; flowTime.value += dt * shared.uWindAmp.value; moteUniforms.uTime.value += dt * shared.uWindAmp.value; }
-    shared.uTime.value = windClock;
+    shared.uTime.value = shared.woodsClock.value = windClock;
     moteUniforms.uCenter.value.copy(camera.position);
     motes.visible = leaves.visible = !still;
     if (ambient) leafUniforms.uTime.value += dt * shared.uWindAmp.value;
@@ -1151,8 +1275,8 @@ async function start() {
       u.face.emissiveIntensity = u.glow * .3;
       board.position.z = u.rest + u.glow * .025;
     }
-    const moving = Math.abs(target - d) > 1e-3 || speed > .02 || Math.abs(dragYaw - hoverX * .07 - lookYaw) > 1e-4 || Math.abs(dragPitch - hoverY * .045 - lookPitch) > 1e-4 || turning;
-    return moving || glowing || journey || (ambient && !still) || gait > .01;
+    const busy = Math.abs(target - d) > 1e-3 || speed > .02 || Math.abs(dragYaw - hoverX * .07 - lookYaw) > 1e-4 || Math.abs(dragPitch - hoverY * .045 - lookPitch) > 1e-4 || turning || push || pushSpeed;
+    return busy || glowing || journey || (ambient && !still) || moving > .01;
   }
 
   const corner = new THREE.Vector3();
@@ -1186,7 +1310,7 @@ async function start() {
     const dt = last ? Math.min(.1, (now - last) / 1000) : 1 / 60;
     last = now;
     const busy = update(dt);
-    renderer.render(scene, camera);
+    draw();
     placeLinks();
     adapt(dt);
     if (busy) wake(); else last = 0;
@@ -1200,13 +1324,51 @@ async function start() {
     if (slow > 1.2 && pixelRatio > .6) { pixelRatio = Math.max(.6, pixelRatio * .84); slow = 0; resize(); }
     else if (quick > 6 && pixelRatio < cap) { pixelRatio = Math.min(cap, pixelRatio * 1.1); quick = 0; resize(); }
   }
+  // The solid woods first, each pixel they cover marked in the stencil. The
+  // far country is drawn only through the gaps that are left, with its own near
+  // and far planes, so neither pass loses depth precision and nothing hidden
+  // behind a trunk is shaded. The gaps are then emptied of depth again, and the
+  // haze, light and water of the woods go over everything.
+  const LAYER_AIR = 1;
+  const resetScene = new THREE.Scene(), resetCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const reset = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
+    vertexShader: 'void main() { gl_Position = vec4(position.xy, 1.0, 1.0); }', fragmentShader: 'void main() { gl_FragColor = vec4(0.0); }',
+    colorWrite: false, depthWrite: true, depthFunc: THREE.AlwaysDepth, stencilWrite: true, stencilFunc: THREE.EqualStencilFunc, stencilRef: 0,
+  }));
+  reset.frustumCulled = false;
+  resetScene.add(reset);
+  scene.traverse(object => {
+    if (!object.material) return;
+    const materials = [].concat(object.material);
+    if (materials.some(m => m.transparent || m.blending !== THREE.NormalBlending)) { object.layers.set(LAYER_AIR); return; }
+    for (const m of materials) Object.assign(m, {stencilWrite: true, stencilRef: 1, stencilFunc: THREE.AlwaysStencilFunc, stencilZPass: THREE.ReplaceStencilOp});
+  });
+  far.traverse(object => {
+    if (object.material) for (const m of [].concat(object.material)) Object.assign(m, {stencilWrite: true, stencilRef: 0, stencilFunc: THREE.EqualStencilFunc});
+  });
+  sun.layers.enableAll(); openSky.layers.enableAll();
+  renderer.shadowMap.autoUpdate = false;
+  function draw() {
+    darkroom.render(() => {
+      renderer.shadowMap.needsUpdate = true;
+      camera.layers.set(0);
+      renderer.render(scene, camera);
+      renderer.render(far, farCamera);
+      renderer.render(resetScene, resetCamera);
+      camera.layers.set(LAYER_AIR);
+      renderer.render(scene, camera);
+      camera.layers.set(0);
+    });
+  }
   function resize() {
     width = stage.clientWidth; height = stage.clientHeight; aspect = width / height;
     renderer.setPixelRatio(pixelRatio);
     renderer.setSize(width, height, false);
-    camera.aspect = aspect;
-    camera.fov = W.lens(aspect);
+    darkroom.setSize(Math.round(width * pixelRatio), Math.round(height * pixelRatio));
+    camera.aspect = farCamera.aspect = aspect;
+    camera.fov = farCamera.fov = lens = W.lens(aspect);
     camera.updateProjectionMatrix();
+    farCamera.updateProjectionMatrix();
     framing = W.arrival(aspect);
     moteUniforms.uScale.value = height * pixelRatio;
   }
@@ -1243,13 +1405,26 @@ async function start() {
   stage.addEventListener('pointercancel', release);
   stage.addEventListener('pointerleave', event => { if (event.pointerType === 'mouse') { hoverX = hoverY = 0; wake(); } });
   const typing = () => document.activeElement && /input|textarea|select/i.test(document.activeElement.tagName);
+  // ← → look around. ↑ walks on down the trail and ↓ walks back the way you
+  // came — the reverse of what the page would scroll — and holding either
+  // long enough breaks into a run.
   addEventListener('keydown', event => {
     if (typing() || event.metaKey || event.ctrlKey || event.altKey) return;
     if (event.key === 'ArrowLeft') { turning = 1; looked = true; wake(); }
     if (event.key === 'ArrowRight') { turning = -1; looked = true; wake(); }
+    if (walking && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
+      event.preventDefault();
+      const way = event.key === 'ArrowUp' ? 1 : -1;
+      if (push !== way) { push = way; held = 0; }
+      cancelJourney();
+      wake();
+    }
   });
-  addEventListener('keyup', event => { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') turning = 0; });
-  addEventListener('blur', () => { turning = 0; release(); });
+  addEventListener('keyup', event => {
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') turning = 0;
+    if ((event.key === 'ArrowUp' && push === 1) || (event.key === 'ArrowDown' && push === -1)) push = 0;
+  });
+  addEventListener('blur', () => { turning = 0; push = 0; release(); });
 
   // ---- Guided walks: optional, and any deliberate input hands control back.
   let journey = 0, focusOnArrival = false;
@@ -1340,7 +1515,7 @@ async function start() {
     root.classList.toggle('woods-walking', walking);
     windButton.hidden = still;
     stage.classList.toggle('woods-look', fine);
-    if (still) cancelJourney();
+    if (still) { cancelJourney(); push = 0; }
     arrived = null;
     first = true;
     measure();
@@ -1359,7 +1534,8 @@ async function start() {
   const at = parseFloat(new URLSearchParams(location.search).get('at'));
   if (walking && at >= 0 && at <= 1 && location.hash !== '#woods-junction') scrollTo({top: start + distance * at, behavior: 'instant'});
   update(1 / 60);
-  if (renderer.compileAsync) await renderer.compileAsync(scene, camera);
+  await vista.prepare();
+  if (renderer.compileAsync) { await renderer.compileAsync(far, farCamera); await renderer.compileAsync(scene, camera); }
   ready = true;
   first = true;
   frame(performance.now());
