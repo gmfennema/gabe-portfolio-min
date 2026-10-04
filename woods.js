@@ -1616,7 +1616,7 @@ async function start() {
       link.tabIndex = opacity > .5 ? 0 : -1;
       if (opacity > 0) {
         // Near the edge of the screen the tag stays on it, and its stem leans to the panel.
-        const half = (link.offsetWidth || 200) / 2, left = W.clamp(x, half + 12, width - half - 12);
+        const half = (item.half ||= link.offsetWidth / 2 || 100), left = W.clamp(x, half + 12, width - half - 12);
         link.style.transform = `translate(${left.toFixed(1)}px, ${y.toFixed(1)}px)`;
         link.style.setProperty('--stem', `${(x - left).toFixed(1)}px`);
       }
@@ -1707,6 +1707,7 @@ async function start() {
   }
   function resize() {
     width = stage.clientWidth; height = stage.clientHeight; aspect = width / height;
+    for (const item of waysides) item.half = 0;
     renderer.setPixelRatio(pixelRatio);
     renderer.setSize(width, height, false);
     darkroom.setSize(Math.round(width * pixelRatio), Math.round(height * pixelRatio));
