@@ -2495,3 +2495,9 @@ footer {
   body { background: #fff; }
   @page { margin: 18mm 16mm; }
 }
+
+/* Pages cross-fade into one another where the browser can, so moving through
+   the site feels like walking on rather than reloading. */
+@view-transition { navigation: auto; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .38s; }
+@media (prefers-reduced-motion: reduce) { ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; } }

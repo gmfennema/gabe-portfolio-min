@@ -49,6 +49,27 @@ for (const log of forest.logs) {
 }
 assert(forest.trees.length > 1200 && forest.trees.length < 4000, `a forest of manageable size (${forest.trees.length})`);
 
+// The wayside panels stand beside the tread, out of the creek, clear of the
+// forest, face the walker coming up the trail, and can be seen from it.
+assert.equal(W.WAYSIDES.length, 3, 'three wayside panels');
+for (const w of W.WAYSIDES) {
+  const s = W.site(w.x, w.z);
+  assert(s.path > 1.9 && s.path < 3.2, `a panel stands a step off the tread (${s.path.toFixed(2)} m)`);
+  assert(s.creek > 4, 'no panel in the creek');
+  for (const tree of forest.trees) assert(Math.hypot(tree.x - w.x, tree.z - w.z) > 2.5, 'no tree grows through a panel');
+  for (const list of ['shrubs', 'rocks', 'ferns', 'stumps']) for (const item of forest[list]) assert(Math.hypot(item.x - w.x, item.z - w.z) > 1.2, `no ${list} against a panel`);
+  const from = W.trail(w.d - 6), face = [Math.sin(w.turn), Math.cos(w.turn)], toward = [from.x - w.x, from.z - w.z];
+  assert(face[0] * toward[0] + face[1] * toward[1] > .99 * Math.hypot(...toward), 'each panel faces the walker coming up the trail');
+  const trunks = forest.trees.filter(t => t.height > 5);
+  for (let k = 3; k <= 12; k++) {
+    const p = W.trail(w.d - k), ex = w.x - p.x, ez = w.z - p.z;
+    for (const t of trunks) {
+      const u = Math.max(0, Math.min(1, ((t.x - p.x) * ex + (t.z - p.z) * ez) / (ex * ex + ez * ez)));
+      assert(Math.hypot(t.x - p.x - ex * u, t.z - p.z - ez * u) > .55, `no trunk hides the panel at d=${w.d} from ${k} m back`);
+    }
+  }
+}
+
 // The walker: always on the tread at eye height, never turning abruptly, and every screen frames the sign.
 function project(pose, point, fov, aspect) {
   const dx = point.x - pose.x, dy = point.y - pose.y, dz = point.z - pose.z;
@@ -113,4 +134,4 @@ for (let t = .001; t <= 4; t += .001) {
 assert(rise > .03 && fall < -.03, `a run leaves the ground and sinks into each landing (${fall.toFixed(3)} to ${rise.toFixed(3)} m)`);
 assert(W.bob(0, W.stride(40)).lift > .4, 'a glide lifts the walker off the tread');
 
-console.log(`PASS: even tread, one creek crossing and a bridge on its banks, ${forest.trees.length} trees clear of the walk, smooth heading, framed arrival and an open view, and a walk that runs and glides`);
+console.log(`PASS: even tread, one creek crossing and a bridge on its banks, ${forest.trees.length} trees clear of the walk, three waysides in view, smooth heading, framed arrival and an open view, and a walk that runs and glides`);

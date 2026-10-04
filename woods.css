@@ -20,9 +20,13 @@
 .woods-stage { position: relative; height: 100svh; height: 100dvh; min-height: 300px; overflow: hidden; isolation: isolate; touch-action: pan-y;
   background: #b9c2a8 url("assets/site-landscape.svg") center bottom / cover no-repeat; }
 .woods-js .woods-stage { background: radial-gradient(ellipse at 50% 32%, #6f7b5d, #2a3a2f 62%, #1c2b23); }
+.woods-js[data-light="twilight"] .woods-stage { background: radial-gradient(ellipse at 50% 32%, #56607a, #252c3c 62%, #151a24); }
+.woods-js[data-light="night"] .woods-stage { background: radial-gradient(ellipse at 50% 32%, #1f2a40, #0d1320 62%, #070a10); }
 .woods-failed .woods-stage { background: #b9c2a8 url("assets/site-landscape.svg") center bottom / cover no-repeat; }
 .woods-canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; opacity: 0; transition: opacity 1.6s ease; }
 .woods-live .woods-canvas { opacity: 1; }
+/* The frame as it was, held over a change of light and faded away. */
+.woods-veil { position: absolute; inset: 0; display: block; width: 100%; height: 100%; opacity: 0; pointer-events: none; }
 .woods-look { cursor: grab; }
 .woods-look.is-dragging { cursor: grabbing; }
 .woods-shade { position: absolute; inset: 0; pointer-events: none;
@@ -38,6 +42,52 @@
 .woods-toggle-icon::before { position: absolute; left: 0; top: 2px; width: 5px; height: 6px; content: ""; background: currentColor; clip-path: polygon(0 20%, 40% 20%, 100% -20%, 100% 120%, 40% 80%, 0 80%); }
 .woods-toggle-icon::after { position: absolute; right: 0; top: 0; width: 5px; height: 10px; content: ""; border: 1.5px solid currentColor; border-left: 0; border-radius: 0 10px 10px 0; opacity: .35; }
 .woods-sound[aria-pressed="true"] .woods-toggle-icon::after { opacity: 1; }
+
+/* Wind: two drifting strokes, faded while it is paused. */
+.woods-wind-icon { position: relative; width: 13px; height: 10px; }
+.woods-wind-icon::before, .woods-wind-icon::after { position: absolute; left: 0; content: ""; height: 1.5px; background: currentColor; border-radius: 2px; }
+.woods-wind-icon::before { top: 2px; width: 13px; }
+.woods-wind-icon::after { top: 7px; width: 9px; left: 3px; }
+.woods-wind[aria-pressed="true"] .woods-wind-icon { opacity: .4; }
+
+/* The camera: a little body and lens, a flash, and the print it makes. */
+.woods-camera-icon { position: relative; width: 13px; height: 9px; border: 1.5px solid currentColor; border-radius: 2px; }
+.woods-camera-icon::before { position: absolute; left: 2.5px; top: 0; width: 5px; height: 5px; content: ""; border: 1.5px solid currentColor; border-radius: 50%; transform: translate(.5px, .5px); }
+.woods-camera-icon::after { position: absolute; left: 2px; top: -4px; width: 4px; height: 2px; content: ""; background: currentColor; border-radius: 1px 1px 0 0; }
+.woods-flash { position: absolute; inset: 0; z-index: 4; background: #fffaf0; opacity: 0; pointer-events: none; }
+.woods-flash.is-firing { animation: woods-flash .55s ease-out; }
+@keyframes woods-flash { 0% { opacity: .85; } 100% { opacity: 0; } }
+.woods-print { width: min(720px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: 22px; color: var(--cream); background: rgba(18, 26, 21, .9); border: 1px solid rgba(246, 240, 228, .2); border-radius: 14px; box-shadow: 0 30px 80px rgba(0, 0, 0, .5); overflow: auto; }
+.woods-print::backdrop { background: rgba(8, 12, 10, .55); backdrop-filter: blur(3px); }
+.woods-print-title { margin: 0 0 14px; font: 400 1.35rem/1.2 var(--display); }
+.woods-print-image { display: block; width: 100%; height: auto; max-height: calc(100dvh - 220px); object-fit: contain; border-radius: 3px; box-shadow: 0 14px 34px rgba(0, 0, 0, .45); }
+.woods-print.is-developing .woods-print-image { animation: woods-develop 2.2s ease-out; }
+@keyframes woods-develop { 0% { filter: sepia(.9) brightness(1.6) contrast(.5) blur(2px); transform: translateY(14px) rotate(-1.2deg); } 40% { transform: none; } 100% { filter: none; } }
+.woods-print-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.woods-print-actions > * { padding: 10px 16px; color: var(--cream); background: rgba(246, 240, 228, .1); border: 1px solid rgba(246, 240, 228, .28); border-radius: 22px; font: 600 .74rem/1 var(--body); text-decoration: none; cursor: pointer; }
+.woods-print-actions > *:hover { background: rgba(246, 240, 228, .2); }
+.woods-print-save { color: var(--forest) !important; background: #f1d9a4 !important; border-color: #f1d9a4 !important; }
+.woods-print-close { margin-left: auto; }
+.woods-print-status { min-height: 1.2em; margin: 10px 2px 0; font-size: .74rem; color: rgba(246, 240, 228, .8); overflow-wrap: anywhere; }
+
+/* The camera and the wind are icons with spoken labels; sound and the hour say what they are. */
+.woods-camera .woods-toggle-label, .woods-wind .woods-toggle-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.woods-camera, .woods-wind { padding: 8px 11px; }
+
+/* The hour: a sun, a sun on the horizon, or a crescent moon, and the time in Arizona. */
+.woods-hour { position: relative; }
+.woods-clock-time { opacity: .72; font-weight: 500; }
+.woods-clock-icon { position: relative; width: 11px; height: 11px; border-radius: 50%; background: #f3cf86; box-shadow: 0 0 6px rgba(243, 207, 134, .7); }
+.woods-clock[data-phase="twilight"] .woods-clock-icon { background: linear-gradient(#f0a46a 50%, transparent 50%); box-shadow: none; border-bottom: 1.5px solid currentColor; border-radius: 11px 11px 0 0; height: 7px; margin-top: 3px; }
+.woods-clock[data-phase="night"] .woods-clock-icon { background: transparent; box-shadow: inset -3.5px 1px 0 0 #e9e4d4; transform: rotate(-20deg); }
+.woods-hours { position: absolute; z-index: 5; top: calc(100% + 8px); right: 0; width: 248px; padding: 14px 10px 10px; color: var(--cream); background: rgba(16, 24, 20, .82); border: 1px solid rgba(246, 240, 228, .22); border-radius: 12px; box-shadow: 0 18px 40px rgba(0, 0, 0, .35); backdrop-filter: blur(10px); }
+.woods-hours[hidden] { display: none; }
+.woods-hours-note { margin: 0 6px 10px; font-size: .72rem; line-height: 1.45; color: rgba(246, 240, 228, .78); }
+.woods-hours-list { display: grid; gap: 2px; }
+.woods-hours-list button { display: flex; justify-content: space-between; align-items: baseline; padding: 9px 10px; color: inherit; background: none; border: 0; border-radius: 7px; font: 600 .78rem/1.2 var(--body); text-align: left; cursor: pointer; }
+.woods-hours-list button:hover, .woods-hours-list button:focus-visible { background: rgba(246, 240, 228, .1); }
+.woods-hours-list button[aria-pressed="true"] { background: rgba(240, 199, 127, .18); color: #f6dfae; }
+.woods-hours-time { font: 500 .7rem/1 var(--utility); letter-spacing: .06em; opacity: .7; }
 
 .woods-intro { position: absolute; z-index: 2; top: max(128px, 16%); width: 100%; padding: 0 22px; text-align: center; pointer-events: none; text-shadow: 0 2px 22px rgba(10, 18, 13, .55); }
 .woods-intro a { pointer-events: auto; }
@@ -74,6 +124,17 @@
 .woods-colophon { position: absolute; z-index: 2; bottom: 10px; left: 5%; right: 5%; margin: 0; text-align: center; color: rgba(236, 234, 220, .85); font: .55rem/1.4 var(--utility); letter-spacing: .045em; }
 .woods-colophon a { color: inherit; }
 .woods-anchor { position: absolute; bottom: 0; left: 0; width: 1px; height: 1px; pointer-events: none; }
+
+/* Wayside links: a tag hung over each trailside panel, following it as the walker passes. */
+.woods-waysides { display: none; }
+.woods-live .woods-waysides { position: absolute; z-index: 2; inset: 0; display: block; pointer-events: none; }
+.woods-wayside { position: absolute; top: 0; left: 0; display: grid; gap: 3px; width: max-content; max-width: 250px; margin: 0; padding: 11px 15px 12px; color: var(--forest); background: rgba(246, 240, 228, .93); border-radius: 9px; box-shadow: 0 12px 28px rgba(10, 18, 13, .28); text-decoration: none; pointer-events: auto; translate: -50% calc(-100% - 14px); opacity: 0; visibility: hidden; }
+.woods-wayside::after { position: absolute; left: calc(50% + var(--stem, 0px)); bottom: -14px; width: 1.5px; height: 14px; content: ""; background: rgba(246, 240, 228, .85); }
+.woods-wayside-kind { font: 600 .56rem/1.3 var(--utility); letter-spacing: .16em; text-transform: uppercase; color: var(--rust); }
+.woods-wayside strong { font: 400 1.08rem/1.18 var(--display); letter-spacing: -.01em; }
+.woods-wayside-go { font-size: .7rem; font-weight: 600; color: var(--olive-dark, #46523a); }
+.woods-wayside:hover { background: #fffaf0; }
+.woods-wayside:hover .woods-wayside-go { text-decoration: underline; }
 
 /* The signs. As plain links they are four wooden boards; over the live scene
    they are invisible hit areas laid exactly over the boards drawn in 3D. */
@@ -128,6 +189,14 @@
   :root:not(.woods-js) .woods-header { gap: 10px; padding-top: 18px; }
   :root:not(.woods-js) .woods-header .nav a { padding: 4px 2px; font-size: .65rem; color: var(--cream); }
   .woods-controls { top: 82px; right: 16px; }
+  .woods-clock-time { display: none; }
+  /* On a phone the hours open from the right edge of the whole row, so they stay on screen. */
+  .woods-hour { position: static; }
+  .woods-hours { width: min(248px, calc(100vw - 32px)); }
+  .woods-controls { gap: 6px; }
+  .woods-sound .woods-toggle-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .woods-sound { padding: 8px 10px; }
+  .woods-print-close { margin-left: 0; }
   .woods-intro { top: 150px; }
   .woods-intro .woods-label { font-size: .5rem; letter-spacing: .14em; gap: 8px; }
   .woods-lead { font-size: .9rem; margin-top: 16px; }
@@ -149,6 +218,8 @@
   .woods-furniture > a span { margin-left: 4px; }
   .woods-colophon { bottom: 14px; font-size: .47rem; }
   .woods-sign strong { font-size: 1.35rem; }
+  .woods-wayside { max-width: 200px; padding: 9px 12px 10px; }
+  .woods-wayside strong { font-size: .95rem; }
 }
 @media (max-width: 360px) { .woods-progress { display: none; } .woods-arrival h2 { font-size: 2.4rem; } }
 @media (max-height: 560px) {

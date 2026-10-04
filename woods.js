@@ -41,23 +41,27 @@ async function start() {
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const maxAniso = renderer.capabilities.getMaxAnisotropy();
 
-  // ---- Light: late afternoon, the sun low over the left shoulder and a little behind.
-  const SUN = new THREE.Vector3(-.92, .26, .26).normalize();
-  const SUN_COLOR = new THREE.Color('#ffbf80'), SUN_POWER = 10.5;
-  const sunLight = SUN_COLOR.clone().multiplyScalar(SUN_POWER);
+  // ---- Light: Arizona's own, for the moment asked for (?light=dusk, or a
+  // choice kept for the visit), otherwise for right now. Golden hour puts the
+  // sun low over the left shoulder; at night the moon, if it is up, takes over.
+  const query = new URLSearchParams(location.search);
+  const remembered = (() => { try { return sessionStorage.getItem('woods:light'); } catch { return null; } })();
+  let hour = WoodsSky.at(query.get('light') || remembered || 'now');
+  const SUN = new THREE.Vector3(...hour.key);
   const air = WoodsRender.atmosphere({
-    sun: SUN.toArray(), sunLight: sunLight.toArray(),
+    sun: hour.key, sunLight: hour.keyLight,
     rayBeta: [5.8e-6 * 1.35, 13.5e-6 * 1.35, 33.1e-6 * 1.35], rayH: 8000,
     hazeBeta: 1.3e-5, hazeH: 1500, mistBeta: 5e-5, mistBase: -620, mistH: 260,
-    skyLight: [1.45, 1.45, 1.45], hazeLight: [.56, .59, .64], mieG: .78, mieGain: .1, cloudBase: 2900,
+    skyLight: hour.sky, hazeLight: hour.haze, mieG: .78, mieGain: .1, cloudBase: 2900,
   });
-  WoodsRender.installFog(THREE, air);
+  air.uniforms.W_SUN.value = SUN;
+  WoodsRender.installFog(THREE, air.glsl);
   const scene = new THREE.Scene(), far = new THREE.Scene();
   // Built-in materials take their air from the fog chunk; fog.near is the haze among the trunks.
   scene.fog = new THREE.Fog(0xffffff, 0, 1);
   const camera = new THREE.PerspectiveCamera(56, 1, .08, 900), farCamera = new THREE.PerspectiveCamera(56, 1, 20, 90000);
   camera.rotation.order = 'YXZ';
-  const sun = new THREE.DirectionalLight(SUN_COLOR, SUN_POWER);
+  const sun = new THREE.DirectionalLight(0xffffff, 1);
   const SHADOW = Q.shadowReach;
   // Soft shadows that widen with distance from their caster, where the GPU can afford them.
   if (!LOW && WoodsRender.installSoftShadows(THREE, {range: 219, span: 2 * SHADOW, spread: .011, search: .9, blockers: 12, samples: 20})) renderer.shadowMap.type = THREE.PCFShadowMap;
@@ -69,6 +73,11 @@ async function start() {
   sun.shadow.radius = 2;
   // Open ground sees the whole sky; under the crowns the environment does the work.
   const openSky = new THREE.HemisphereLight('#a9c3e6', '#6b5a3c', 0);
+  // After dark the walker carries a headlamp, and a lantern hangs at the
+  // signpost. They join the scene only once the light goes, so daytime frames
+  // never pay for them; the change compiles behind the crossfade.
+  const headlamp = new THREE.SpotLight('#ffeedd', 0, 40, .56, .7, 2);
+  const lantern = new THREE.PointLight('#ffb15c', 0, 14, 2);
   scene.add(sun, sun.target, openSky);
 
   const rnd = W.random(20260923), R = (a, b) => a + (b - a) * rnd(), pick = list => list[Math.floor(rnd() * list.length)];
@@ -76,7 +85,9 @@ async function start() {
 
   // ---- Wind, shared by every swaying thing and by the sound of it.
   const shared = {uTime: {value: 0}, uWindAmp: {value: 1}, uWindDir: {value: new THREE.Vector2(.88, .47)}, uSunDir: {value: SUN},
-    uSunColor: {value: SUN_COLOR.clone().multiplyScalar(SUN_POWER / Math.PI)}, woodsNoise: {value: null}, woodsClock: {value: 0}};
+    uSunColor: {value: new THREE.Color()}, woodsNoise: {value: null}, woodsClock: {value: 0}};
+  // The glint of the key light on moving water.
+  const glint = {value: new THREE.Color()};
   const f = x => Number(x).toFixed(4);
   const WIND = `
     uniform float uTime; uniform float uWindAmp; uniform vec2 uWindDir;
@@ -746,27 +757,45 @@ async function start() {
   const leafMaterial = (map, bend, glow, flutter = .035) => sway(new THREE.MeshStandardMaterial({map, vertexColors: true, alphaTest: .5, roughness: .8, alphaToCoverage: Q.samples > 0}), {bend, flutter, sprite: true, glow});
   const leafDepth = (map, bend, flutter = .035) => sway(new THREE.MeshDepthMaterial({depthPacking: THREE.RGBADepthPacking, map, alphaTest: .5}), {bend, flutter, sprite: true});
   const hex = list => list.map(c => new THREE.Color(c));
+  // ---- The season, from Arizona's calendar. Aspens leaf out pale in May, are
+  // green all summer, turn through September, blaze gold and orange in
+  // October, drop the last leaves in November and stand bare all winter.
+  const GREEN = ['#6c8a3c', '#5f7d36', '#73903f', '#668a3a', '#7a9444'], BARE = ['#7a6a48', '#6e5f40', '#857252', '#6a5a3c', '#8a7650'];
+  const SEASON = [
+    null, null, null, null,
+    {aspens: ['#cfe58a', '#bfdc7a', '#d8eb98', '#b2d06e'], fall: 0, grass: ['#b9c27a', '#a6b66a', '#c4c98a', '#9fae62', '#cfd49a'], shrubs: GREEN},
+    {aspens: ['#8fbb5c', '#7fae50', '#9cc566', '#86b356', '#a3c86e'], fall: 0, grass: ['#a9b56b', '#98a85e', '#b7bd78', '#8f9f58', '#c2c486'], shrubs: GREEN},
+    {aspens: ['#8fbb5c', '#7fae50', '#9cc566', '#86b356', '#a3c86e'], fall: 0, grass: null, shrubs: GREEN},
+    {aspens: ['#94bb5a', '#86b050', '#a6c766', '#b6c35e', '#9ab958'], fall: .05, grass: null, shrubs: GREEN},
+    // Late September: most aspens have turned, a few are still holding green.
+    {aspens: ['#ffc84f', '#ffd35e', '#f7b53f', '#fae17a', '#e8d86a', '#c9d46c', '#a8c15f', '#f59a3d'], fall: .7, grass: null},
+    {aspens: ['#ffc84f', '#ffd35e', '#f7b53f', '#fae17a', '#f59a3d', '#ffb347', '#e98a35', '#f2c650'], fall: 1, grass: null},
+    {aspens: null, fall: .25, grass: ['#c9b27e', '#b8a172', '#a99467', '#d2bf92', '#bfa676'], shrubs: BARE},
+    null,
+  ].map(season => season || {aspens: null, fall: 0, grass: ['#c4ad7c', '#b39d70', '#a38f66', '#ccb88c', '#b9a274'], shrubs: BARE})[
+    // ?month=6 previews another season (0 is January).
+    query.has('month') ? W.clamp(Math.round(+query.get('month')) || 0, 0, 11) : WoodsSky.clock(new Date()).month];
   const SPECIES = {
     pine: {shape: pineTree(), bark: pineBark, leaves: pineSprite, bend: .011, glow: .5, tints: hex(['#ffffff', '#f2f5e6', '#e7ecd9', '#fbf5e4', '#dfe6cf'])},
     fir: {shape: firTree(false), bark: firBark, leaves: firSprite, bend: .012, glow: .22, tints: hex(['#ffffff', '#e8efe1', '#dce6d6', '#f1f2e4'])},
     young: {shape: firTree(true), bark: firBark, leaves: firSprite, bend: .02, glow: .22, tints: hex(['#ffffff', '#e6f0de', '#f4f4e2'])},
-    // Late September: most aspens have turned, a few are still holding green.
-    aspen: {shape: aspenTree(), bark: aspenBark, leaves: leafSprite, bend: .014, glow: .7,
-      tints: hex(['#ffc84f', '#ffd35e', '#f7b53f', '#fae17a', '#e8d86a', '#c9d46c', '#a8c15f', '#f59a3d'])},
+    aspen: {shape: aspenTree(), bark: aspenBark, leaves: leafSprite, bend: .014, glow: .7, tints: hex(SEASON.aspens || ['#000'])},
   };
   for (const [name, kind] of Object.entries(SPECIES)) {
+    // In winter the aspens stand bare: white trunks and nothing else.
+    if (name === 'aspen' && !SEASON.aspens) { patches(forest.trees.filter(t => t.height >= 5 && t.kind === 'aspen'), kind.shape.wood, barkMaterial(kind.bark, kind.bend), t => place(t, t.height * t.girth, t.height, t.height * t.girth), {}); continue; }
     const trees = forest.trees.filter(t => (t.height < 5 ? 'young' : t.kind) === name);
     const transform = t => place(t, t.height * (name === 'young' ? 1.35 : t.girth), t.height, t.height * (name === 'young' ? 1.35 : t.girth));
     patches(trees, kind.shape.wood, barkMaterial(kind.bark, kind.bend, name === 'pine' ? 1 : 0), transform, {});
     patches(trees, kind.shape.crown, leafMaterial(kind.leaves, kind.bend, kind.glow), transform,
       {depth: leafDepth(kind.leaves, kind.bend), color: (t, c) => c.copy(kind.tints[Math.floor(t.tint * kind.tints.length)])});
   }
-  const shrubTints = hex(['#6c8a3c', '#7a8d42', '#8e8a3e', '#a17a3a', '#5f7d36']);
+  const shrubTints = hex(SEASON.shrubs || ['#6c8a3c', '#7a8d42', '#8e8a3e', '#a17a3a', '#5f7d36']);
   patches(forest.shrubs, shrubShape(), leafMaterial(shrubSprite, .03, .45, .05), s => place(s, s.size * 1.5, s.size, s.size * 1.5),
     {depth: leafDepth(shrubSprite, .03, .05), color: (s, c) => c.copy(shrubTints[Math.floor(s.tint * shrubTints.length)])});
 
   const grass = W.grass(Q.grass);
-  const grassTints = hex(['#d6c07e', '#c8ad69', '#b9ab66', '#a6a35d', '#dccb8e']), wetGrass = new THREE.Color('#93a857');
+  const grassTints = hex(SEASON.grass || ['#d6c07e', '#c8ad69', '#b9ab66', '#a6a35d', '#dccb8e']), wetGrass = new THREE.Color('#93a857');
   patches(grass, grassShape(), sway(new THREE.MeshStandardMaterial({vertexColors: true, side: THREE.DoubleSide, roughness: .9}), {bend: .17, flutter: .05, glow: .4, upright: true}),
     g => place(g, g.size * 1.2, g.size * (.7 + g.tint * .45), g.size * 1.2), {cell: 32, cast: false,
       color: (g, c) => c.copy(grassTints[Math.floor(g.tint * grassTints.length)]).lerp(wetGrass, 1 - W.smooth(3, 13, W.creekDistance(g.x, g.z)))});
@@ -897,7 +926,7 @@ async function start() {
     geometry.setIndex(idx);
     const material = new THREE.ShaderMaterial({
       fog: true, transparent: true, depthWrite: false, side: THREE.DoubleSide,
-      uniforms: {...THREE.UniformsUtils.clone(THREE.UniformsLib.fog), uNoise: {value: noiseTexture}, uTime: flowTime, uSunDir: {value: SUN}, uSunColor: {value: SUN_COLOR},
+      uniforms: {...THREE.UniformsUtils.clone(THREE.UniformsLib.fog), uNoise: {value: noiseTexture}, uTime: flowTime, uSunDir: {value: SUN}, uSunColor: glint,
         uSky: {value: new THREE.Color('#9eb0aa')}, uDeep: {value: new THREE.Color('#141a13')}, uShallow: {value: new THREE.Color('#353b2b')}},
       vertexShader: `varying vec2 vUv; varying vec3 vWorld;
         #include <fog_pars_vertex>
@@ -975,6 +1004,7 @@ async function start() {
     }, {aniso: 16});
   }
   const boards = [];
+  const lanternGlass = new THREE.MeshStandardMaterial({color: '#3a3226', emissive: '#ffb15c', emissiveIntensity: 0, roughness: .25, transparent: false});
   (() => {
     const {L, H, tip, depth, bevel} = BOARD;
     const postMaterial = new THREE.MeshStandardMaterial({map: planks, color: '#8f7a5a', roughness: .9});
@@ -983,6 +1013,20 @@ async function start() {
     const cap = new THREE.Mesh(new THREE.ConeGeometry(.125, .12, 4), postMaterial);
     cap.position.set(W.SIGN.x, W.JY + 2.78, W.SIGN.z); cap.rotation.y = Math.PI / 4;
     for (const mesh of [post, cap]) { mesh.castShadow = mesh.receiveShadow = true; scene.add(mesh); }
+    // A tin lantern on an iron arm above the boards, lit once the light goes.
+    const iron = new THREE.MeshStandardMaterial({color: '#2b2722', roughness: .55, metalness: .6});
+    const hang = new THREE.Vector3(W.SIGN.x + .25, W.JY + 2.6, W.SIGN.z + .06);
+    const lamp = new THREE.Group();
+    const add = (geometry, material, x, y, z) => { const mesh = new THREE.Mesh(geometry, material); mesh.position.set(x, y, z); mesh.castShadow = true; lamp.add(mesh); return mesh; };
+    add(new THREE.BoxGeometry(.2, .018, .018), iron, -.12, .135, 0);
+    add(new THREE.CylinderGeometry(.004, .004, .045, 4), iron, 0, .1, 0);
+    add(new THREE.BoxGeometry(.095, .012, .095), iron, 0, -.072, 0);
+    add(new THREE.ConeGeometry(.07, .05, 4), iron, 0, .085, 0).rotation.y = Math.PI / 4;
+    for (const [x, z] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) add(new THREE.BoxGeometry(.01, .13, .01), iron, x * .041, 0, z * .041);
+    add(new THREE.BoxGeometry(.078, .124, .078), lanternGlass, 0, 0, 0).castShadow = false;
+    lamp.position.copy(hang);
+    scene.add(lamp);
+    lantern.position.copy(hang).add(new THREE.Vector3(0, -.01, .02));
     const edge = new THREE.MeshStandardMaterial({color: '#5d4f33', roughness: .85});
     SIGNS.forEach(sign => {
       const shape = new THREE.Shape(boardOutline(L, H, tip, sign.left).map(([x, y]) => new THREE.Vector2(x, y)));
@@ -1001,16 +1045,149 @@ async function start() {
     });
   })();
 
+  // ---- Wayside exhibits. Three low panels beside the trail, painted from the
+  // site itself: the newest field note, one of the photographs (a different
+  // one each visit), and the newest project. Each has a real link that hangs
+  // over it as the walker comes up the trail.
+  const PHOTOS = [['glacier', 'Glacier National Park, Montana'], ['glacier_2', 'Glacier National Park, Montana'], ['grand_tetons', 'Grand Teton National Park, Wyoming'],
+    ['colchuck', 'Colchuck Lake, Washington'], ['post_falls_idaho', 'Post Falls, Idaho'], ['yeallowstone_1', 'Yellowstone National Park'], ['yellowstone_2', 'Yellowstone National Park'],
+    ['Sedona_az_1', 'Sedona, Arizona'], ['sedona_az_2', 'Sedona, Arizona'], ['netherlands', 'Netherlands countryside'], ['rotterdam', 'Rotterdam, Netherlands']];
+  const SKETCHES = [[/gain train/i, 'train'], [/momento/i, 'momento'], [/firevin/i, 'firevin'], [/dynamics/i, 'dynamics'], [/investments/i, 'coffee'], [/magic circles/i, 'circles'], [/episodic/i, 'mountain']];
+  const sketchFor = (title, fallback) => `assets/sketch-${(SKETCHES.find(([pattern]) => pattern.test(title)) || [0, fallback])[1]}.svg`;
+  const PANEL = {w: 1.04, h: .68, tilt: -.42, top: 1.02};
+  const waysides = W.WAYSIDES.map((spot, i) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024; canvas.height = 670;
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.anisotropy = Math.min(maxAniso, 16);
+    const group = new THREE.Group();
+    group.position.set(spot.x, spot.y, spot.z);
+    group.rotation.y = spot.turn;
+    const wood = new THREE.MeshStandardMaterial({map: planks, color: '#6f5a40', roughness: .9});
+    for (const x of [-.44, .44]) {
+      const post = new THREE.Mesh(new THREE.BoxGeometry(.09, PANEL.top + .1, .09), wood);
+      post.position.set(x, (PANEL.top + .1) / 2 - .1, -.05);
+      post.castShadow = post.receiveShadow = true;
+      group.add(post);
+    }
+    // The panel hinges back from its top edge so its face looks up at the walker.
+    const hinge = new THREE.Group();
+    hinge.position.set(0, PANEL.top, 0);
+    hinge.rotation.x = PANEL.tilt;
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(PANEL.w + .08, PANEL.h + .08, .05), new THREE.MeshStandardMaterial({color: '#3d3024', roughness: .8}));
+    frame.position.set(0, -PANEL.h / 2 - .02, -.03);
+    const face = new THREE.Mesh(new THREE.PlaneGeometry(PANEL.w, PANEL.h), new THREE.MeshStandardMaterial({map: texture, roughness: .55}));
+    face.position.set(0, -PANEL.h / 2 - .02, .0);
+    frame.castShadow = frame.receiveShadow = face.receiveShadow = true;
+    hinge.add(frame, face);
+    group.add(hinge);
+    scene.add(group);
+    return {spot, canvas, texture, group, anchor: new THREE.Vector3(spot.x, spot.y + PANEL.top + .34, spot.z), link: null, stop: ['01', '02', '03'][i]};
+  });
+  function wrapText(g, text, width, lines) {
+    const words = String(text).split(/\s+/), out = [];
+    let line = '';
+    for (const word of words) {
+      const next = line ? line + ' ' + word : word;
+      if (g.measureText(next).width > width && line) { out.push(line); line = word; } else line = next;
+    }
+    if (line) out.push(line);
+    if (out.length > lines) { out.length = lines; out[lines - 1] = out[lines - 1].replace(/[,.;:]?\s*\S*$/, '') + '…'; }
+    return out;
+  }
+  const SERIF = '"Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif', SANS = '"Avenir Next", Avenir, "Segoe UI", Helvetica, Arial, sans-serif';
+  function paintWayside(item, {kind, title, lines = [], when = '', image = null, photo = false, foot}) {
+    const g = item.canvas.getContext('2d'), w = item.canvas.width, h = item.canvas.height;
+    // Porcelain-enamel stock: warm cream with a little mottling, like a park sign that has seen weather.
+    g.fillStyle = '#eee4cc'; g.fillRect(0, 0, w, h);
+    // Its own random numbers, so the panels never shift the rest of the forest's.
+    const m = W.random(77 + waysides.indexOf(item)), M = (a, b) => a + (b - a) * m();
+    for (let k = 0; k < 900; k++) { g.fillStyle = `rgba(${m() < .5 ? '120,96,60' : '255,250,235'},${M(.02, .06)})`; g.fillRect(M(0, w), M(0, h), M(2, 9), M(2, 9)); }
+    g.fillStyle = '#3b2f23'; g.fillRect(0, 0, w, 86);
+    g.fillStyle = '#efdcae'; g.font = `600 30px ${SANS}`; g.textBaseline = 'middle';
+    g.fillText(kind.toUpperCase().split('').join(String.fromCharCode(8202)), 40, 45);
+    g.textAlign = 'right'; g.fillStyle = 'rgba(239,220,174,.75)'; g.font = `500 24px ${SANS}`;
+    g.fillText(`TRAIL STOP ${item.stop}`, w - 40, 45);
+    g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+    if (photo && image) {
+      const top = 108, bottom = h - 92, ratio = image.width / image.height, boxW = w - 80, boxH = bottom - top;
+      let dw = boxW, dh = dw / ratio;
+      if (dh < boxH) { dh = boxH; dw = dh * ratio; }
+      g.save(); g.beginPath(); g.rect(40, top, boxW, boxH); g.clip();
+      g.drawImage(image, 40 + (boxW - dw) / 2, top + (boxH - dh) / 2, dw, dh);
+      g.restore();
+      g.strokeStyle = '#3b2f23'; g.lineWidth = 3; g.strokeRect(40, top, boxW, boxH);
+      g.fillStyle = '#26342e'; g.font = `400 40px ${SERIF}`; g.fillText(title, 40, h - 36);
+    } else {
+      const textWidth = image ? 560 : w - 80;
+      g.fillStyle = '#26342e'; g.font = `400 62px ${SERIF}`;
+      const head = wrapText(g, title, textWidth, 3);
+      head.forEach((line, k) => g.fillText(line, 40, 170 + k * 68));
+      let y = 170 + head.length * 68 + 6;
+      if (when) { g.fillStyle = '#9a5a2e'; g.font = `600 22px ${SANS}`; g.fillText(when.toUpperCase(), 42, y); y += 46; }
+      g.fillStyle = '#3e4943'; g.font = `400 29px ${SANS}`;
+      wrapText(g, lines.join(' '), textWidth, Math.max(1, Math.floor((h - 110 - y) / 40))).forEach((line, k) => g.fillText(line, 42, y + k * 40));
+      if (image) {
+        const size = 330, x = w - size - 50, top = 130;
+        g.fillStyle = 'rgba(255,252,242,.7)'; g.beginPath(); g.arc(x + size / 2, top + size / 2, size / 2 + 12, 0, 6.283); g.fill();
+        g.drawImage(image, x, top + (size - size * image.height / image.width) / 2, size, size * image.height / image.width);
+      }
+    }
+    g.fillStyle = '#3b2f23'; g.fillRect(40, h - 20, w - 80, 3);
+    if (foot && !photo) { g.fillStyle = '#677069'; g.font = `600 21px ${SANS}`; g.fillText(foot.toUpperCase(), 42, h - 40); }
+    item.texture.needsUpdate = true;
+  }
+  // The links that hang over the panels, created once the site's data is in.
+  const waysideNav = $('.woods-waysides');
+  function hangLink(item, {href, kind, title, go}) {
+    const link = document.createElement('a'), label = document.createElement('span'), name = document.createElement('strong'), cue = document.createElement('span');
+    link.className = 'woods-wayside';
+    link.href = href;
+    link.tabIndex = -1;
+    label.className = 'woods-wayside-kind'; label.textContent = kind;
+    name.textContent = title;
+    cue.className = 'woods-wayside-go'; cue.textContent = go + ' →';
+    link.append(label, name, cue);
+    link.style.visibility = 'hidden';
+    waysideNav.append(link);
+    item.link = link;
+  }
+  const loadImage = src => new Promise(resolve => { const image = new Image(); image.onload = () => resolve(image); image.onerror = () => resolve(null); image.src = src; });
+  const latest = list => list.filter(x => x.date).sort((a, b) => b.date.localeCompare(a.date))[0];
+  const month = date => new Date(date + 'T12:00:00').toLocaleDateString('en-US', {month: 'long', year: 'numeric'});
+  waysides.forEach((item, i) => paintWayside(item, {kind: ['Field note', 'The scenic route', 'Lately building'][i], title: '', foot: ''}));
+  (async () => {
+    const [posts, projects] = await Promise.all(['posts/posts.json', 'projects/projects.json'].map(url => fetch(url).then(r => r.ok ? r.json() : []).catch(() => [])));
+    const note = latest(posts), project = latest(projects.filter(p => p.path && !/^https?:/.test(p.path))) || latest(projects);
+    const [shot, caption] = PHOTOS[Math.floor(Math.random() * PHOTOS.length)];
+    const [noteSketch, photo, projectSketch] = await Promise.all([note && loadImage(sketchFor(note.title, 'notebook')), loadImage(`assets/photos/trail/${shot}.webp`), project && loadImage(sketchFor(project.title, 'mountain'))]);
+    if (note) {
+      paintWayside(waysides[0], {kind: 'Field note', title: note.title, when: month(note.date), lines: [note.summary], image: noteSketch, foot: 'More field notes at the signpost'});
+      hangLink(waysides[0], {href: note.path, kind: 'Field note', title: note.title, go: 'Read the note'});
+    }
+    paintWayside(waysides[1], {kind: 'The scenic route', title: caption, image: photo, photo: true});
+    hangLink(waysides[1], {href: 'photography.html', kind: 'Photograph', title: caption, go: 'See the photographs'});
+    if (project) {
+      paintWayside(waysides[2], {kind: 'Lately building', title: project.title, when: project.kind, lines: [project.summary], image: projectSketch, foot: 'Every project is down the left fork'});
+      hangLink(waysides[2], {href: project.path, kind: 'Lately building', title: project.title, go: 'See the project'});
+    }
+    wake();
+  })();
+
   // ---- Far away: the valley and the range, and the sky over them, in their own pass.
-  const vista = WoodsVista.build(THREE, renderer, {W, glsl: air, shared, low: LOW});
+  const vista = WoodsVista.build(THREE, renderer, {W, air, shared, low: LOW});
   const skyDome = WoodsRender.skyDome(THREE, air, shared);
-  far.add(skyDome, vista.group);
-  // Light from the forest itself: sky through the gaps, crowns all round, litter below.
-  scene.environment = WoodsRender.environment(THREE, renderer, air, shared, {gapLow: .1, gapHigh: .72, crowns: [.016, .024, .013], crownSun: .006, floor: [.04, .032, .022]});
+  const starfield = WoodsRender.stars(THREE, air, WoodsSky.STARS, {clock: shared.woodsClock, count: LOW ? 1600 : 2600, pixelRatio: Math.min(devicePixelRatio || 1, 2)});
+  far.add(skyDome, vista.group, starfield);
+  // Light from the forest itself: sky through the gaps, crowns all round, litter
+  // below. It is rebuilt whenever the hour changes.
+  const forestLight = scale => WoodsRender.environment(THREE, renderer, air, shared, {gapLow: .1, gapHigh: .72, crowns: [.016, .024, .013], crownSun: .006, floor: [.04, .032, .022]}, scale);
   scene.environmentIntensity = 1;
   const darkroom = WoodsRender.darkroom(THREE, renderer, {samples: Q.samples, levels: Q.bloom, look: {exposure: 1.15, bloom: .045, vignette: .24, aberration: .0016, grain: .016, saturation: 1.2, contrast: 1.1}});
 
   // ---- Shafts of low sun slanting through the trunks.
+  const shaftUniforms = {uSunDir: {value: SUN}, uColor: {value: new THREE.Color('#ffdcaa')}, uStrength: {value: .11}};
   (() => {
     const pos = [], shape = [], idx = [];
     for (let i = 0; i < Q.rays; i++) {
@@ -1025,7 +1202,7 @@ async function start() {
     geometry.setIndex(idx);
     const material = new THREE.ShaderMaterial({
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
-      uniforms: {uSunDir: {value: SUN}, uColor: {value: new THREE.Color('#ffdcaa')}, uStrength: {value: .11}},
+      uniforms: shaftUniforms,
       vertexShader: `attribute vec4 aRay; uniform vec3 uSunDir; varying float vSide, vAlong, vFade;
         void main() {
           vec3 p = position + uSunDir * aRay.y * aRay.w;
@@ -1052,7 +1229,8 @@ async function start() {
   })();
 
   // ---- Dust and pollen drifting in the light, always around the walker.
-  const moteUniforms = {uCenter: {value: new THREE.Vector3()}, uTime: {value: 0}, uSunDir: {value: SUN}, uMap: {value: moteSprite}, uScale: {value: 400}};
+  const moteUniforms = {uCenter: {value: new THREE.Vector3()}, uTime: {value: 0}, uSunDir: {value: SUN}, uMap: {value: moteSprite}, uScale: {value: 400},
+    uStrength: {value: 1}, uLamp: {value: 0}, uForward: {value: new THREE.Vector3(0, 0, -1)}};
   const motes = new THREE.Points((() => {
     const g = new THREE.BufferGeometry(), p = new Float32Array(Q.motes * 3);
     for (let i = 0; i < p.length; i++) p[i] = rnd();
@@ -1060,7 +1238,7 @@ async function start() {
     return g;
   })(), new THREE.ShaderMaterial({
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, uniforms: moteUniforms,
-    vertexShader: `uniform vec3 uCenter, uSunDir; uniform float uTime, uScale; varying float vAlpha;
+    vertexShader: `uniform vec3 uCenter, uSunDir, uForward; uniform float uTime, uScale, uStrength, uLamp; varying float vAlpha;
       void main() {
         vec3 box = vec3(28.0, 7.0, 28.0);
         vec3 p = position * box + vec3(sin(uTime * .13 + position.y * 40.0) * .8, uTime * .06 + sin(uTime * .21 + position.x * 30.0) * .4, cos(uTime * .11 + position.z * 30.0) * .8);
@@ -1070,7 +1248,10 @@ async function start() {
         vec3 offset = p - uCenter;
         float edge = 1.0 - smoothstep(.34, .5, max(abs(offset.x), abs(offset.z)) / box.x);
         float lit = pow(max(dot(normalize(p - cameraPosition), uSunDir), 0.0), 3.0);
-        vAlpha = edge * smoothstep(1.5, 4.0, -mv.z) * (.03 + lit * .45) * (.5 + .5 * sin(uTime * .8 + position.z * 60.0));
+        // By night, only the dust in the beam of the headlamp shows.
+        vec3 toward = p - cameraPosition;
+        float beam = smoothstep(.86, .97, dot(normalize(toward), uForward)) * (1.0 - smoothstep(3.0, 14.0, length(toward))) * uLamp;
+        vAlpha = edge * smoothstep(1.5, 4.0, -mv.z) * ((.03 + lit * .45) * uStrength + beam * .5) * (.5 + .5 * sin(uTime * .8 + position.z * 60.0));
         gl_PointSize = min(5.0, uScale * .018 / -mv.z);
         gl_Position = projectionMatrix * mv;
       }`,
@@ -1091,7 +1272,7 @@ async function start() {
       return W.smooth(0, 7, n);
     };
   })();
-  const leafUniforms = {uCenter: {value: new THREE.Vector3()}, uTime: {value: 0}, uAmount: {value: 0}, uWind: shared.uWindDir, uSunDir: {value: SUN}};
+  const leafUniforms = {uCenter: {value: new THREE.Vector3()}, uTime: {value: 0}, uAmount: {value: 0}, uWind: shared.uWindDir, uSunDir: {value: SUN}, uLight: {value: 1}};
   const leaves = (() => {
     const count = LOW ? 40 : 80, seed = [], corner = [], idx = [];
     for (let i = 0; i < count; i++) {
@@ -1126,10 +1307,10 @@ async function start() {
           vKeep = step(aSeed.w, uAmount) * (1.0 - smoothstep(.75, 1.0, max(offset.x, offset.y)));
           gl_Position = projectionMatrix * viewMatrix * vec4(world, 1.0);
         }`,
-      fragmentShader: `varying vec2 vCorner; varying float vShade, vKeep;
+      fragmentShader: `uniform float uLight; varying vec2 vCorner; varying float vShade, vKeep;
         void main() {
           if (vKeep < .5 || dot(vCorner, vCorner) > 1.0) discard;
-          gl_FragColor = vec4(vec3(1.0, .72, .22) * vShade * 1.1, 1.0);
+          gl_FragColor = vec4(vec3(1.0, .72, .22) * vShade * 1.1 * uLight, 1.0);
           #include <tonemapping_fragment>
           #include <colorspace_fragment>
         }`,
@@ -1138,6 +1319,126 @@ async function start() {
     scene.add(mesh);
     return mesh;
   })();
+
+  // ---- A pair of ravens working the updraft off the rim, by day. They circle
+  // out over the valley, banking into the turn, and now and then beat their
+  // wings a few times before settling back into a glide.
+  const ravens = (() => {
+    const black = new THREE.MeshStandardMaterial({color: '#0c0c0e', roughness: .5, metalness: .15, side: THREE.DoubleSide});
+    const panel = (points) => {
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(points.flat(), 3));
+      g.setIndex(points.length === 4 ? [0, 1, 2, 0, 2, 3] : [0, 1, 2]);
+      g.computeVertexNormals();
+      return g;
+    };
+    const flock = [0, 1].map(k => {
+      const bird = new THREE.Group(), wings = [];
+      const body = new THREE.Mesh(new THREE.SphereGeometry(.1, 8, 6), black);
+      body.scale.set(.85, .75, 3.1);
+      const head = new THREE.Mesh(new THREE.SphereGeometry(.065, 8, 6), black);
+      head.position.set(0, .02, -.34);
+      const beak = new THREE.Mesh(new THREE.ConeGeometry(.026, .11, 5).rotateX(-Math.PI / 2), black);
+      beak.position.set(0, .01, -.43);
+      // The raven's wedge of a tail, longest in the middle.
+      const tail = new THREE.Mesh(panel([[-.05, 0, .25], [.05, 0, .25], [.13, 0, .5], [-.13, 0, .5]]), black);
+      const tip = new THREE.Mesh(panel([[-.13, 0, .5], [.13, 0, .5], [0, 0, .58]]), black);
+      bird.add(body, head, beak, tail, tip);
+      for (const side of [-1, 1]) {
+        const shoulder = new THREE.Group(), hand = new THREE.Group();
+        shoulder.position.set(side * .06, .02, -.06);
+        shoulder.add(new THREE.Mesh(panel([[0, 0, -.12], [side * .42, 0, -.1], [side * .42, 0, .15], [0, 0, .16]]), black));
+        hand.position.set(side * .42, 0, 0);
+        // Fingered primaries at the tip.
+        hand.add(new THREE.Mesh(panel([[0, 0, -.1], [side * .3, 0, -.05], [side * .36, 0, .06], [0, 0, .15]]), black));
+        for (let f = 0; f < 4; f++) hand.add(new THREE.Mesh(panel([[side * .28, 0, -.06 + f * .03], [side * (.42 + f * .01), 0, -.04 + f * .035], [side * .3, 0, -.03 + f * .035]]), black));
+        shoulder.add(hand);
+        bird.add(shoulder);
+        wings.push({shoulder, hand, side});
+      }
+      bird.scale.setScalar(1.45);
+      bird.userData = {wings, phase: k * 2.2, radius: 34 + k * 8, lift: 17 + k * 4, beat: 0, burst: 4 + k * 3};
+      scene.add(bird);
+      return bird;
+    });
+    const centre = new THREE.Vector3(W.J.x + 4, W.JY, W.J.z - 84), next = new THREE.Vector3();
+    return {
+      flock,
+      set visible(on) { flock.forEach(bird => { bird.visible = on; }); },
+      update(time, dt) {
+        for (const bird of flock) {
+          const u = bird.userData, place = t => next.set(centre.x + Math.cos(t * .11 + u.phase) * u.radius, centre.y + u.lift + 4 * Math.sin(t * .23 + u.phase * 3), centre.z + Math.sin(t * .11 + u.phase) * u.radius * .7);
+          bird.position.copy(place(time));
+          place(time + .5);
+          bird.lookAt(next.x * 2 - bird.position.x, next.y * 2 - bird.position.y, next.z * 2 - bird.position.z);
+          bird.rotateZ(-.32);
+          // A few wingbeats every so often, then a long glide on raised wings.
+          u.burst -= dt;
+          if (u.burst < 0) { u.beat = 3.2 + Math.random() * 1.5; u.burst = 6 + Math.random() * 9; }
+          u.beat = Math.max(0, u.beat - dt);
+          const flap = u.beat > 0 ? Math.sin(time * 9 + u.phase) * W.smooth(0, .5, u.beat) : 0;
+          for (const w of u.wings) {
+            w.shoulder.rotation.z = w.side * (.14 + flap * .55);
+            w.hand.rotation.z = w.side * (.06 + flap * .35);
+          }
+        }
+      },
+    };
+  })();
+
+  // ===================================================================
+  // The hour. Everything that depends on where the light comes from is set
+  // here, so the woods can be lit for any moment without being rebuilt.
+  const shadowRight = new THREE.Vector3(), shadowUp = new THREE.Vector3();
+  const luma = c => c[0] * .2126 + c[1] * .7152 + c[2] * .0722;
+  let environmentMap = null, openScale = 1;
+  function applyLight(next) {
+    hour = next;
+    SUN.set(...next.key);
+    shadowRight.crossVectors(UP, SUN).normalize(); shadowUp.crossVectors(SUN, shadowRight);
+    const U = air.uniforms, k = next.keyLight, power = Math.max(...k), after = 1 - W.smooth(-1, 3, next.elevation);
+    U.W_SUN_LIGHT.value = k.slice();
+    U.W_SKY_LIGHT.value = next.sky.slice();
+    U.W_HAZE_LIGHT.value = next.haze.slice();
+    U.W_GLOW_DIR.value = next.sun.slice();
+    U.W_GLOW.value = next.glow.slice();
+    U.W_AFTER.value = next.glow.map(v => v * after);
+    U.W_HALO.value = next.keyIsMoon ? 1 : 0;
+    U.W_STARS.value = next.stars;
+    U.W_MOON.value = next.moon.slice();
+    U.W_MOON_LIGHT.value = [1, .97, .92].map(v => v * W.mix(.9, 3.2, next.night) * next.moonUp);
+    U.W_HEAVENS.value = next.frame.slice();
+    sun.color.setRGB(...(power > 0 ? k.map(v => v / power) : [1, 1, 1]));
+    sun.intensity = power;
+    shared.uSunColor.value.setRGB(...k.map(v => v / Math.PI));
+    glint.value.setRGB(...k.map(v => v / 10.5));
+    const tint = power > 0 ? k.map(v => v / power) : [1, 1, 1];
+    shaftUniforms.uColor.value.setRGB(1, Math.sqrt(tint[1]), Math.pow(tint[2], .6));
+    shaftUniforms.uStrength.value = next.shafts;
+    moteUniforms.uStrength.value = next.motes;
+    moteUniforms.uLamp.value = next.lamp * next.night;
+    leafUniforms.uLight.value = W.clamp(luma(k) / 6.31 * .8 + luma(next.sky) / 1.45 * .2, 0, 1.4);
+    const look = darkroom.look;
+    look.uExposure.value = next.look.exposure;
+    look.uSaturation.value = next.look.saturation;
+    look.uContrast.value = next.look.contrast;
+    look.uTint.value.set(...next.look.tint);
+    lantern.intensity = next.lamp * .9;
+    // Lamps in the scene only when they are lit: returns whether that changed.
+    const lamps = next.lamp > 0, changed = lamps !== (lantern.parent === scene);
+    if (changed && lamps) scene.add(headlamp, headlamp.target, lantern);
+    else if (changed) scene.remove(headlamp, headlamp.target, lantern);
+    lanternGlass.emissiveIntensity = next.lamp * 9;
+    openScale = next.env;
+    const previous = environmentMap;
+    environmentMap = scene.environment = forestLight(next.env);
+    if (previous) previous.dispose();
+    root.dataset.light = next.night > .5 ? 'night' : next.elevation < 4 ? 'twilight' : 'day';
+    WoodsSound.setHour(next.night, next.month);
+    ravens.visible = next.elevation > -3;
+    starfield.visible = next.stars > 0;
+    return changed;
+  }
 
   // ===================================================================
   // The walk. Scroll is the only thing that moves the walker forward.
@@ -1170,7 +1471,7 @@ async function start() {
     return ['04', 'CHOOSE YOUR TRAIL'];
   }
 
-  const shadowRight = new THREE.Vector3().crossVectors(UP, SUN).normalize(), shadowUp = new THREE.Vector3().crossVectors(SUN, shadowRight), focus = new THREE.Vector3();
+  const focus = new THREE.Vector3(), forward = new THREE.Vector3(), meteor = {wait: 12, length: .7};
   function update(dt) {
     // ↑ and ↓ walk on and back by scrolling, so scroll stays the one source of the walk.
     held = push ? held + dt : 0;
@@ -1235,7 +1536,14 @@ async function start() {
     const open = Math.max(W.meadow(camera.position.x, camera.position.z), 1 - W.smooth(8, 26, Math.hypot(camera.position.x - W.J.x, camera.position.z - W.J.z)));
     scene.fog.near = vista.local.value = W.mix(.0019, .0002, open);
     vista.detail.value = W.mix(1, vista.full, W.smooth(framing.d - 70, framing.d - 30, d));
-    openSky.intensity = W.mix(.15, .75, open);
+    openSky.intensity = W.mix(.15, .75, open) * openScale;
+    // The headlamp rides a little below the eyes and looks where they do, dipped toward the tread.
+    camera.getWorldDirection(forward);
+    moteUniforms.uForward.value.copy(forward);
+    headlamp.position.copy(camera.position).addScaledVector(UP, -.08);
+    headlamp.target.position.copy(camera.position).addScaledVector(forward, 7).addScaledVector(UP, -2);
+    // At the signpost the lantern does the work, so the beam is dipped.
+    headlamp.intensity = hour.lamp * 18 * W.mix(1, .3, W.smooth(framing.d - 14, framing.d, d));
 
     // The sun's shadow box travels ahead of the walker, snapped to its texels
     // so shadow edges hold still instead of crawling with every step.
@@ -1253,8 +1561,20 @@ async function start() {
     moteUniforms.uCenter.value.copy(camera.position);
     motes.visible = leaves.visible = !still;
     if (ambient) leafUniforms.uTime.value += dt * shared.uWindAmp.value;
+    if (ambient) ravens.update(windClock, dt * shared.uWindAmp.value);
+    // Under a dark sky, a shooting star every minute or so, somewhere ahead.
+    const M = air.uniforms;
+    if (M.W_METEOR_T.value >= 0) { M.W_METEOR_T.value += dt / meteor.length; if (M.W_METEOR_T.value >= 1) M.W_METEOR_T.value = -1; }
+    else if (ambient && hour.stars > .5 && (meteor.wait -= dt) < 0) {
+      meteor.wait = 25 + Math.random() * 60; meteor.length = .5 + Math.random() * .5;
+      const az = pose.yaw + lookYaw + (Math.random() - .5) * 1.4, el = .45 + Math.random() * .5, turn = (Math.random() - .5) * 2.4, reach = .2 + Math.random() * .15;
+      const at = (a, e) => [-Math.sin(a) * Math.cos(e), Math.sin(e), -Math.cos(a) * Math.cos(e)];
+      M.W_METEOR_A.value = at(az, el);
+      M.W_METEOR_B.value = at(az + Math.sin(turn) * reach, el - Math.abs(Math.cos(turn)) * reach);
+      M.W_METEOR_T.value = 0;
+    }
     leafUniforms.uCenter.value.copy(camera.position);
-    leafUniforms.uAmount.value += (aspenNear(camera.position.x, camera.position.z) * .9 + .05 - leafUniforms.uAmount.value) * (1 - Math.exp(-dt / 2));
+    leafUniforms.uAmount.value += ((aspenNear(camera.position.x, camera.position.z) * .9 + .05) * SEASON.fall - leafUniforms.uAmount.value) * (1 - Math.exp(-dt / 2));
     WoodsSound.update(W.gust(camera.position.x, camera.position.z, windClock) * shared.uWindAmp.value,
       1 - W.smooth(3, 36, W.creekDistance(camera.position.x, camera.position.z)), 1 - W.meadow(camera.position.x, camera.position.z) * .7);
 
@@ -1279,8 +1599,31 @@ async function start() {
     return busy || glowing || journey || (ambient && !still) || moving > .01;
   }
 
-  const corner = new THREE.Vector3();
+  const corner = new THREE.Vector3(), ahead = new THREE.Vector3();
+  // The wayside links hang over their panels while the walker is near enough
+  // to read them, and fade as the panel is passed.
+  function placeWaysides() {
+    for (const item of waysides) {
+      const link = item.link;
+      if (!link) continue;
+      const far = camera.position.distanceTo(item.anchor);
+      corner.copy(item.anchor).project(camera);
+      const facing = ahead.copy(item.anchor).sub(camera.position).dot(forward) > 0;
+      const x = (corner.x * .5 + .5) * width, y = (.5 - corner.y * .5) * height;
+      const inside = facing && corner.z < 1 && x > 4 && x < width - 4 && y > 70 && y < height - 60;
+      const opacity = inside && !still ? W.smooth(17, 12, far) * W.smooth(2.4, 4.2, far) : 0;
+      show(link, opacity);
+      link.tabIndex = opacity > .5 ? 0 : -1;
+      if (opacity > 0) {
+        // Near the edge of the screen the tag stays on it, and its stem leans to the panel.
+        const half = (link.offsetWidth || 200) / 2, left = W.clamp(x, half + 12, width - half - 12);
+        link.style.transform = `translate(${left.toFixed(1)}px, ${y.toFixed(1)}px)`;
+        link.style.setProperty('--stem', `${(x - left).toFixed(1)}px`);
+      }
+    }
+  }
   function placeLinks() {
+    placeWaysides();
     if (!arrived) return;
     boards.forEach((board, i) => {
       let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity, behind = false;
@@ -1346,7 +1689,9 @@ async function start() {
   far.traverse(object => {
     if (object.material) for (const m of [].concat(object.material)) Object.assign(m, {stencilWrite: true, stencilRef: 0, stencilFunc: THREE.EqualStencilFunc});
   });
-  sun.layers.enableAll(); openSky.layers.enableAll();
+  // Every material breathes the same air, so the hour reaches all of them.
+  for (const group of [scene, far]) group.traverse(object => { if (object.material) for (const m of [].concat(object.material)) air.share(m); });
+  sun.layers.enableAll(); openSky.layers.enableAll(); headlamp.layers.enableAll(); lantern.layers.enableAll();
   renderer.shadowMap.autoUpdate = false;
   function draw() {
     darkroom.render(() => {
@@ -1384,7 +1729,7 @@ async function start() {
 
   // ---- Looking around with a drag, a swipe sideways, or the arrow keys.
   stage.addEventListener('pointerdown', event => {
-    if (event.target.closest('a, button') || !event.isPrimary) return;
+    if (event.target.closest('a, button, .woods-hours') || !event.isPrimary) return;
     cancelJourney();
     dragging = {id: event.pointerId, x: event.clientX, y: event.clientY, mouse: event.pointerType === 'mouse'};
     if (dragging.mouse) { event.preventDefault(); stage.setPointerCapture(event.pointerId); stage.classList.add('is-dragging'); }
@@ -1409,7 +1754,7 @@ async function start() {
   // came — the reverse of what the page would scroll — and holding either
   // long enough breaks into a run.
   addEventListener('keydown', event => {
-    if (typing() || event.metaKey || event.ctrlKey || event.altKey) return;
+    if (typing() || event.metaKey || event.ctrlKey || event.altKey || event.target.closest?.('.woods-hours, .woods-print')) return;
     if (event.key === 'ArrowLeft') { turning = 1; looked = true; wake(); }
     if (event.key === 'ArrowRight') { turning = -1; looked = true; wake(); }
     if (walking && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
@@ -1492,6 +1837,167 @@ async function start() {
     home.querySelector('.brand a').focus({preventScroll: true});
   });
 
+  // ---- The hour: Arizona's light right now, or a moment of today picked from
+  // the clock. A change of light is a crossfade from the frame as it was.
+  const clockButton = $('.woods-clock'), hoursPanel = $('.woods-hours'), hoursList = $('.woods-hours-list'), localTime = $('.woods-local');
+  const veil = document.createElement('canvas');
+  veil.className = 'woods-veil';
+  veil.setAttribute('aria-hidden', 'true');
+  canvas.after(veil);
+  let choice = hour.name;
+  function describe() {
+    const time = choice === 'now' ? WoodsSky.clock(new Date()).text : hour.time;
+    clockButton.querySelector('.woods-toggle-label').textContent = hour.phase;
+    clockButton.querySelector('.woods-clock-time').textContent = time;
+    clockButton.dataset.phase = hour.night > .5 ? 'night' : hour.elevation < 4 ? 'twilight' : 'day';
+    clockButton.setAttribute('aria-label', `Light: ${hour.phase}, ${time} in Arizona. Choose another hour`);
+    localTime.textContent = choice === 'now' ? ` · ${time}` : ` · ${hour.phase.toLowerCase()}`;
+  }
+  function fillHours() {
+    const today = WoodsSky.moments(new Date());
+    hoursList.replaceChildren(...Object.entries(WoodsSky.NAMES).map(([key, label]) => {
+      const button = document.createElement('button'), name = document.createElement('span'), time = document.createElement('span');
+      button.type = 'button';
+      button.dataset.light = key;
+      button.setAttribute('aria-pressed', String(key === choice));
+      name.textContent = label;
+      time.className = 'woods-hours-time';
+      time.textContent = WoodsSky.clock(key === 'now' ? new Date() : today[key]).text;
+      button.append(name, time);
+      return button;
+    }));
+  }
+  function showHours(open) {
+    if (open) fillHours();
+    hoursPanel.hidden = !open;
+    clockButton.setAttribute('aria-expanded', String(open));
+    if (open) (hoursList.querySelector('[aria-pressed="true"]') || hoursList.firstElementChild).focus();
+  }
+  let relighting = Promise.resolve();
+  function setLight(name, {slow = false} = {}) {
+    choice = name;
+    try { name === 'now' ? sessionStorage.removeItem('woods:light') : sessionStorage.setItem('woods:light', name); } catch { /* private mode */ }
+    relighting = relighting.then(async () => {
+      // Hold the frame as it was while the light changes underneath it.
+      if (ready) {
+        draw();
+        veil.width = canvas.width; veil.height = canvas.height;
+        veil.getContext('2d').drawImage(canvas, 0, 0);
+        veil.style.transition = 'none';
+        veil.style.opacity = '1';
+        void veil.offsetWidth;
+      }
+      const relit = applyLight(WoodsSky.at(name));
+      describe();
+      await vista.relight();
+      // Lamps lit or put out change the shaders: compile them while the veil holds the old frame.
+      if (relit && renderer.compileAsync) await renderer.compileAsync(scene, camera);
+      if (!ready) return;
+      last = 0;
+      frame(performance.now());
+      veil.style.transition = `opacity ${slow ? 4 : 1.3}s ease`;
+      veil.style.opacity = '0';
+    }).catch(error => { veil.style.opacity = '0'; console.warn('The light could not be changed.', error); });
+    return relighting;
+  }
+  clockButton.hidden = false;
+  describe();
+  clockButton.addEventListener('click', () => showHours(hoursPanel.hidden));
+  hoursList.addEventListener('click', event => {
+    const button = event.target.closest('button');
+    if (!button) return;
+    showHours(false);
+    clockButton.focus();
+    setLight(button.dataset.light);
+  });
+  hoursPanel.addEventListener('keydown', event => {
+    const items = [...hoursList.children], i = items.indexOf(document.activeElement);
+    if (event.key === 'Escape') { showHours(false); clockButton.focus(); }
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); items[(i + (event.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length].focus(); }
+  });
+  document.addEventListener('pointerdown', event => { if (!hoursPanel.hidden && !event.target.closest('.woods-hour')) showHours(false); });
+  // Left on now, the woods keep Arizona's time: the clock ticks and the light
+  // follows the sun. Deep in the night nothing changes but the turning sky and
+  // the moon, so then a quarter of an hour goes by between changes.
+  let relitAt = Date.now();
+  setInterval(() => {
+    if (choice !== 'now' || document.hidden) return;
+    const next = WoodsSky.at('now'), moved = Math.abs(next.elevation - hour.elevation) > 1.5 && Math.max(next.elevation, hour.elevation) > -19;
+    if (moved || next.phase !== hour.phase || Date.now() - relitAt > 900000) { relitAt = Date.now(); setLight('now', {slow: true}); }
+    else describe();
+  }, 60000);
+
+  // ---- The camera. A frame of the woods, printed with a border and a caption,
+  // to keep or share, and a link that brings anyone back to the same spot,
+  // looking the same way, in the same light.
+  const cameraButton = $('.woods-camera'), flash = $('.woods-flash'), print = $('.woods-print');
+  const printImage = $('.woods-print-image'), saveLink = $('.woods-print-save'), shareButton = $('.woods-print-share'), linkButton = $('.woods-print-link'), printStatus = $('.woods-print-status');
+  let printBlob = null, printUrl = '';
+  const arizonaStamp = date => new Date(date.getTime() - 7 * 3600000).toISOString().slice(0, 16);
+  function spotLink() {
+    const url = new URL(location.pathname, location.href);
+    if (!still) url.searchParams.set('at', progress().toFixed(3));
+    // A head barely turned (the mouse resting off-centre) is just looking ahead.
+    const yaw = Math.round(lookYaw / W.DEG), pitch = Math.round(lookPitch / W.DEG);
+    if (Math.abs(yaw) > 2 || Math.abs(pitch) > 2) url.searchParams.set('look', `${yaw},${pitch}`);
+    url.searchParams.set('light', arizonaStamp(hour.date));
+    return url.href;
+  }
+  function develop() {
+    // Read the frame straight after drawing it, before the page composites it away.
+    draw();
+    const shot = document.createElement('canvas'), w = canvas.width, h = canvas.height;
+    // Crop to a print's proportions: 3:2 across, or 4:5 on a tall screen.
+    const ratio = w >= h ? 3 / 2 : 4 / 5, cw = Math.min(w, h * ratio), ch = cw / ratio;
+    const scale = Math.min(1, 1800 / Math.max(cw, ch)), pw = Math.round(cw * scale), ph = Math.round(ch * scale);
+    const border = Math.round(pw * .045), band = Math.round(pw * (ratio > 1 ? .11 : .16));
+    shot.width = pw + border * 2; shot.height = ph + border + band;
+    const g = shot.getContext('2d');
+    g.fillStyle = '#f6f0e4'; g.fillRect(0, 0, shot.width, shot.height);
+    g.drawImage(canvas, (w - cw) / 2, (h - ch) / 2, cw, ch, border, border, pw, ph);
+    g.strokeStyle = 'rgba(38,52,46,.18)'; g.lineWidth = 2; g.strokeRect(border, border, pw, ph);
+    const [, words] = stopFor(d), place = still ? 'The junction' : words.charAt(0) + words.slice(1).toLowerCase();
+    const size = Math.round(band * .3), base = border + ph + band * .58;
+    g.fillStyle = '#26342e'; g.font = `italic 400 ${size}px ${SERIF}`;
+    g.fillText(`${place}, ${hour.time.replace(' ', '\u2009')}`, border, base);
+    g.fillStyle = '#677069'; g.font = `600 ${Math.round(size * .5)}px ${SANS}`;
+    g.fillText(`${hour.phase.toUpperCase()} · FLAGSTAFF, ARIZONA`, border, base + size * .85);
+    g.textAlign = 'right'; g.fillStyle = '#b46635'; g.font = `400 ${Math.round(size * .78)}px ${SERIF}`;
+    g.fillText('gabefen.com', border + pw, base);
+    return shot;
+  }
+  cameraButton.hidden = false;
+  cameraButton.addEventListener('click', () => {
+    const shot = develop();
+    WoodsSound.shutter();
+    flash.classList.remove('is-firing'); void flash.offsetWidth; flash.classList.add('is-firing');
+    shot.toBlob(blob => {
+      if (!blob) return;
+      printBlob = blob;
+      if (printUrl) URL.revokeObjectURL(printUrl);
+      printUrl = URL.createObjectURL(blob);
+      printImage.src = printUrl;
+      printImage.alt = `A photograph of the woods: ${stopFor(d)[1].toLowerCase()}, ${hour.phase.toLowerCase()}`;
+      saveLink.href = printUrl;
+      saveLink.download = `gabefen-woods-${stopFor(d)[1].toLowerCase().replace(/[^a-z]+/g, '-')}.jpg`;
+      const file = new File([blob], saveLink.download, {type: 'image/jpeg'});
+      shareButton.hidden = !(navigator.canShare && navigator.canShare({files: [file]}));
+      printStatus.textContent = '';
+      print.classList.remove('is-developing'); void print.offsetWidth; print.classList.add('is-developing');
+      if (!print.open) print.showModal();
+    }, 'image/jpeg', .9);
+  });
+  shareButton.addEventListener('click', async () => {
+    try { await navigator.share({files: [new File([printBlob], saveLink.download, {type: 'image/jpeg'})], title: 'From the woods at gabefen.com', url: spotLink()}); } catch { /* cancelled */ }
+  });
+  linkButton.addEventListener('click', async () => {
+    const link = spotLink();
+    try { await navigator.clipboard.writeText(link); printStatus.textContent = 'Link copied. It opens right here, in this light.'; }
+    catch { printStatus.textContent = link; }
+  });
+  $('.woods-print-close').addEventListener('click', () => print.close());
+  print.addEventListener('click', event => { if (event.target === print) print.close(); });
+
   // ---- Sound and wind controls.
   soundButton.hidden = false;
   soundButton.addEventListener('click', () => {
@@ -1504,6 +2010,8 @@ async function start() {
   windButton.addEventListener('click', () => {
     windOn = !windOn;
     windButton.querySelector('.woods-toggle-label').textContent = windOn ? 'Pause wind' : 'Resume wind';
+    windButton.setAttribute('aria-pressed', String(!windOn));
+    windButton.title = windOn ? 'Pause wind' : 'Resume wind';
     wake();
   });
 
@@ -1529,10 +2037,28 @@ async function start() {
     root.classList.add('woods-failed');
   });
 
+  // Leaving by a sign or a wayside remembers where the walker stood, so coming
+  // back to the homepage in the same visit picks the walk up there instead of
+  // starting again at the trailhead. Going back to the trailhead forgets it.
+  const remember = value => { try { value === null ? sessionStorage.removeItem('woods:spot') : sessionStorage.setItem('woods:spot', value); } catch { /* private mode */ } };
+  home.addEventListener('click', event => {
+    if (event.target.closest('.woods-sign, .woods-wayside')) remember(still ? '1' : progress().toFixed(3));
+    if (event.target.closest('.woods-return')) remember(null);
+  });
+  const resume = (() => { try { return parseFloat(sessionStorage.getItem('woods:spot')); } catch { return NaN; } })();
+
   configure();
   // ?at=0.4 opens the walk that far along the trail, for sharing a spot.
-  const at = parseFloat(new URLSearchParams(location.search).get('at'));
+  const at = query.has('at') ? parseFloat(query.get('at')) : resume;
   if (walking && at >= 0 && at <= 1 && location.hash !== '#woods-junction') scrollTo({top: start + distance * at, behavior: 'instant'});
+  // ?look=-40,12 turns the head that many degrees (left positive) and lifts it.
+  const gaze = (query.get('look') || '').split(',').map(Number);
+  if (gaze.length === 2 && gaze.every(Number.isFinite)) {
+    lookYaw = dragYaw = W.clamp(gaze[0] * W.DEG, -2.4, 2.4);
+    lookPitch = dragPitch = W.clamp(gaze[1] * W.DEG, -.55, .5);
+    looked = true;
+  }
+  applyLight(hour);
   update(1 / 60);
   await vista.prepare();
   if (renderer.compileAsync) { await renderer.compileAsync(far, farCamera); await renderer.compileAsync(scene, camera); }

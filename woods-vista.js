@@ -3,13 +3,14 @@
    the snow. It is one heightfield on a polar grid centred on the junction, so
    it is as fine near the walker as far away when measured in degrees. The
    heights are generated on the GPU at load; shadows and sky light are baked
-   once, since the sun never moves. woods.js draws it in its own pass, behind
+   then, and again whenever the hour, and so the sun, changes. woods.js draws it in its own pass, behind
    the forest, and the near terrain meets it along the edge of the woods.
    A classic script: woods.js hands it THREE and the shared atmosphere. */
 const WoodsVista = (() => {
   const g = x => { const s = Number(x).toPrecision(9); return /[.eE]/.test(s) ? s : s + '.0'; };
 
-  function build(THREE, renderer, {W, glsl, shared, low}) {
+  function build(THREE, renderer, {W, air, shared, low}) {
+    const glsl = air.glsl;
     const NU = low ? 512 : 1024, NV = low ? 384 : 768, BAKE = low ? 1 : 1.5;
     const R0 = 30, R1 = 70000, FLOOR = -620, WATER = FLOOR - 1.5;
     const B = W.BOUNDS;
@@ -186,10 +187,11 @@ const WoodsVista = (() => {
     });
 
     // Sun visibility by marching the heightfield toward the sun; sky visibility
-    // from the horizon in twelve directions. Both baked once.
+    // from the horizon in twelve directions. Both baked at load, and the sun's
+    // again whenever the hour moves it.
     const bake = new THREE.ShaderMaterial({
       vertexShader: QUAD, depthTest: false, depthWrite: false,
-      uniforms: {tHeight: {value: heightTarget.texture}, uSteps: {value: low ? 44 : 72}},
+      uniforms: {...air.uniforms, tHeight: {value: heightTarget.texture}, uSteps: {value: low ? 44 : 72}},
       fragmentShader: `${glsl}${POLAR}
         uniform sampler2D tHeight; uniform float uSteps; varying vec2 vUv;
         float heightAt(vec2 p) { return texture2D(tHeight, vistaUv(p)).r; }
@@ -225,7 +227,9 @@ const WoodsVista = (() => {
     // ---- How the land looks: granite, snow, dark forest, meadows, water.
     const SHADE = `
       uniform sampler2D tHeight, tLight; uniform float uDetail;
-      const vec3 V_SKY = vec3(.16, .22, .33), V_BOUNCE = vec3(.045, .045, .038);
+      // Sky light and bounce follow the hour: their golden-hour colours, scaled by the sky.
+      #define V_SKY (vec3(.16, .22, .33) * W_SKY_LIGHT / 1.45)
+      #define V_BOUNCE (vec3(.045, .045, .038) * (W_SKY_LIGHT.g / 2.9 + dot(W_SUN_LIGHT, vec3(.2126, .7152, .0722)) / 12.62))
       float vistaSunlit;
       vec3 vistaShade(vec3 world, vec2 uv, float px) {
         vec4 hm = texture2D(tHeight, uv);
@@ -292,7 +296,7 @@ const WoodsVista = (() => {
     // Rock detail is only worth its cost where the far country fills the view.
     const local = {value: 0}, detail = {value: low ? 3 : 6};
     const terrainMaterial = new THREE.ShaderMaterial({
-      uniforms: {tHeight: {value: heightTarget.texture}, tLight: {value: lightTarget.texture}, woodsNoise: shared.woodsNoise, woodsClock: shared.woodsClock, uLocal: local, uDetail: detail},
+      uniforms: {...air.uniforms, tHeight: {value: heightTarget.texture}, tLight: {value: lightTarget.texture}, woodsNoise: shared.woodsNoise, woodsClock: shared.woodsClock, uLocal: local, uDetail: detail},
       vertexShader: `${POLAR}
         uniform sampler2D tHeight; varying vec3 vWorld; varying vec2 vUv;
         void main() {
@@ -339,7 +343,7 @@ const WoodsVista = (() => {
 
     // The lake and river: sky and peaks mirrored, marched through the heightfield.
     const water = new THREE.Mesh(new THREE.PlaneGeometry(26000, 5200, 96, 24).rotateX(-Math.PI / 2).translate(W.J.x, WATER, W.J.z - 2600), new THREE.ShaderMaterial({
-      uniforms: {tHeight: {value: heightTarget.texture}, tLight: {value: lightTarget.texture}, woodsNoise: shared.woodsNoise, woodsClock: shared.woodsClock, uLocal: local, uDetail: {value: 2}},
+      uniforms: {...air.uniforms, tHeight: {value: heightTarget.texture}, tLight: {value: lightTarget.texture}, woodsNoise: shared.woodsNoise, woodsClock: shared.woodsClock, uLocal: local, uDetail: {value: 2}},
       // The water curves with the earth, as the land around it does.
       vertexShader: `${POLAR} varying vec3 vWorld; void main() { vec4 w = modelMatrix * vec4(position, 1.0); float r = length(w.xz - V_C); w.y -= r * r / 12.74e6; vWorld = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
       fragmentShader: `${glsl}${POLAR}${SHADE}
@@ -400,10 +404,12 @@ const WoodsVista = (() => {
     async function prepare() {
       await strips(generate, heightTarget, low ? 4 : 8);
       await strips(bake, lightTarget, low ? 6 : 16);
-      generate.dispose(); bake.dispose();
+      generate.dispose();
     }
+    // When the hour changes, the sun (or moon) is somewhere else: bake its light again.
+    const relight = () => strips(bake, lightTarget, low ? 3 : 6);
 
-    return {group: scene, prepare, local, detail, full: low ? 3 : 6};
+    return {group: scene, prepare, relight, local, detail, full: low ? 3 : 6};
   }
 
   return {build};

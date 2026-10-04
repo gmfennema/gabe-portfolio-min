@@ -185,6 +185,15 @@ const WoodsWorld = (() => {
     return BRINK_SLOPE * BRINK_SLOPE / (2 * BRINK_CURVE) * (x + Math.log1p(Math.exp(-2 * x)) - Math.LN2);
   }
 
+  // ---- Wayside exhibits: three low panels beside the tread, each turned to
+  // face the walker coming up the trail. The forest is planted as it always
+  // was and then cleared round them, so nothing else in the woods moves.
+  const WAYSIDES = [[23, -1, 2.4], [56, 1, 2.4], [92, 1, 2.4]].map(([d, side, off]) => {
+    const t = trail(d), x = t.x - t.tz * side * off, z = t.z + t.tx * side * off, from = trail(d - 6);
+    return {d, side, x, z, y: height(x, z), turn: Math.atan2(from.x - x, from.z - z)};
+  });
+  const clearOf = r => item => WAYSIDES.every(w => Math.hypot(item.x - w.x, item.z - w.z) > r);
+
   // ---- The walker. Distances are along the tread, so scroll maps to steps.
   const SIGN = {width: 1.78, bottom: 1.1, top: 2.48, x: J.x, z: J.z};
   function lens(aspect) {
@@ -263,7 +272,8 @@ const WoodsWorld = (() => {
       if (rand() > (wet * .85 + patch * .7 + .04) * (1 - s.meadow * .8)) continue;
       ferns.push({x, z, y: height(x, z, s) - .03, size: .7 + rand() * .6, turn: rand() * 6.28, tint: rand()});
     }
-    return {trees, shrubs, rocks, ferns, logs: logs(), stumps: stumps(rand)};
+    return {trees: trees.filter(clearOf(2.6)), shrubs: shrubs.filter(clearOf(1.9)), rocks: rocks.filter(clearOf(1.4)), ferns: ferns.filter(clearOf(1.3)),
+      logs: logs(), stumps: stumps(rand).filter(clearOf(1.4))};
   }
   function lay(d, side, offset, angle, length, radius) {
     const t = trail(d), cx = t.x - t.tz * side * offset, cz = t.z + t.tx * side * offset;
@@ -300,7 +310,7 @@ const WoodsWorld = (() => {
       if (rand() > chance) continue;
       out.push({x, z, y: height(x, z, s), size: .38 + rand() * .42 + s.meadow * .12, turn: rand() * 6.28, tint: rand()});
     }
-    return out;
+    return out.filter(clearOf(.8));
   }
 
   // ---- The gait. Speed is how fast the walker covers trail, in m/s. A scroll
@@ -341,7 +351,7 @@ const WoodsWorld = (() => {
     return g * g * g;
   }
 
-  return {DEG, EYE, TREAD, BEGIN, JUNCTION, CREEK, BRIDGE, DECK, WATER, JY, J, SIGN, BOUNDS, FIELD,
+  return {DEG, EYE, TREAD, BEGIN, JUNCTION, CREEK, BRIDGE, DECK, WATER, JY, J, SIGN, BOUNDS, FIELD, WAYSIDES,
     clamp, smooth, mix, random, hash, noise, fbm, trail, rise, nearestTrail, creekDistance, forkDistance, site, meadow,
     height, brink, lens, arrival, pose, inView, plant, grass, gust, stride, bob, creekLine, forks, crossing};
 })();
