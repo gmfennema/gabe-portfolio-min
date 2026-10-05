@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#24382f" />
+  <title>The Woods · Gabe Fennema</title>
+  <meta name="description" content="A little curiosity goes a long way. Walk a forest trail to the projects, field notes, and photography of Gabe Fennema, a marketing data engineer in Arizona." />
+  <meta property="og:title" content="The Woods · Gabe Fennema" />
+  <meta property="og:description" content="A little curiosity goes a long way. Walk a forest trail to the projects, field notes, and photography of Gabe Fennema, a marketing data engineer in Arizona." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://gabefen.com/woods.html" />
+  <meta property="og:site_name" content="Gabe Fennema" />
+  <meta property="og:image" content="https://gabefen.com/assets/og-woods.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="A wooden signpost at a trail junction above a deep valley, granite peaks behind it in the late afternoon light." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="https://gabefen.com/assets/og-woods.jpg" />
+  <link rel="stylesheet" href="site.css?v=aca8e2af" />
+  <link rel="stylesheet" href="woods.css?v=ba18d9cd" />
+  <link rel="icon" href="assets/favicon.png" type="image/png" />
+  <link rel="modulepreload" href="vendor/three-0.180.0/three.core.min.js" />
+  <link rel="modulepreload" href="vendor/three-0.180.0/three.module.min.js" />
+  <script>
+    // If the 3D walk never starts, the still trail with plain links takes over.
+    document.documentElement.classList.add('woods-js');
+    setTimeout(function () { var root = document.documentElement; if (!root.classList.contains('woods-live')) root.classList.add('woods-failed'); }, 15000);
+  </script>
+</head>
+<body class="woods-home">
+  <a class="woods-skip" href="#woods-junction">Skip to the trail junction</a>
+  <header class="site woods-header">
+    <div class="brand"><a href="index.html" aria-label="Gabe Fennema home"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 28 17 10l6 9 4-5 9 14Z"/><path d="m13 16 4-6 6 9-6-3-3 4"/><path d="M5 33h31"/></svg>GabeFen.com</a></div>
+    <nav class="nav" aria-label="Primary navigation">
+      <a href="projects.html">Projects</a><a href="field-notes.html">Field Notes</a><a href="photography.html">Photography</a><a href="about.html">About</a>
+    </nav>
+  </header>
+  <main id="main">
+    <section class="woods-walk" aria-label="Walk the forest trail to the junction">
+      <div class="woods-stage">
+        <canvas class="woods-canvas" aria-hidden="true"></canvas>
+        <div class="woods-shade" aria-hidden="true"></div>
+        <div class="woods-controls">
+          <div class="woods-hour">
+            <button class="woods-toggle woods-clock" type="button" aria-expanded="false" aria-controls="woods-hours" hidden><span class="woods-clock-icon" aria-hidden="true"></span><span class="woods-toggle-label">Now</span><span class="woods-clock-time"></span></button>
+            <div class="woods-hours" id="woods-hours" hidden>
+              <p class="woods-hours-note">The light over Flagstaff, Arizona, right now or at any moment today.</p>
+              <div class="woods-hours-list" role="group" aria-label="Choose the hour"></div>
+            </div>
+          </div>
+          <button class="woods-toggle woods-camera" type="button" title="Take a photo" hidden><span class="woods-camera-icon" aria-hidden="true"></span><span class="woods-toggle-label">Take a photo</span></button>
+          <button class="woods-toggle woods-sound" type="button" aria-pressed="false" hidden><span class="woods-toggle-icon" aria-hidden="true"></span><span class="woods-toggle-label">Sound off</span></button>
+          <button class="woods-toggle woods-wind" type="button" title="Pause wind" hidden><span class="woods-wind-icon" aria-hidden="true"></span><span class="woods-toggle-label">Pause wind</span></button>
+        </div>
+        <div class="woods-intro">
+          <p class="woods-label"><span class="woods-dot" aria-hidden="true"></span> <span>A personal wilderness · Arizona<span class="woods-local"></span></span></p>
+          <h1>Hi, I’m <em>Gabe.</em></h1>
+          <p class="woods-lead">I solve problems with data and code.<br />And take the scenic route along the way.</p>
+          <a class="woods-begin" href="#woods-junction">Take a walk <span aria-hidden="true">↓</span></a>
+          <p class="woods-loading" role="status">Walking into the woods…</p>
+        </div>
+        <div class="woods-arrival"><p class="woods-label">You made it to the junction</p><h2>Where to next?</h2><p>Pick a sign. Follow your curiosity.</p></div>
+        <nav class="woods-waysides" aria-label="Along the trail"></nav>
+        <nav class="woods-signs" aria-label="Choose your next trail">
+          <a class="woods-sign" href="projects.html"><strong>Projects</strong> <span>Things I’ve built</span></a>
+          <a class="woods-sign" href="field-notes.html"><strong>Field Notes</strong> <span>Thoughts along the way</span></a>
+          <a class="woods-sign" href="photography.html"><strong>Photography</strong> <span>The scenic route</span></a>
+          <a class="woods-sign" href="about.html#contact"><strong>Let’s Connect</strong> <span>Good work starts with a conversation</span></a>
+        </nav>
+        <p class="woods-hint" aria-hidden="true"><span class="woods-hint-walk">Scroll or press ↑ to walk</span> · <span class="woods-hint-look">drag to look around</span></p>
+        <div class="woods-furniture">
+          <div class="woods-mile"><span class="woods-mile-number" aria-hidden="true">00</span><span class="woods-mile-copy">THE TRAILHEAD</span></div>
+          <div class="woods-progress" aria-hidden="true"><span></span></div>
+          <a class="woods-shortcut" href="#woods-junction">Jump to the junction <span aria-hidden="true">↗</span></a>
+          <a class="woods-return" href="#main">Back to the trailhead <span aria-hidden="true">↑</span></a>
+        </div>
+        <div class="woods-flash" aria-hidden="true"></div>
+        <dialog class="woods-print" aria-labelledby="woods-print-title">
+          <h2 id="woods-print-title" class="woods-print-title">Your photograph from the trail</h2>
+          <img class="woods-print-image" alt="" />
+          <div class="woods-print-actions">
+            <a class="woods-print-save" download>Save</a>
+            <button class="woods-print-share" type="button" hidden>Share</button>
+            <button class="woods-print-link" type="button">Copy link to this spot</button>
+            <button class="woods-print-close" type="button">Back to the woods</button>
+          </div>
+          <p class="woods-print-status" role="status"></p>
+        </dialog>
+        <p class="woods-colophon">© <span data-year></span> Gabe Fennema · Built with care in Arizona.</p>
+      </div>
+      <div id="woods-junction" class="woods-anchor" tabindex="-1" aria-label="The trail junction"></div>
+    </section>
+  </main>
+  <script src="site.js?v=35667754" defer></script>
+  <script src="woods-path.js?v=1ec2d1bf" defer></script>
+  <script src="woods-sky.js?v=e4ca42de" defer></script>
+  <script src="woods-sound.js?v=f2c5ab17" defer></script>
+  <script src="woods-render.js?v=fb9da3ca" defer></script>
+  <script src="woods-vista.js?v=61c10c82" defer></script>
+  <script type="module" src="woods.js?v=273d365b"></script>
+</body>
+</html>

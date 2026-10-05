@@ -2,8 +2,10 @@
 
 A hand-written static site. No build step, no dependencies: `index.html` and
 friends are served as they are. Shared styles and behavior live in `site.css`
-and `site.js`. The homepage, `index.html`, is a 3D walk through the woods and
-adds `woods.css`, `woods-path.js`, `woods-sky.js`, `woods-sound.js`,
+and `site.js`. The homepage, `index.html`, is a static page: the header, a
+hand-drawn landscape hero, three cards (Field Notes, Projects, Photography) and
+a contact button, on the shared files alone. `woods.html` is a 3D walk through
+the woods and adds `woods.css`, `woods-path.js`, `woods-sky.js`, `woods-sound.js`,
 `woods-render.js`, `woods-vista.js`, `woods.js` and a vendored copy of three.js.
 GitHub Pages deploys `main` on push.
 
@@ -19,7 +21,7 @@ Posts are hand-authored HTML in `posts/`, listed in `posts/posts.json` and
 `sitemap.xml`. Projects work the same way in `projects/`. Every page carries
 Open Graph and Twitter card tags with an absolute `og:url` and the shared card
 image, `https://gabefen.com/assets/og-woods.jpg`; copy them into new pages. The
-newest post and project also appear on the homepage's trailside panels, read
+newest post and project also appear on the woods' trailside panels, read
 straight from the two JSON files.
 
 ## Before you commit
@@ -29,7 +31,7 @@ take `--check` and exit non-zero, so they can gate a deploy.
 
 | Command | What it does |
 | --- | --- |
-| `python3 tools/version-assets.py` | Rewrites the `?v=` on shared and homepage asset links to the files' content hash. **Run this whenever any CSS or JS file changes** — otherwise browsers keep the copy they already have and the change never reaches anyone. New homepage scripts must be classic scripts linked from `index.html` (and listed in the tool), not ES-module imports, or they escape the versioning. |
+| `python3 tools/version-assets.py` | Rewrites the `?v=` on shared and woods asset links to the files' content hash. **Run this whenever any CSS or JS file changes** — otherwise browsers keep the copy they already have and the change never reaches anyone. New woods scripts must be classic scripts linked from `woods.html` (and listed in the tool), not ES-module imports, or they escape the versioning. |
 | `python3 tools/size-images.py` | Stamps `width`/`height` on every `<img>` from the file on disk. Run after adding pictures: the field-note reader measures pages before images load, and unsized pictures make it lay out pages for a document that has none. |
 | `tools/check-reader.sh` | Runs the reader's invariants in headless Chrome across every post at four screen sizes. Needs Chrome or Chromium (`CHROME=/path/to/chrome` to point at one). |
 
@@ -89,9 +91,10 @@ The rules it lives by:
   pixels, because a footer that grows or an image that loads after measuring
   pushes content under the page's clip, invisibly.
 
-## The woods (the homepage)
+## The woods (`woods.html`)
 
-`index.html` is the homepage: the welcome, navigation and four destinations, as
+`woods.html` (the homepage until the static one came back) is the welcome,
+navigation and four destinations, as
 a first-person walk through a ponderosa and aspen forest to a signpost on the
 brink of a deep valley, with a granite range across it. It is drawn with
 three.js, vendored and pinned in `vendor/three-0.180.0/` — no CDN, no build —
@@ -223,7 +226,7 @@ can version it.
   wooden links.
 
 The social card, `assets/og-woods.jpg`, is the junction at golden hour
-(`?light=2026-10-04T17:05&look=0,4#woods-junction`, 1200 × 630 with the
+(`woods.html?light=2026-10-04T17:05&look=0,4#woods-junction`, 1200 × 630 with the
 interface hidden and the welcome laid over the sky). Re-render it if the
 signpost or the range changes.
 

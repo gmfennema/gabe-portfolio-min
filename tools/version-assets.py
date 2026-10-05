@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Point every page at the current shared and homepage assets by content hash.
+"""Point every page at the current shared and woods assets by content hash.
 
 Pages request the stylesheet and script with a ?v= token. When that token is
 edited by hand it gets forgotten, and browsers keep serving the copy they
@@ -54,7 +54,7 @@ def main():
             print("stale asset links in: " + ", ".join(str(p) for p in stale))
             print("run: python3 tools/version-assets.py")
             return 1
-        print("all pages point at the current shared and homepage assets")
+        print("all pages point at the current shared and woods assets")
         return 0
 
     summary = ", ".join(f"{asset} -> {version}" for asset, version in versions.items())

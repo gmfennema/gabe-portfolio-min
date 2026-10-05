@@ -1,13 +1,14 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="theme-color" content="#24382f" />
   <title>Gabe Fennema · Marketing Data Engineer</title>
-  <meta name="description" content="A little curiosity goes a long way. Walk a forest trail to the projects, field notes, and photography of Gabe Fennema, a marketing data engineer in Arizona." />
+  <meta name="description"
+    content="Gabe Fennema turns messy marketing data into clear decisions, useful tools, and calm systems." />
   <meta property="og:title" content="Gabe Fennema · Marketing Data Engineer" />
-  <meta property="og:description" content="A little curiosity goes a long way. Walk a forest trail to the projects, field notes, and photography of Gabe Fennema, a marketing data engineer in Arizona." />
+  <meta property="og:description" content="Gabe Fennema turns messy marketing data into clear decisions, useful tools, and calm systems." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://gabefen.com/" />
   <meta property="og:site_name" content="Gabe Fennema" />
@@ -18,86 +19,69 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://gabefen.com/assets/og-woods.jpg" />
   <link rel="stylesheet" href="site.css?v=aca8e2af" />
-  <link rel="stylesheet" href="woods.css?v=ba18d9cd" />
   <link rel="icon" href="assets/favicon.png" type="image/png" />
-  <link rel="modulepreload" href="vendor/three-0.180.0/three.core.min.js" />
-  <link rel="modulepreload" href="vendor/three-0.180.0/three.module.min.js" />
-  <script>
-    // If the 3D walk never starts, the still trail with plain links takes over.
-    document.documentElement.classList.add('woods-js');
-    setTimeout(function () { var root = document.documentElement; if (!root.classList.contains('woods-live')) root.classList.add('woods-failed'); }, 15000);
-  </script>
 </head>
-<body class="woods-home">
-  <a class="woods-skip" href="#woods-junction">Skip to the trail junction</a>
-  <header class="site woods-header">
-    <div class="brand"><a href="index.html" aria-label="Gabe Fennema home"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 28 17 10l6 9 4-5 9 14Z"/><path d="m13 16 4-6 6 9-6-3-3 4"/><path d="M5 33h31"/></svg>GabeFen.com</a></div>
-    <nav class="nav" aria-label="Primary navigation">
-      <a href="projects.html">Projects</a><a href="field-notes.html">Field Notes</a><a href="photography.html">Photography</a><a href="about.html">About</a>
-    </nav>
-  </header>
-  <main id="main">
-    <section class="woods-walk" aria-label="Walk the forest trail to the junction">
-      <div class="woods-stage">
-        <canvas class="woods-canvas" aria-hidden="true"></canvas>
-        <div class="woods-shade" aria-hidden="true"></div>
-        <div class="woods-controls">
-          <div class="woods-hour">
-            <button class="woods-toggle woods-clock" type="button" aria-expanded="false" aria-controls="woods-hours" hidden><span class="woods-clock-icon" aria-hidden="true"></span><span class="woods-toggle-label">Now</span><span class="woods-clock-time"></span></button>
-            <div class="woods-hours" id="woods-hours" hidden>
-              <p class="woods-hours-note">The light over Flagstaff, Arizona, right now or at any moment today.</p>
-              <div class="woods-hours-list" role="group" aria-label="Choose the hour"></div>
-            </div>
-          </div>
-          <button class="woods-toggle woods-camera" type="button" title="Take a photo" hidden><span class="woods-camera-icon" aria-hidden="true"></span><span class="woods-toggle-label">Take a photo</span></button>
-          <button class="woods-toggle woods-sound" type="button" aria-pressed="false" hidden><span class="woods-toggle-icon" aria-hidden="true"></span><span class="woods-toggle-label">Sound off</span></button>
-          <button class="woods-toggle woods-wind" type="button" title="Pause wind" hidden><span class="woods-wind-icon" aria-hidden="true"></span><span class="woods-toggle-label">Pause wind</span></button>
+
+<body>
+  <div class="site-shell">
+    <header class="site">
+      <div class="brand"><a href="index.html">GabeFen.com</a></div>
+      <nav class="nav" aria-label="Primary navigation">
+        <a href="projects.html">Projects</a>
+        <a href="field-notes.html">Field Notes</a>
+        <a href="photography.html">Photography</a>
+        <a href="about.html">About</a>
+      </nav>
+      <a class="trail-mark" href="about.html" aria-label="About Gabe">
+        <img src="assets/sketch-signpost.svg" alt="" width="90" height="90"/>
+      </a>
+    </header>
+
+    <main>
+      <section class="home-hero">
+        <img class="home-landscape" src="assets/site-landscape.svg?v=3"
+          alt="Hand-drawn mountains, an evergreen treeline, and a meadow trail" width="2400" height="720"/>
+        <div class="hero-copy">
+          <h1 class="display">Hi, I’m Gabe.</h1>
+          <div class="hand-rule" aria-hidden="true"></div>
+          <p class="lead">I solve problems with data and code.</p>
+          <span class="sketch-arrow" aria-hidden="true">
+            <svg viewBox="0 0 130 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path pathLength="100" d="M3 12h112M104 3l13 9-13 9M18 7l8 5-8 5M8 7l8 5-8 5" />
+            </svg>
+          </span>
         </div>
-        <div class="woods-intro">
-          <p class="woods-label"><span class="woods-dot" aria-hidden="true"></span> <span>A personal wilderness · Arizona<span class="woods-local"></span></span></p>
-          <h1>Hi, I’m <em>Gabe.</em></h1>
-          <p class="woods-lead">I solve problems with data and code.<br />And take the scenic route along the way.</p>
-          <a class="woods-begin" href="#woods-junction">Take a walk <span aria-hidden="true">↓</span></a>
-          <p class="woods-loading" role="status">Walking into the woods…</p>
-        </div>
-        <div class="woods-arrival"><p class="woods-label">You made it to the junction</p><h2>Where to next?</h2><p>Pick a sign. Follow your curiosity.</p></div>
-        <nav class="woods-waysides" aria-label="Along the trail"></nav>
-        <nav class="woods-signs" aria-label="Choose your next trail">
-          <a class="woods-sign" href="projects.html"><strong>Projects</strong> <span>Things I’ve built</span></a>
-          <a class="woods-sign" href="field-notes.html"><strong>Field Notes</strong> <span>Thoughts along the way</span></a>
-          <a class="woods-sign" href="photography.html"><strong>Photography</strong> <span>The scenic route</span></a>
-          <a class="woods-sign" href="about.html#contact"><strong>Let’s Connect</strong> <span>Good work starts with a conversation</span></a>
-        </nav>
-        <p class="woods-hint" aria-hidden="true"><span class="woods-hint-walk">Scroll or press ↑ to walk</span> · <span class="woods-hint-look">drag to look around</span></p>
-        <div class="woods-furniture">
-          <div class="woods-mile"><span class="woods-mile-number" aria-hidden="true">00</span><span class="woods-mile-copy">THE TRAILHEAD</span></div>
-          <div class="woods-progress" aria-hidden="true"><span></span></div>
-          <a class="woods-shortcut" href="#woods-junction">Jump to the junction <span aria-hidden="true">↗</span></a>
-          <a class="woods-return" href="#main">Back to the trailhead <span aria-hidden="true">↑</span></a>
-        </div>
-        <div class="woods-flash" aria-hidden="true"></div>
-        <dialog class="woods-print" aria-labelledby="woods-print-title">
-          <h2 id="woods-print-title" class="woods-print-title">Your photograph from the trail</h2>
-          <img class="woods-print-image" alt="" />
-          <div class="woods-print-actions">
-            <a class="woods-print-save" download>Save</a>
-            <button class="woods-print-share" type="button" hidden>Share</button>
-            <button class="woods-print-link" type="button">Copy link to this spot</button>
-            <button class="woods-print-close" type="button">Back to the woods</button>
-          </div>
-          <p class="woods-print-status" role="status"></p>
-        </dialog>
-        <p class="woods-colophon">© <span data-year></span> Gabe Fennema · Built with care in Arizona.</p>
-      </div>
-      <div id="woods-junction" class="woods-anchor" tabindex="-1" aria-label="The trail junction"></div>
-    </section>
-  </main>
+      </section>
+
+      <section class="home-portals" aria-label="Explore the site">
+        <a class="portal-card" href="field-notes.html">
+          <img src="assets/sketch-notebook.svg" alt="" width="160" height="130"/>
+          <h2>Field Notes</h2>
+          <p>Thoughts on life as I learn more about it.</p>
+        </a>
+        <a class="portal-card" href="projects.html">
+          <img src="assets/sketch-mountain.svg" alt="" width="180" height="130"/>
+          <h2>Projects</h2>
+          <p>Things I've built and continue to build.</p>
+        </a>
+        <a class="portal-card" href="photography.html">
+          <img src="assets/sketch-camera.svg" alt="" width="170" height="130"/>
+          <h2>Photography</h2>
+          <p>Trying to capture the world around me.</p>
+        </a>
+      </section>
+
+      <section class="home-cta">
+        <a class="trail-button" href="mailto:gmfennema@gmail.com"><span class="btn-arrow" aria-hidden="true">→</span> &nbsp; Let’s work together</a>
+      </section>
+    </main>
+
+    <footer>
+      <p>© <span data-year></span> Gabe Fennema · Built with care in Arizona.</p>
+    </footer>
+  </div>
   <script src="site.js?v=35667754" defer></script>
-  <script src="woods-path.js?v=1ec2d1bf" defer></script>
-  <script src="woods-sky.js?v=e4ca42de" defer></script>
-  <script src="woods-sound.js?v=f2c5ab17" defer></script>
-  <script src="woods-render.js?v=fb9da3ca" defer></script>
-  <script src="woods-vista.js?v=61c10c82" defer></script>
-  <script type="module" src="woods.js?v=273d365b"></script>
 </body>
+
 </html>
