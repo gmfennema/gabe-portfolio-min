@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Stamp width and height on every <img> inside a post or project article.
 
-The reader measures a note before its pictures have loaded. Without intrinsic
-dimensions the browser reserves no room for them, page breaks are computed for
-a document with no images in it, and the pictures then push text under the
-page's clip. Explicit width/height gives the browser an aspect ratio to hold
-space with, so what is measured is what is finally rendered.
+Without intrinsic dimensions the browser reserves no room for a picture until
+it loads, and then it shoves everything below it down the page: the text the
+visitor was reading moves, and a jump from a note's contents lands short of its
+heading. Explicit width/height gives the browser an aspect ratio to hold space
+with, so the page is laid out once, as it will finally be.
 
 Usage: python3 tools/size-images.py [--check]
        --check exits non-zero if any content image is missing dimensions.

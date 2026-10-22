@@ -13,7 +13,8 @@
   <meta property="og:image:alt" content="A wooden signpost at a trail junction above a deep valley, granite peaks behind it in the late afternoon light."/>
   <meta name="twitter:image" content="https://gabefen.com/assets/og-woods.jpg"/>
   <meta name="post:date" content="2026-09-04"/>
-  <link rel="stylesheet" href="../site.css?v=aca8e2af"/>
+  <link rel="stylesheet" href="../site.css?v=86202355"/>
+  <link rel="preload" href="../assets/fonts/newsreader-roman.woff2" as="font" type="font/woff2" crossorigin/>
   <link rel="icon" href="../assets/favicon.png" type="image/png"/>
   <style>
   html[data-theme="dark"] { color-scheme: dark; }
@@ -30,8 +31,8 @@
   <meta name="twitter:description" content="Judgment closes the case; discernment opens an investigation. Two questions for telling which one you’re actually doing."/>
   
 </head>
-<body>
-  <div class="post-container">
+<body class="note-page">
+  <div class="note-shell">
     <header class="site">
       <div class="brand"><a href="../index.html">GabeFen.com</a></div>
       <nav class="nav" aria-label="Primary navigation">
@@ -42,22 +43,15 @@
       </nav>
       <a class="trail-mark" href="../about.html" aria-label="About Gabe"><img src="../assets/sketch-signpost.svg" alt="" width="90" height="90"/></a>
     </header>
-    <hr class="rule"/>
 
-    <div class="post-hero">
-      <h1 class="post-title">Judgment vs. Discernment</h1>
-    </div>
-
-    <div class="post-grid">
-      <aside class="post-meta">
-        <div class="card">
-          <div><strong>Post</strong><br/>Judgment vs. Discernment</div>
-        </div>
-        <div class="card">
-          <div><strong>Published</strong><br/>September 4, 2026</div>
-        </div>
-      </aside>
-      <article class="post-content">
+    <main class="note">
+      <header class="note-head">
+        <p class="note-kicker">Field Note</p>
+        <h1 class="note-title">Judgment vs. Discernment</h1>
+        <p class="note-dek">Judgment closes the case; discernment opens an investigation. Two questions for telling which one you’re actually doing.</p>
+        <p class="note-meta"><time datetime="2026-09-04">September 4, 2026</time></p>
+      </header>
+      <article class="note-body">
         <h2>The Seattle Freeze</h2>
         <p>I had a call a few weeks ago with someone I had never met for a new project. As a world-class people pleaser I take pride in my first impression, and I have a pretty impressive record of people generally liking me.</p>
         <p>Not this guy. Ice cold. None of my staples worked: warm smile, active listening, subtle compliments, a little self-deprecating humor? Unimpressed.</p>
@@ -78,7 +72,7 @@
         <p>Understanding opens the door for love. That’s why “known and loved” are often talked about together. Ender’s Game is one of my favorite books and sums it up well:</p>
         <blockquote>
           <p>I think it’s impossible to really understand somebody, what they want, what they believe, and not love them the way they love themselves.</p>
-          <p>— Orson Scott Card, Ender’s Game</p>
+          <footer>— Orson Scott Card, <cite>Ender’s Game</cite></footer>
         </blockquote>
         <p>Judgment on the other hand ends the conversation. For me, it ended the conversation with myself as to why my co-worker might not immediately like me. “He’s just icy” seemed easier than self-reflection.</p>
 
@@ -89,15 +83,15 @@
         <p>Question 2: <strong>Does this observation spark curiosity, or kill it?</strong></p>
         <p>As for the icy co-worker. I’m still not convinced that he likes me, but at least now I’m curious as to why.</p>
       </article>
-    </div>
+      <nav class="note-after" aria-label="More field notes">
+        <a class="note-all" href="../field-notes.html">All field notes</a>
+      </nav>
+    </main>
 
-    <footer>
-      <p>© <span id="y"></span> Gabe Fennema</p>
+    <footer class="note-foot">
+      <p>© <span data-year></span> Gabe Fennema</p>
     </footer>
   </div>
-  <script>
-    document.getElementById('y').textContent = new Date().getFullYear();
-  </script>
-  <script src="../site.js?v=35667754"></script>
+  <script src="../site.js?v=d9e0cbce"></script>
 </body>
 </html>

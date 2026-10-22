@@ -13,7 +13,8 @@
   <meta property="og:image:alt" content="A wooden signpost at a trail junction above a deep valley, granite peaks behind it in the late afternoon light."/>
   <meta name="twitter:image" content="https://gabefen.com/assets/og-woods.jpg"/>
   <meta name="post:date" content="2025-09-06"/>
-  <link rel="stylesheet" href="../site.css?v=aca8e2af"/>
+  <link rel="stylesheet" href="../site.css?v=86202355"/>
+  <link rel="preload" href="../assets/fonts/newsreader-roman.woff2" as="font" type="font/woff2" crossorigin/>
   <link rel="icon" href="../assets/favicon.png" type="image/png"/>
   <style>
   html[data-theme="dark"] { color-scheme: dark; }
@@ -30,8 +31,8 @@
   <meta name="twitter:description" content="Reflecting at 30 on the highest‑ROI choices of my 20s: espresso, photos, a home gym, travel, marrying young, and having kids."/>
   
 </head>
-<body>
-  <div class="post-container">
+<body class="note-page">
+  <div class="note-shell">
     <header class="site">
       <div class="brand"><a href="../index.html">GabeFen.com</a></div>
       <nav class="nav" aria-label="Primary navigation">
@@ -42,22 +43,15 @@
       </nav>
       <a class="trail-mark" href="../about.html" aria-label="About Gabe"><img src="../assets/sketch-signpost.svg" alt="" width="90" height="90"/></a>
     </header>
-    <hr class="rule"/>
 
-    <div class="post-hero">
-      <h1 class="post-title">The Best Investments of My 20s</h1>
-    </div>
-
-    <div class="post-grid">
-      <aside class="post-meta">
-        <div class="card">
-          <div><strong>Post</strong><br/>The Best Investments of My 20s</div>
-        </div>
-        <div class="card">
-          <div><strong>Published</strong><br/>September 6, 2025</div>
-        </div>
-      </aside>
-      <article class="post-content">
+    <main class="note">
+      <header class="note-head">
+        <p class="note-kicker">Field Note</p>
+        <h1 class="note-title">The Best Investments of My 20s</h1>
+        <p class="note-dek">Reflecting at 30 on the highest‑ROI choices of my 20s: espresso, photos, a home gym, travel, marrying young, and having kids.</p>
+        <p class="note-meta"><time datetime="2025-09-06">September 6, 2025</time></p>
+      </header>
+      <article class="note-body self-numbered">
         <p>I turned 30 this year. Like any newly minted 30-year-old, I used the milestone to reflect on the last decade and maybe uncover some wisdom that can help me in my next decade. I’ve seen people do this in the form of “advice to my 20-year-old self” or “the biggest lessons I learned in my 20s,” but here’s my take on the trend.</p>
         <p>I’ve spent plenty of time, money, and effort. Which investments delivered the best return? Which ones really gave me outsized gains for what I put into them?</p>
 
@@ -144,16 +138,16 @@
           <li>Enjoy a home full of kids you’ll treasure more than anything you gave up.</li>
         </ul>
       </article>
-    </div>
+      <nav class="note-after" aria-label="More field notes">
+        <a class="note-all" href="../field-notes.html">All field notes</a>
+      </nav>
+    </main>
 
-    <footer>
-      <p>© <span id="y"></span> Gabe Fennema</p>
+    <footer class="note-foot">
+      <p>© <span data-year></span> Gabe Fennema</p>
     </footer>
   </div>
-  <script>
-    document.getElementById('y').textContent = new Date().getFullYear();
-  </script>
-  <script src="../site.js?v=35667754"></script>
+  <script src="../site.js?v=d9e0cbce"></script>
 </body>
 </html>
 

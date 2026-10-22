@@ -13,7 +13,8 @@
   <meta property="og:image:alt" content="A wooden signpost at a trail junction above a deep valley, granite peaks behind it in the late afternoon light."/>
   <meta name="twitter:image" content="https://gabefen.com/assets/og-woods.jpg"/>
   <meta name="post:date" content="2023-07-08"/>
-  <link rel="stylesheet" href="../site.css?v=aca8e2af"/>
+  <link rel="stylesheet" href="../site.css?v=86202355"/>
+  <link rel="preload" href="../assets/fonts/newsreader-roman.woff2" as="font" type="font/woff2" crossorigin/>
   <link rel="icon" href="../assets/favicon.png" type="image/png"/>
   <style>
   html[data-theme="dark"] { color-scheme: dark; }
@@ -29,8 +30,8 @@
   <meta name="twitter:title" content="Small Talk, Big Mistakes"/>
   <meta name="twitter:description" content="Avoid the Law of Triviality in meetings: keep focus on what matters with objectives and a framework."/>
 </head>
-<body>
-  <div class="post-container">
+<body class="note-page">
+  <div class="note-shell">
     <header class="site">
       <div class="brand"><a href="../index.html">GabeFen.com</a></div>
       <nav class="nav" aria-label="Primary navigation">
@@ -41,22 +42,15 @@
       </nav>
       <a class="trail-mark" href="../about.html" aria-label="About Gabe"><img src="../assets/sketch-signpost.svg" alt="" width="90" height="90"/></a>
     </header>
-    <hr class="rule"/>
 
-    <div class="post-hero">
-      <h1 class="post-title">Small Talk, Big Mistakes</h1>
-    </div>
-
-    <div class="post-grid">
-      <aside class="post-meta">
-        <div class="card">
-          <div><strong>Post</strong><br/>Small Talk, Big Mistakes</div>
-        </div>
-        <div class="card">
-          <div><strong>Published</strong><br/>July 8, 2023</div>
-        </div>
-      </aside>
-      <article class="post-content">
+    <main class="note">
+      <header class="note-head">
+        <p class="note-kicker">Field Note</p>
+        <h1 class="note-title">Small Talk, Big Mistakes</h1>
+        <p class="note-dek">Avoid the Law of Triviality in meetings: keep focus on what matters with objectives and a framework.</p>
+        <p class="note-meta"><time datetime="2023-07-08">July 8, 2023</time></p>
+      </header>
+      <article class="note-body">
         <h3><strong>A Lesson From History</strong></h3>
         <p>In 1971, the Ford Pinto made its debut and left an explosive impact on the automotive industry. The car was notorious for its tendency to explode when rear-ended, a consequence of a design flaw that resulted in a $128 million lesson in the Law of Triviality.</p>
         <p>The Law of Triviality is an observation that people often spend more time and energy on insignificant issues while overlooking more important ones.</p>
@@ -71,16 +65,16 @@
         <p>Humans are distractible. This is why we need systems, to keep us focused. Setting a meeting objective and then reviewing progress toward it at the end of the meeting is a good place to start.</p>
         <p>Stop meeting without a purpose and hoping to make progress.</p>
       </article>
-    </div>
+      <nav class="note-after" aria-label="More field notes">
+        <a class="note-all" href="../field-notes.html">All field notes</a>
+      </nav>
+    </main>
 
-    <footer>
-      <p>© <span id="y"></span> Gabe Fennema</p>
+    <footer class="note-foot">
+      <p>© <span data-year></span> Gabe Fennema</p>
     </footer>
   </div>
-  <script>
-    document.getElementById('y').textContent = new Date().getFullYear();
-  </script>
-  <script src="../site.js?v=35667754"></script>
+  <script src="../site.js?v=d9e0cbce"></script>
   
 </body>
 </html>

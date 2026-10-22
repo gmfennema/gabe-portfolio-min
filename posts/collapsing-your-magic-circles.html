@@ -13,7 +13,8 @@
   <meta property="og:image:alt" content="A wooden signpost at a trail junction above a deep valley, granite peaks behind it in the late afternoon light."/>
   <meta name="twitter:image" content="https://gabefen.com/assets/og-woods.jpg"/>
   <meta name="post:date" content="2025-08-13"/>
-  <link rel="stylesheet" href="../site.css?v=aca8e2af"/>
+  <link rel="stylesheet" href="../site.css?v=86202355"/>
+  <link rel="preload" href="../assets/fonts/newsreader-roman.woff2" as="font" type="font/woff2" crossorigin/>
   <link rel="icon" href="../assets/favicon.png" type="image/png"/>
   <style>
   html[data-theme="dark"] { color-scheme: dark; }
@@ -29,8 +30,8 @@
   <meta name="twitter:title" content="Collapsing Your Magic Circles"/>
   <meta name="twitter:description" content="Identify the games you're playing, intentionally collapse their ‘magic circles,’ and choose better rules on your terms."/>
 </head>
-<body>
-  <div class="post-container">
+<body class="note-page">
+  <div class="note-shell">
     <header class="site">
       <div class="brand"><a href="../index.html">GabeFen.com</a></div>
       <nav class="nav" aria-label="Primary navigation">
@@ -41,22 +42,15 @@
       </nav>
       <a class="trail-mark" href="../about.html" aria-label="About Gabe"><img src="../assets/sketch-signpost.svg" alt="" width="90" height="90"/></a>
     </header>
-    <hr class="rule"/>
 
-    <div class="post-hero">
-      <h1 class="post-title">Collapsing Your Magic Circles</h1>
-    </div>
-
-    <div class="post-grid">
-      <aside class="post-meta">
-        <div class="card">
-          <div><strong>Post</strong><br/>Collapsing Your Magic Circles</div>
-        </div>
-        <div class="card">
-          <div><strong>Published</strong><br/>August 13, 2025</div>
-        </div>
-      </aside>
-      <article class="post-content">
+    <main class="note">
+      <header class="note-head">
+        <p class="note-kicker">Field Note</p>
+        <h1 class="note-title">Collapsing Your Magic Circles</h1>
+        <p class="note-dek">Identify the games you're playing, intentionally collapse their ‘magic circles,’ and choose better rules on your terms.</p>
+        <p class="note-meta"><time datetime="2025-08-13">August 13, 2025</time></p>
+      </header>
+      <article class="note-body">
         <h2>The Games We Play</h2>
         <p>Life is full of games. Not just video games, but the kind you don’t even realize you’re playing.</p>
         <p>Sometimes they’re obvious: your career ladder at work, a sports league, your side hustle. Other times they’re subtle: the unwritten rules in your friend group, the “perfect” morning routine you’ve built, your obsession with getting your toddler to nap on schedule.</p>
@@ -130,16 +124,16 @@
           <p id="fn1"><strong>1.</strong> This phrase was first introduced by Johan Huizinga’s in his 1938 book <em>Homo Ludens</em>.</p>
         </section>
       </article>
-    </div>
+      <nav class="note-after" aria-label="More field notes">
+        <a class="note-all" href="../field-notes.html">All field notes</a>
+      </nav>
+    </main>
 
-    <footer>
-      <p>© <span id="y"></span> Gabe Fennema</p>
+    <footer class="note-foot">
+      <p>© <span data-year></span> Gabe Fennema</p>
     </footer>
   </div>
-  <script>
-    document.getElementById('y').textContent = new Date().getFullYear();
-  </script>
-  <script src="../site.js?v=35667754"></script>
+  <script src="../site.js?v=d9e0cbce"></script>
 </body>
 <!--  -->
 </html>

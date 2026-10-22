@@ -13,7 +13,8 @@
   <meta property="og:image:alt" content="A wooden signpost at a trail junction above a deep valley, granite peaks behind it in the late afternoon light."/>
   <meta name="twitter:image" content="https://gabefen.com/assets/og-woods.jpg"/>
   <meta name="post:date" content="2023-01-30"/>
-  <link rel="stylesheet" href="../site.css?v=aca8e2af"/>
+  <link rel="stylesheet" href="../site.css?v=86202355"/>
+  <link rel="preload" href="../assets/fonts/newsreader-roman.woff2" as="font" type="font/woff2" crossorigin/>
   <link rel="icon" href="../assets/favicon.png" type="image/png"/>
   <style>
   html[data-theme="dark"] { color-scheme: dark; }
@@ -29,8 +30,8 @@
   <meta name="twitter:title" content="Auto-Decline Events Outside of Working Hours in Google Calendar"/>
   <meta name="twitter:description" content="Automatically respond to meetings outside your working hours in Google Calendar using a simple Google Apps Script."/>
 </head>
-<body>
-  <div class="post-container">
+<body class="note-page">
+  <div class="note-shell">
     <header class="site">
       <div class="brand"><a href="../index.html">GabeFen.com</a></div>
       <nav class="nav" aria-label="Primary navigation">
@@ -41,22 +42,15 @@
       </nav>
       <a class="trail-mark" href="../about.html" aria-label="About Gabe"><img src="../assets/sketch-signpost.svg" alt="" width="90" height="90"/></a>
     </header>
-    <hr class="rule"/>
 
-    <div class="post-hero">
-      <h1 class="post-title">Auto-Decline Events Outside of Working Hours in Google Calendar</h1>
-    </div>
-
-    <div class="post-grid">
-      <aside class="post-meta">
-        <div class="card">
-          <div><strong>Post</strong><br/>Auto-Decline Events Outside of Working Hours in Google Calendar</div>
-        </div>
-        <div class="card">
-          <div><strong>Published</strong><br/>January 30, 2023</div>
-        </div>
-      </aside>
-      <article class="post-content">
+    <main class="note">
+      <header class="note-head">
+        <p class="note-kicker">Field Note</p>
+        <h1 class="note-title note-title-long">Auto-Decline Events Outside of Working Hours in Google Calendar</h1>
+        <p class="note-dek">Automatically respond to meetings outside your working hours in Google Calendar using a simple Google Apps Script.</p>
+        <p class="note-meta"><time datetime="2023-01-30">January 30, 2023</time></p>
+      </header>
+      <article class="note-body">
         <h2>The Problem</h2>
         <p>Remote work and time zone differences can lead to accidental 6am or 7pm meetings. While Google offers a working hours feature, it can be overlooked by organizers—especially when they book via non‑Google tools.</p>
 
@@ -145,16 +139,16 @@ function deleteMeetingResponerTrigger() {
 }
 </code></pre>
       </article>
-    </div>
+      <nav class="note-after" aria-label="More field notes">
+        <a class="note-all" href="../field-notes.html">All field notes</a>
+      </nav>
+    </main>
 
-    <footer>
-      <p>© <span id="y"></span> Gabe Fennema</p>
+    <footer class="note-foot">
+      <p>© <span data-year></span> Gabe Fennema</p>
     </footer>
   </div>
-  <script>
-    document.getElementById('y').textContent = new Date().getFullYear();
-  </script>
-  <script src="../site.js?v=35667754"></script>
+  <script src="../site.js?v=d9e0cbce"></script>
 </body>
 </html>
 

@@ -32,64 +32,53 @@ take `--check` and exit non-zero, so they can gate a deploy.
 | Command | What it does |
 | --- | --- |
 | `python3 tools/version-assets.py` | Rewrites the `?v=` on shared and woods asset links to the files' content hash. **Run this whenever any CSS or JS file changes** — otherwise browsers keep the copy they already have and the change never reaches anyone. New woods scripts must be classic scripts linked from `woods.html` (and listed in the tool), not ES-module imports, or they escape the versioning. |
-| `python3 tools/size-images.py` | Stamps `width`/`height` on every `<img>` from the file on disk. Run after adding pictures: the field-note reader measures pages before images load, and unsized pictures make it lay out pages for a document that has none. |
-| `tools/check-reader.sh` | Runs the reader's invariants in headless Chrome across every post at four screen sizes. Needs Chrome or Chromium (`CHROME=/path/to/chrome` to point at one). |
+| `python3 tools/size-images.py` | Stamps `width`/`height` on every `<img>` from the file on disk. Run after adding pictures: an unsized picture holds no room until it loads, then shoves the text down under the reader — and moves the running head on with it. |
+| `tools/check-reader.sh` | Runs the field-note invariants in headless Chrome across every post at five screen sizes. Needs Chrome or Chromium (`CHROME=/path/to/chrome` to point at one). |
 
-## The field-note reader
+## Field notes
 
-`setupNotebookPosts()` in `site.js` turns a post's `<article>` into a notebook.
-The rules it lives by:
+A post is one column of prose set like a book page, under a running head. The
+page itself is the reader: it scrolls, prints and reads the same with or
+without JavaScript. Everything is in `site.css` (the `.note-*` rules) and
+`setupNotes()` in `site.js`.
 
-- **The article is the source of truth.** It stays in the page as the scroll
-  view, the print layout and the fallback. The paginated spread is a
-  presentation of it, built from clones.
-- **Two views, and the reader picks.** Pages by default — two sheets on a
-  desktop spread, one at a time on a phone — with a continuous ruled scroll
-  a tap away on the toolbar toggle. The choice is kept under `notebook:view`
-  for the whole notebook, not per note. Only a screen with no room for a page
-  at all is forced to scroll. `data-mode` on `.post-reader` says which view is
-  live; `data-fallback` says why, when pagination gave up.
-- **One breakpoint, two places.** `READER_PHONE` in `site.js` and the
-  `max-width: 720px` block in `site.css` both decide whether a spread is one
-  sheet or two. They have to agree, or a turn moves the wrong distance.
-- **A turn is animated, and the pages do not move.** `flipSheet()` builds a
-  two-sided clone in `.reader-turn` — front the sheet that is leaving, back
-  the page it lands as — and turns it right over while the track jumps,
-  underneath it, to the destination. It finishes sitting exactly on what is
-  already there, so taking it away is invisible. A spread hinges at the spine
-  and the sheet crosses to the other leaf. A phone is one page wide and has no
-  other leaf to land on, so `flipPage()` turns a single face about that same
-  hinge on the left: going on, the sheet lifts by its right edge and swings
-  towards the spine, uncovering the page it was lying on, and is edge-on and
-  clipped away by the time it reaches it — the rest of the revolution happens
-  off the book, as it does in a book held open at one page. Coming back is
-  that same turn run backwards, easing included. The clone is `aria-hidden`,
-  unselectable and gone inside a second; the real pages never leave the track.
-  Reduced motion skips it.
-- **The words change when the paper does.** The track jumps to the
-  destination the instant a turn starts, so `flipSheet()` also pins a
-  `.reader-hold` copy of the page the sheet is about to land on, as it was,
-  underneath the sheet for the length of the turn. Without it the page under
-  the turning sheet changes its text before any paper has crossed it, and the
-  sheet arrives too late to look like it carried the words over. A phone needs
-  the hold only on the way back, where the sheet comes down over the page
-  being left; going on, the page the track has jumped to is exactly what
-  should come out from under the sheet as it lifts.
-- **The cover's stock follows the view, not the screen.** Kraft board in the
-  page view at any width, because there is a book to have a cover; the site's
-  own ground in the scroll view, where there is not. Both are keyed off
-  `data-mode`.
-- **Every page stays in the DOM**, in a scroll-snapping track, so find-in-page,
-  select-all and translate see the whole note.
-- **Nothing may go missing.** After building, the paginator compares the text
-  of its pages against the article and throws if a character is lost; the
-  reader then falls back to the scroll view rather than showing a note with a
-  hole in it. `tests/reader-invariants.html` checks the same thing from
-  outside, along with picture counts, clipping, and reachable controls.
-- **Measure what will actually render.** Pages are measured with their final
-  furniture (page number, running head) and with picture heights fixed in
-  pixels, because a footer that grows or an image that loads after measuring
-  pushes content under the page's clip, invisibly.
+- **The skeleton.** Copy an existing post. `<body class="note-page">`, then
+  `.note-shell` holding the shared `header.site`, a `main.note` and
+  `footer.note-foot`. Inside `main.note`: `header.note-head` (`.note-kicker`
+  reading "Field Note", `h1.note-title`, `.note-dek` — the page's meta
+  description — and `.note-meta` with the `<time>`), then `article.note-body`
+  with the prose, then `nav.note-after` with the link to all field notes.
+  A title too long to stand at full size gets `note-title-long` as well.
+- **Sections are headings.** A note is divided at its `h2`s, or at its `h3`s
+  if it has no `h2`; `h3`s under `h2`s are sub-heads. The stylesheet numbers
+  sections in Roman numerals with a CSS counter, and `setupNotes()` divides the
+  running head and the contents at the same headings, giving each an id from
+  its text. A note whose headings already carry numbers ("1. …", "Part 1 – …")
+  gets `class="note-body self-numbered"` so they are not numbered twice.
+- **What the script adds.** The running head (a `<details>`: the note's title,
+  the section being read, a hairline that fills as the note is read, and the
+  contents when opened), the contents list under the title once a note has two
+  or more sections, the reading time, the note's number in the series and links
+  to the notes either side of it — the last two read from `posts/posts.json`
+  sorted by date. None of it is needed to read the note.
+- **The running head follows scroll, not frames.** It measures straight from
+  the scroll event (browsers already deliver it at most once a frame); a
+  section is the one being read once its heading is within 260px of the top.
+  Headings carry `scroll-margin-top` so a jump from the contents lands below
+  the head, not under it.
+- **Type.** Newsreader, self-hosted from `assets/fonts/` (latin, variable
+  roman and italic; `OFL.txt` is its licence). Every post preloads the roman
+  face, from the same URL the stylesheet uses. The measure is `--note-measure`
+  (714px); one breakpoint, 720px, matching the site header's.
+- **Pictures** are `<figure><img width height></figure>` and take their look
+  from the stylesheet, not inline styles. Blockquote sources go in a `<footer>`
+  inside the `<blockquote>`, with the work in `<cite>`.
+- **Checked from outside.** `tests/reader-invariants.html` (run it with
+  `tools/check-reader.sh`) loads every post at five screen sizes and checks the
+  font, the measure, no sideways scroll, sized pictures, that every contents
+  entry lands on its heading clear of the running head, that the head follows
+  the reader and fills by the end, that it opens and closes, the series number
+  and neighbours, and unique ids.
 
 ## The woods (`woods.html`)
 

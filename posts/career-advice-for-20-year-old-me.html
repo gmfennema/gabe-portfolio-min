@@ -13,7 +13,8 @@
   <meta property="og:image:alt" content="A wooden signpost at a trail junction above a deep valley, granite peaks behind it in the late afternoon light."/>
   <meta name="twitter:image" content="https://gabefen.com/assets/og-woods.jpg"/>
   <meta name="post:date" content="2023-06-20"/>
-  <link rel="stylesheet" href="../site.css?v=aca8e2af"/>
+  <link rel="stylesheet" href="../site.css?v=86202355"/>
+  <link rel="preload" href="../assets/fonts/newsreader-roman.woff2" as="font" type="font/woff2" crossorigin/>
   <link rel="icon" href="../assets/favicon.png" type="image/png"/>
   <style>
   html[data-theme="dark"] { color-scheme: dark; }
@@ -30,8 +31,8 @@
   <meta name="twitter:description" content="Treat your career like a portfolio: build durable career capital and spend company capital wisely for short-term leverage."/>
   
 </head>
-<body>
-  <div class="post-container">
+<body class="note-page">
+  <div class="note-shell">
     <header class="site">
       <div class="brand"><a href="../index.html">GabeFen.com</a></div>
       <nav class="nav" aria-label="Primary navigation">
@@ -42,22 +43,15 @@
       </nav>
       <a class="trail-mark" href="../about.html" aria-label="About Gabe"><img src="../assets/sketch-signpost.svg" alt="" width="90" height="90"/></a>
     </header>
-    <hr class="rule"/>
 
-    <div class="post-hero">
-      <h1 class="post-title">Career Advice for 20-Year-Old Me</h1>
-    </div>
-
-    <div class="post-grid">
-      <aside class="post-meta">
-        <div class="card">
-          <div><strong>Post</strong><br/>Career Advice for 20-Year-Old Me</div>
-        </div>
-        <div class="card">
-          <div><strong>Published</strong><br/>June 20, 2023</div>
-        </div>
-      </aside>
-      <article class="post-content">
+    <main class="note">
+      <header class="note-head">
+        <p class="note-kicker">Field Note</p>
+        <h1 class="note-title">Career Advice for 20-Year-Old Me</h1>
+        <p class="note-dek">Treat your career like a portfolio: build durable career capital and spend company capital wisely for short-term leverage.</p>
+        <p class="note-meta"><time datetime="2023-06-20">June 20, 2023</time></p>
+      </header>
+      <article class="note-body">
         <p>I've been trying to think more strategically about my career recently, and there is a metaphor that has served as a helpful lens through which to view my professional choices. The idea is to take cues from Cal Newport's <em>So Good They Can't Ignore You</em>, a book that I can't recommend enough. The idea is to view your career like you would an investment portfolio. This portfolio should be made up of long term investments, <em>career capital</em>, and short term investments, <em>company capital</em>.</p>
 
         <h2>Career Capital</h2>
@@ -91,16 +85,16 @@
         <p>Now, this is by no means a perfect way to describe career investments, but rather a way to help better understand two different forms of leverage that can often be confused. Ultimately, reputation in a company <em>can</em> have an impact on your career capital by opening doors to unexpected relationships. It can also have the opposite effect if you have a negative reputation.</p>
         <p>The mistake I see many people make in their first job is investing everything they have in company capital, but find out all too late that they under-invested in their career capital and have significantly less bargaining power than they thought. This is how you can get trapped at a company. If you have more company capital than career capital, your current role is better than anything else you can go out and find. While that might seem great in the short run, over time you will realize that your ability to negotiate is severely compromised by a lack of competition.</p>
       </article>
-    </div>
+      <nav class="note-after" aria-label="More field notes">
+        <a class="note-all" href="../field-notes.html">All field notes</a>
+      </nav>
+    </main>
 
-    <footer>
-      <p>© <span id="y"></span> Gabe Fennema</p>
+    <footer class="note-foot">
+      <p>© <span data-year></span> Gabe Fennema</p>
     </footer>
   </div>
-  <script>
-    document.getElementById('y').textContent = new Date().getFullYear();
-  </script>
-  <script src="../site.js?v=35667754"></script>
+  <script src="../site.js?v=d9e0cbce"></script>
 </body>
 </html>
 

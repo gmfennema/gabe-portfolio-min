@@ -34,7 +34,7 @@ for _ in $(seq 1 40); do
   sleep 0.25
 done
 
-# Reduced motion keeps page turns instant, so the checks see the settled state.
+# Reduced motion makes jumps to a section instant, so the checks see where they land.
 output="$("$chrome" --headless=new --no-sandbox --disable-gpu \
   --force-prefers-reduced-motion --virtual-time-budget=180000 --window-size=1500,1000 \
   --dump-dom "http://localhost:$port/tests/reader-invariants.html" 2>/dev/null)"

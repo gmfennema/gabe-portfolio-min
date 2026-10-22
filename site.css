@@ -1077,6 +1077,7 @@ body.lightbox-open { overflow: hidden; }
 .callout { padding: 20px; border-radius: 10px; }
 .callout h3 { margin-top: 0; }
 hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
+.post-container > hr.rule { display: none; }
 
 /* Project pages (pp- template) */
 .pp-masthead {
@@ -1348,714 +1349,439 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
   .pp-ticket { gap: 24px; }
 }
 
-/* Open notebook post layout */
-.post-container > hr.rule { display: none; }
-.notebook-spread {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(280px, .84fr) minmax(0, 1.16fr);
-  margin: 48px 0 70px;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 15px;
-  background:
-    linear-gradient(rgba(251, 247, 239, .94), rgba(251, 247, 239, .94)),
-    url("assets/site-topography.svg") center / 700px auto repeat;
-  box-shadow: var(--card-shadow);
+/* =========================================================
+   Field notes: one column of prose, set like a book page,
+   under a running head that knows where the reader is.
+   ========================================================= */
+@font-face {
+  font-family: Newsreader;
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url("assets/fonts/newsreader-roman.woff2") format("woff2");
 }
-.notebook-spread::before {
-  position: absolute;
+@font-face {
+  font-family: Newsreader;
+  font-style: italic;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url("assets/fonts/newsreader-italic.woff2") format("woff2");
+}
+
+.note-page {
+  --note-ground: #f8f4ec;
+  --note-text: #2c332f;
+  --note-muted: #666c66;
+  --note-rule: #ddd3c2;
+  --note-accent: #a4572c; /* rust, deep enough for small type */
+  --note-mark: #c08a63;   /* rust for rules and ornaments */
+  --note-serif: Newsreader, "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --note-measure: 714px;
+  background: var(--note-ground);
+}
+.note-page ::selection { background: rgba(192, 138, 99, .28); }
+.note-shell > header.site {
+  padding-inline: max(54px, calc((100% - 1120px) / 2));
+  border-bottom: 0;
+  background: var(--note-ground);
+}
+
+/* The running head: the note's title, the section being read, and a hairline
+   that fills as the note is read. It opens into the contents. */
+.note-bar {
+  position: sticky;
   top: 0;
-  bottom: 0;
-  left: 42%;
-  width: 1px;
-  content: "";
-  background: rgba(169, 157, 135, .52);
-  box-shadow: 4px 0 0 rgba(255, 253, 247, .7), -4px 0 0 rgba(212, 201, 181, .2);
-  pointer-events: none;
+  z-index: 10;
+  border-top: 1px solid var(--note-rule);
+  border-bottom: 1px solid var(--note-rule);
+  background: rgba(248, 244, 236, .94);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  font-family: var(--note-serif);
 }
-.notebook-spread .post-hero {
-  grid-column: 1;
-  grid-row: 1;
-  min-height: 100%;
-  margin: 0;
-  padding: 52px 42px 36px;
-  overflow: visible;
-  background: transparent;
-}
-.notebook-spread .post-hero::after { display: none; }
-.notebook-spread .post-title {
-  max-width: 420px;
-  margin: 10px 0 0;
-  color: var(--ink);
-  font-size: clamp(2.9rem, 5vw, 4.8rem);
-  text-align: left;
-}
-.notebook-kicker,
-.notebook-date,
-.notebook-reading-time {
-  display: block;
-  color: var(--rust);
-  font-family: var(--utility);
-  font-size: .73rem;
-  font-weight: 700;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-}
-.notebook-kicker { margin-bottom: 15px; }
-.notebook-kicker::after {
-  display: block;
-  width: 86px;
-  height: 2px;
-  margin-top: 10px;
-  content: "";
-  background: currentColor;
-  transform: rotate(-1deg);
-}
-.notebook-date { color: var(--ink-soft); font-size: .8rem; font-weight: 500; letter-spacing: .02em; text-transform: none; }
-.notebook-summary { max-width: 380px; margin: 22px 0 15px; color: var(--ink-soft); font-size: 1.03rem; line-height: 1.55; }
-.notebook-reading-time { color: var(--muted); font-size: .7rem; letter-spacing: .08em; }
-.notebook-illustration { width: min(220px, 82%); height: 155px; margin: 32px auto 24px; object-fit: contain; }
-.notebook-spread .post-meta {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-  margin-top: 20px;
-}
-.notebook-spread .post-meta .card {
-  margin: 0;
-  padding: 14px 0 0;
-  border: 0;
-  border-top: 1px solid var(--line);
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  font-size: .78rem;
-}
-.notebook-spread .post-meta .card strong { color: var(--rust); font-family: var(--utility); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; }
-.post-outline {
-  display: grid;
-  gap: 11px;
-  margin-top: 25px;
-  padding-top: 19px;
-  border-top: 1px solid var(--line);
-}
-.post-outline strong { color: var(--ink); font-family: var(--display); font-size: 1.18rem; }
-.post-outline strong::after {
-  display: block;
-  width: 30px;
-  height: 2px;
-  margin-top: 8px;
-  content: "";
-  background: var(--rust);
-  transform: rotate(-2deg);
-}
-.post-outline a { color: var(--ink-soft); font-size: .87rem; line-height: 1.35; text-decoration: none; }
-.post-outline a::before { margin-right: 8px; color: var(--rust); content: "•"; }
-.post-outline a:hover { color: var(--rust); }
-.notebook-spread .post-grid { display: contents; }
-.notebook-spread .post-content {
-  grid-column: 2;
-  grid-row: 1;
-  min-width: 0;
-  padding: 54px 50px 60px;
-  color: #363d38;
-}
-.notebook-spread .post-content > p:first-child { margin-top: 0; font-size: 1.1rem; }
-.notebook-spread .post-content h2 { scroll-margin-top: 24px; }
-.notebook-spread .post-content blockquote {
-  margin: 2.2em 0;
-  padding: 20px 0;
-  border-top: 1px solid var(--rust);
-  border-right: 0;
-  border-bottom: 1px solid var(--line);
-  border-left: 0;
-  color: var(--ink);
-  font-family: var(--display);
-  font-size: 1.35rem;
-  line-height: 1.35;
-}
-.post-note-nav {
-  display: flex;
-  grid-column: 1 / -1;
-  grid-row: 2;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 20px 42px 22px;
-  border-top: 1px solid var(--line);
-  background: rgba(233, 223, 204, .22);
-}
-.post-note-nav a { color: var(--ink); font-family: var(--display); font-weight: 700; text-decoration: none; }
-.post-note-nav a:hover { color: var(--rust); }
-
-/* Field notebook reader: a stapled memo book, open on the desk */
-.post-reader {
-  --reader-page-height: clamp(620px, calc(100vh - 220px), 780px);
-  --sheet: #fdfaf2;
-  --sheet-edge: #ece3d0;
-  --kraft: #d4c19f;
-  --kraft-deep: #c2ab84;
-  --rule-ink: rgba(36, 56, 47, .15);
-  /* Ruled paper: one line per line of prose. Prose blocks below are sized in whole
-     --rule-step units so the text keeps sitting on the ruling down the page.
-     --rule-lead is half-leading plus Georgia's ascent, i.e. the first baseline. */
-  --rule-step: 1.6875rem;
-  --rule-lead: calc(var(--rule-step) / 2 + .349em);
-  --margin-line: rgba(180, 102, 53, .38);
-  --stamp: "American Typewriter", "Courier Prime", "Courier New", Courier, monospace;
-  --cover-face: Futura, "Avenir Next", "Century Gothic", "Trebuchet MS", sans-serif;
-  margin: 38px 0 68px;
-}
-.reader-toolbar {
-  display: grid;
-  grid-template-columns: auto minmax(110px, 1fr) auto auto;
-  align-items: center;
-  gap: 18px;
-  margin: 0 4px 18px;
-}
-.reader-toolbar > * { min-width: 0; }
-.reader-label,
-.reader-status {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--muted);
-  font-family: var(--utility);
-  font-size: .7rem;
-  font-weight: 700;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-}
-.reader-label { color: var(--rust); }
-.reader-status { justify-self: end; letter-spacing: .06em; }
-.reader-progress { position: relative; height: 2px; background: var(--line); }
-.reader-progress::after { position: absolute; inset: 0 auto 0 0; width: var(--reader-progress, 0%); content: ""; background: var(--rust); transition: width .3s ease; }
-
-.reader-stage {
-  position: relative;
-  height: var(--reader-page-height);
-  perspective: 1800px;
-}
-/* Sheets stacked beneath the open spread, then the desk shadow. */
-.reader-stage::before {
-  position: absolute;
-  inset: 0;
-  content: "";
-  border-radius: 12px;
-  box-shadow:
-    0 1px 0 var(--sheet-edge),
-    0 3px 0 var(--sheet),
-    0 4px 0 var(--sheet-edge),
-    0 26px 40px -10px rgba(43, 45, 35, .28);
-  pointer-events: none;
-}
-/* Every page of the note lives in this track, so find-in-page, select-all and
-   translate see the whole note; the stage is just the window onto it. */
-.reader-track {
-  display: flex;
-  height: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-snap-type: x mandatory;
-  overscroll-behavior-x: contain;
-  scrollbar-width: none;
-  border-radius: 12px;
-}
-.reader-track::-webkit-scrollbar { display: none; }
-.reader-track:focus-visible { outline: 3px solid rgba(180, 102, 53, .55); outline-offset: 3px; }
-.reader-page {
-  position: relative;
-  display: flex;
-  flex: 0 0 50%;
-  height: 100%;
-  min-width: 0;
-  min-height: 0;
-  flex-direction: column;
-  overflow: hidden;
-  background: var(--sheet);
-  transform-origin: center;
-  backface-visibility: hidden;
-}
-/* A spread starts on every other page, so turning moves two sheets at once. */
-.reader-page:nth-child(odd) { scroll-snap-align: start; }
-/* Outer corners are rounded like a memo book; inner corners meet at the spine. */
-.reader-page:nth-child(odd) { border-radius: 12px 0 0 12px; }
-.reader-page:nth-child(even) { border-radius: 0 12px 12px 0; }
-.reader-page:only-child { border-radius: 12px; }
-.reader-page.reader-blank-page { background: var(--sheet); }
-/* Paper curling into the gutter. */
-.reader-page:nth-child(odd):not(:only-child)::after,
-.reader-page:nth-child(even)::after {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 70px;
-  content: "";
-  pointer-events: none;
-}
-.reader-page:nth-child(odd):not(:only-child)::after { right: 0; background: linear-gradient(90deg, transparent, rgba(92, 78, 52, .06) 70%, rgba(92, 78, 52, .16)); }
-.reader-page:nth-child(even)::after { left: 0; background: linear-gradient(270deg, transparent, rgba(92, 78, 52, .05) 70%, rgba(92, 78, 52, .14)); }
-
-/* The margin line runs down the left of every interior page. */
-.reader-article-page::before {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 44px;
-  width: 1px;
-  content: "";
-  background: var(--margin-line);
-}
-
-/* The page the sheet lands on, held as it was for the length of the turn.
-   The track jumps to the destination as soon as a turn starts, so without
-   this the words underneath change before any paper has crossed them. It
-   sits under the sheet and goes away with it, by which time the track behind
-   is showing the same page. */
-.reader-hold {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  overflow: hidden;
-  user-select: none;
-  pointer-events: none;
-}
-.reader-hold > .reader-page {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  flex: none;
-  border-radius: inherit;
-}
-.reader-hold-left { right: 50%; left: 0; border-radius: 12px 0 0 12px; }
-.reader-hold-right { right: 0; left: 50%; border-radius: 0 12px 12px 0; }
-
-/* The sheet mid-turn: a two-sided clone that turns right over around the
-   spine, its back the page it lands as. Decorative and transient — the real
-   pages stay in the track underneath it the whole time. */
-.reader-turn {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  overflow: hidden;
-  border-radius: 12px;
-  perspective: 1500px;
-  pointer-events: none;
-}
-.reader-turn:empty { display: none; }
-.reader-leaf {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  user-select: none;
-  pointer-events: none;
-  transform-style: preserve-3d;
-  will-change: transform;
-}
-/* The two sides of the sheet. Only one faces the reader at a time, so the
-   turn shows the page it is leaving, then the page it lands as. */
-.reader-leaf-face {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  backface-visibility: hidden;
-  /* The lifted sheet casts on the page it is leaving, so its edge reads as
-     paper above paper rather than as a tear through the words. At rest it
-     covers that page exactly and the shadow is clipped away unseen. */
-  box-shadow: 0 2px 26px rgba(43, 45, 35, .34);
-}
-.reader-leaf-reverse { transform: rotateY(180deg); }
-.reader-leaf-face > .reader-page {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  flex: none;
-  border-radius: inherit;
-}
-/* Light falls away from the fold as the sheet lifts, and returns as it lands.
-   The back is mirrored, so its fold is on the opposite side in its own
-   coordinates and its gradient runs the other way. */
-.reader-leaf-shade { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
-/* Turning forward, the right-hand sheet swings left around the spine and lands
-   as the left-hand page; turning back, the mirror of that. */
-.reader-leaf-forward {
-  right: 0;
-  left: 50%;
-  transform-origin: left center;
-}
-.reader-leaf-backward {
-  right: 50%;
-  left: 0;
-  transform-origin: right center;
-}
-/* Both faces carry the outgoing page's corners: mirrored, they read as the
-   corners of the page the sheet lands as. */
-.reader-leaf-forward .reader-leaf-face { border-radius: 0 12px 12px 0; }
-.reader-leaf-backward .reader-leaf-face { border-radius: 12px 0 0 12px; }
-.reader-leaf-forward .reader-leaf-front .reader-leaf-shade,
-.reader-leaf-backward .reader-leaf-reverse .reader-leaf-shade { background: linear-gradient(90deg, rgba(43, 45, 35, .03), rgba(43, 45, 35, .52)); }
-.reader-leaf-forward .reader-leaf-reverse .reader-leaf-shade,
-.reader-leaf-backward .reader-leaf-front .reader-leaf-shade { background: linear-gradient(270deg, rgba(43, 45, 35, .03), rgba(43, 45, 35, .52)); }
-
-/* One page wide, and no facing leaf for a sheet to come down on. The sheet is
-   the whole stage and still hinges at the spine, on its left, so a turn lifts
-   the page by its right edge and carries it over towards the spine instead of
-   spinning it about its own middle. Half a revolution in it is edge-on and
-   past the left edge, where the clip on .reader-turn takes it: the rest of the
-   turn happens off the book, as it does in a book held open at one page. */
-.reader-leaf-single {
-  right: 0;
-  left: 0;
-  transform-origin: left center;
-}
-.reader-leaf-single .reader-leaf-face { border-radius: 12px; }
-/* The lifting edge is the far one from the hinge, and it darkens as it rises,
-   which deepens the shadow it throws on the page coming out from under it. */
-.reader-leaf-single .reader-leaf-front .reader-leaf-shade { background: linear-gradient(90deg, rgba(43, 45, 35, .03), rgba(43, 45, 35, .52)); }
-/* Coming back, the page being left is held under the whole width of the
-   returning sheet. */
-.reader-hold-single { right: 0; left: 0; border-radius: 12px; }
-
-/* Saddle stitch */
-.reader-spine {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  width: 3px;
-  transform: translateX(-50%);
-  background: linear-gradient(180deg, rgba(92, 78, 52, .1), rgba(92, 78, 52, .3) 20%, rgba(92, 78, 52, .3) 80%, rgba(92, 78, 52, .1));
-  pointer-events: none;
-}
-.reader-staple {
-  position: absolute;
-  left: 50%;
-  width: 4px;
-  height: 22px;
-  border-radius: 2px;
-  background: linear-gradient(90deg, #8d8a80, #d8d5cb 45%, #a29e93);
-  box-shadow: 0 1px 1px rgba(43, 45, 35, .35), inset 0 0 0 .5px rgba(60, 55, 45, .5);
-  transform: translateX(-50%);
-}
-.reader-staple:nth-child(1) { top: 14%; }
-.reader-staple:nth-child(2) { top: 50%; margin-top: -11px; }
-.reader-staple:nth-child(3) { bottom: 14%; }
-
-
-/* Inside cover: kraft stock, a pasted label, and the filled-in form. */
-.reader-cover-page {
-  color: var(--ink);
-  background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .2 0 0 0 0 .15 0 0 0 0 .05 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E") 0 0 / 220px 220px,
-    linear-gradient(160deg, var(--kraft) 0%, var(--kraft-deep) 100%);
-}
-.reader-cover-page .post-hero {
-  display: flex;
-  min-height: 0;
-  margin: 0;
-  padding: 0 32px 22px;
-  flex: 1;
-  flex-direction: column;
-  overflow: hidden;
-  background: transparent;
-}
-.reader-cover-page .post-hero::after { display: none; }
-.reader-cover-page .post-meta { display: none !important; }
-.cover-print {
-  display: flex;
-  min-height: 0;
-  flex: 1 1 auto;
-  flex-direction: column;
-  justify-content: center;
-  justify-content: safe center;
-  padding: 26px 0 18px;
-  text-align: center;
-}
-.cover-emblem {
-  width: 132px;
-  height: 100px;
-  margin: 0 auto 22px;
-  flex-shrink: 0;
-  object-fit: contain;
-  opacity: .9;
-  mix-blend-mode: multiply;
-}
-.reader-cover-page .post-title.cover-title {
-  max-width: none;
-  margin: 0;
-  color: #1d1f1c;
-  font-family: var(--cover-face);
-  font-size: clamp(1.7rem, 2.75vw, 2.5rem);
-  font-weight: 700;
-  letter-spacing: .12em;
-  line-height: 1.12;
-  text-align: center;
-  text-transform: uppercase;
-  text-wrap: balance;
-}
-.reader-cover-page .post-title.cover-title-long { font-size: clamp(1.2rem, 1.9vw, 1.7rem); letter-spacing: .1em; }
-.cover-stamp {
-  margin: 0;
-  color: #1d1f1c;
-  font-family: var(--cover-face);
-  font-size: .72rem;
-  font-weight: 700;
-  letter-spacing: .05em;
-  line-height: 1.5;
-}
-.cover-title + .cover-stamp { margin-top: 18px; }
-.reader-cover-page .post-outline { display: grid; flex: 0 1 auto; min-height: 0; margin: 0; padding: 14px 0 0; gap: 0; overflow: hidden; border: 0; border-top: 1.5px solid rgba(29, 31, 28, .55); align-content: start; }
-.reader-cover-page .post-outline strong { display: block; padding: 0 0 6px; color: #1d1f1c; font-family: var(--cover-face); font-size: .66rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
-.reader-cover-page .post-outline strong::after { display: none; }
-.outline-list { margin: 0; padding: 0; list-style: none; }
-.outline-link {
+.note-bar-line {
   display: flex;
   align-items: baseline;
-  gap: 6px;
-  padding: 4px 0;
-  color: #1d1f1c;
-  font-size: .8rem;
-  line-height: 1.25;
+  gap: 20px;
+  width: min(var(--note-measure), 100% - 44px);
+  margin: 0 auto;
+  padding: 12px 0 11px;
+  list-style: none;
+  cursor: pointer;
+}
+.note-bar.is-plain .note-bar-line { cursor: default; }
+.note-bar-line::-webkit-details-marker { display: none; }
+.note-bar-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--note-muted);
+  font-size: 15.5px;
+  font-style: italic;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.note-bar-section {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  min-width: 0;
+  color: var(--ink);
+  font-size: 15.5px;
+  white-space: nowrap;
+}
+.note-bar-name { overflow: hidden; text-overflow: ellipsis; }
+.note-bar-chevron {
+  flex: none;
+  align-self: center;
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: var(--note-muted);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.3;
+  transition: transform .2s ease;
+}
+.note-bar[open] .note-bar-chevron { transform: rotate(180deg); }
+.note-progress {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 1px;
+  pointer-events: none;
+}
+.note-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--note-accent);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+}
+.note-bar-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
+  border-bottom: 1px solid var(--note-rule);
+  background: var(--note-ground);
+  box-shadow: 0 22px 30px -26px rgba(31, 43, 37, .45);
+}
+.note-bar-menu ol { width: min(var(--note-measure), 100% - 44px); margin: 0 auto; padding: 12px 0 16px; list-style: none; }
+.note-bar-menu a {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 9px 0;
+  color: var(--note-text);
+  font-size: 18px;
   text-decoration: none;
 }
-.outline-link::before { display: none; }
-.outline-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.outline-leader { flex: 1; min-width: 16px; border-bottom: 1px dotted rgba(29, 31, 28, .55); transform: translateY(-3px); }
-.outline-page { font-family: var(--stamp); font-size: .78rem; }
-.outline-link:hover .outline-text { color: var(--rust); text-decoration: underline; text-decoration-color: var(--rust); text-underline-offset: .2em; }
-
-/* Interior pages */
-.reader-page-header {
-  display: flex;
-  padding: 18px 34px 0 62px;
-  justify-content: space-between;
-  gap: 14px;
-  color: var(--muted);
-  font-family: var(--utility);
-  font-size: .62rem;
-  font-weight: 700;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-}
-.reader-running-title,
-.reader-running-section { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.reader-running-section { flex-shrink: 0; max-width: 55%; color: var(--rust); }
-.reader-running-section:empty { display: none; }
-.reader-page-body { position: relative; flex: 1; min-height: 0; padding: 16px 34px 26px 62px; overflow: hidden; }
-.notebook-prose { color: #33403a; font-size: 1rem; line-height: var(--rule-step); }
-/* The fallback must not narrow the column: a scrollbar here would reflow the
-   text and make the very overflow it is compensating for worse. */
-.reader-page-body.is-overflowing { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
-.reader-page-body.is-overflowing::-webkit-scrollbar { display: none; }
-/* The ruling is positioned off the content box, so it keeps step with the prose
-   whatever the running header measures, and tiled both ways to run edge to edge. */
-.reader-article-page .reader-page-body,
-.reader-continuous {
-  background-image: linear-gradient(to bottom, var(--rule-ink) 1px, transparent 1px);
-  background-position: 0 var(--rule-lead);
-  background-size: 100% var(--rule-step);
-  background-origin: content-box;
-  background-clip: border-box;
-  background-repeat: repeat;
-}
-.notebook-prose p { margin: 0 0 var(--rule-step); }
-.notebook-prose h2 { position: relative; margin: var(--rule-step) 0 0; font-size: clamp(1.55rem, 2.6vw, 2.05rem); line-height: calc(var(--rule-step) * 2); letter-spacing: -.03em; }
-.notebook-prose h2:first-child,
-.notebook-prose h3:first-child { margin-top: 0; }
-/* A pencil tick in the margin marks each new section; sub-sections get a shorter one. */
-.notebook-prose h3 { position: relative; }
-.notebook-prose h3::before {
-  position: absolute;
-  top: .6em;
-  left: -34px;
-  width: 12px;
-  height: 2px;
-  content: "";
-  background: var(--rust);
-  opacity: .8;
-  transform: rotate(-6deg);
-}
-.notebook-prose h2::before {
-  position: absolute;
-  top: .8em;
-  left: -40px;
-  width: 22px;
-  height: 2px;
-  content: "";
-  background: var(--rust);
-  transform: rotate(-6deg);
-}
-.notebook-prose h3 { margin: var(--rule-step) 0 0; font-size: 1.22rem; line-height: var(--rule-step); }
-.notebook-prose ul,
-.notebook-prose ol { margin: 0 0 var(--rule-step); padding-left: 1.25em; }
-.notebook-prose li { margin-bottom: 0; }
-.notebook-prose li::marker { color: var(--rust); }
-.notebook-prose img { max-height: 320px; padding: 6px; object-fit: contain; border-radius: 3px; background: var(--paper-soft); }
-.notebook-prose pre {
-  max-height: 310px;
-  margin: var(--rule-step) 0;
-  padding: calc(var(--rule-step) / 2 - 1px) 16px;
-  overflow: auto;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  background: rgba(251, 247, 239, .9);
-  font-size: .82rem;
-  line-height: var(--rule-step);
-}
-.notebook-prose code { background: rgba(233, 223, 204, .7); }
-.notebook-prose pre code { padding: 0; background: transparent; }
-.notebook-prose blockquote { margin: var(--rule-step) 0; padding: calc(var(--rule-step) - 1px) 0; border-top: 1px solid var(--rust); border-right: 0; border-bottom: 1px solid var(--line); border-left: 0; color: var(--ink); font-family: var(--display); font-size: 1.22rem; line-height: var(--rule-step); }
-.notebook-prose hr.rule { margin: calc(var(--rule-step) - 1px) 0 var(--rule-step); }
-.notebook-prose .footnotes { color: var(--muted); font-size: .86rem; }
-.notebook-prose sup a { text-decoration: none; }
-
-/* Page numbers, stamped in the outer bottom corner. */
-.reader-page-footer {
-  display: flex;
-  margin: 0;
-  padding: 0 34px 16px;
-  justify-content: flex-end;
-  color: var(--muted);
-  font-family: var(--stamp);
-  font-size: .8rem;
-  letter-spacing: .04em;
-}
-.reader-page:nth-child(odd):not(:only-child) .reader-page-footer { justify-content: flex-start; }
-.reader-page-number:empty { display: none; }
-
-.reader-pager { display: flex; margin: 22px 4px 0; align-items: center; justify-content: space-between; gap: 18px; }
-.reader-button {
-  min-height: 42px;
-  padding: 9px 16px;
-  border: 1px solid var(--line-dark);
-  border-radius: 6px;
-  color: var(--ink);
-  background: transparent;
-  font-family: var(--display);
-  font-size: .98rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: border-color .18s ease, color .18s ease, background .18s ease, transform .18s ease;
-}
-.reader-button:hover:not(:disabled) { border-color: var(--rust); color: var(--rust); background: rgba(251, 247, 239, .8); transform: translateY(-2px); }
-.reader-button:disabled { cursor: default; opacity: .35; }
-.reader-pager-middle { display: flex; min-width: 0; flex-direction: column; align-items: center; gap: 4px; }
-.reader-hint { color: var(--muted); font-family: var(--utility); font-size: .68rem; letter-spacing: .06em; text-align: center; }
-.reader-restart {
-  padding: 2px 4px;
-  border: 0;
-  color: var(--rust);
-  background: none;
-  font-family: var(--utility);
-  font-size: .68rem;
-  font-weight: 700;
-  letter-spacing: .06em;
+.note-bar-menu a:hover { color: var(--note-accent); }
+.note-bar-menu .note-num { flex: none; width: 2.4em; }
+.note-bar-menu a[aria-current] .note-entry {
   text-decoration: underline;
-  text-underline-offset: .25em;
-  cursor: pointer;
+  text-decoration-color: var(--note-mark);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
 }
-.reader-restart[hidden] { display: none; }
-.reader-measure { position: absolute; inset: 0; height: 100%; visibility: hidden; pointer-events: none; }
-.reader-measure .reader-page { position: absolute; top: 0; left: 0; flex: none; }
-
-/* ---------------------------------------------------------
-   Two views of one note
-   The reader turns pages by default — two sheets where there is room,
-   one on a phone — and scrolls when a reader asks for it or when no
-   page would fit. The scroll view is also what prints and what a
-   failed pagination falls back to, so it is a first-class layout,
-   not a stub.
-   --------------------------------------------------------- */
-.post-reader[data-mode="loading"] .reader-continuous,
-.post-reader[data-mode="spread"] .reader-continuous { display: none; }
-.post-reader[data-mode="continuous"] .reader-stage,
-.post-reader[data-mode="continuous"] .reader-pager { display: none; }
-.post-reader[data-mode="loading"] .reader-pager { visibility: hidden; }
-.post-reader[data-mode="spread"] .reader-skeleton { display: none; }
-
-/* In the scroll view the cover is a title card at the head of the note — no
-   book, so no board stock: it sits on the page's own ground, at any width. */
-.post-reader[data-mode="continuous"] .reader-cover-page {
-  height: auto;
-  flex: none;
-  margin: 0 0 20px;
-  border-radius: 12px;
-  overflow: visible;
-  color: var(--ink);
-  background: transparent;
-}
-.post-reader[data-mode="continuous"] .reader-cover-page .post-title.cover-title { color: var(--ink); }
-.post-reader[data-mode="continuous"] .cover-stamp { color: var(--ink-soft); }
-.post-reader[data-mode="continuous"] .cover-emblem { mix-blend-mode: normal; opacity: .8; }
-.post-reader[data-mode="continuous"] .reader-cover-page .post-outline { border-top-color: var(--line-dark); }
-.post-reader[data-mode="continuous"] .reader-cover-page .post-outline strong { color: var(--rust); }
-.post-reader[data-mode="continuous"] .outline-link { color: var(--ink); }
-.post-reader[data-mode="continuous"] .outline-leader { border-bottom-color: var(--line-dark); }
-.post-reader[data-mode="continuous"] .reader-cover-page .post-hero,
-.post-reader[data-mode="continuous"] .cover-print { flex: none; overflow: visible; }
-.post-reader[data-mode="continuous"] .cover-print { padding: 30px 0 18px; }
-.post-reader[data-mode="continuous"] .reader-cover-page .post-outline { overflow: visible; }
-.post-reader[data-mode="continuous"] .reader-cover-page .reader-page-footer { display: none; }
-.post-reader[data-mode="continuous"] .reader-cover-page::after { display: none; }
-
-.reader-view {
-  justify-self: end;
-  padding: 4px 10px;
-  border: 1px solid var(--line-dark);
-  border-radius: 999px;
-  color: var(--muted);
-  background: transparent;
-  font-family: var(--utility);
-  font-size: .62rem;
-  font-weight: 700;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: border-color .18s ease, color .18s ease;
-}
-.reader-view:hover { border-color: var(--rust); color: var(--rust); }
-.reader-view[hidden] { display: none; }
-
-/* A ruled sheet stands in while the pages are being measured. */
-.reader-skeleton {
-  position: absolute;
-  inset: 0;
-  border-radius: 12px;
-  background:
-    linear-gradient(to bottom, var(--rule-ink) 1px, transparent 1px) 0 34px / 100% var(--rule-step) repeat,
-    var(--sheet);
-  opacity: .75;
+.note-num {
+  color: var(--note-accent);
+  font-size: 11.5px;
+  font-style: normal;
+  letter-spacing: .2em;
 }
 
-/* The scroll view: one long sheet of the same paper. */
-.reader-continuous {
-  position: relative;
-  padding: 26px 34px 40px 62px;
-  border-radius: 12px;
-  background: var(--sheet);
-  box-shadow: 0 1px 0 var(--sheet-edge), 0 3px 0 var(--sheet), 0 4px 0 var(--sheet-edge), 0 26px 40px -10px rgba(43, 45, 35, .28);
+/* Title page */
+.note-head {
+  width: min(780px, 100% - 44px);
+  margin: 0 auto;
+  padding: clamp(56px, 8vw, 112px) 0 0;
+  font-family: var(--note-serif);
+  text-align: center;
 }
-.reader-continuous::before {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 44px;
-  width: 1px;
+.note-head::after {
+  display: block;
+  width: 120px;
+  height: 9px;
+  margin: 52px auto;
   content: "";
-  background: var(--margin-line);
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 9' fill='none' stroke='%23c08a63'%3E%3Cpath d='M0 4.5h50M70 4.5h50M60 .9l3.6 3.6L60 8.1l-3.6-3.6z'/%3E%3C/svg%3E") center / contain no-repeat;
 }
-.continuous-head {
-  margin: 0 0 var(--rule-step);
-  color: var(--muted);
-  font-family: var(--utility);
-  font-size: .62rem;
-  font-weight: 700;
-  letter-spacing: .1em;
+.note-kicker {
+  margin: 0 0 28px;
+  color: var(--note-accent);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: .24em;
   text-transform: uppercase;
 }
-.reader-continuous .post-content { margin: 0; }
+.note-title {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--note-serif);
+  font-size: clamp(46px, 6.2vw, 88px);
+  font-weight: 400;
+  letter-spacing: -.022em;
+  line-height: 1.02;
+  text-wrap: balance;
+}
+/* Set by hand on a title too long to stand at full size. */
+.note-title-long { font-size: clamp(38px, 4.6vw, 62px); line-height: 1.06; }
+.note-dek {
+  max-width: 27em;
+  margin: 28px auto 0;
+  color: var(--note-muted);
+  font-size: clamp(19px, 1.7vw, 22.5px);
+  font-style: italic;
+  line-height: 1.45;
+  text-wrap: balance;
+}
+.note-meta {
+  margin: 28px 0 0;
+  color: var(--note-muted);
+  font-size: 12.5px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+.note-dot { margin: 0 .7em; color: var(--note-mark); }
+
+.note-contents {
+  width: min(var(--note-measure), 100% - 44px);
+  margin: 0 auto 76px;
+  font-family: var(--note-serif);
+  text-align: center;
+}
+.note-contents-label {
+  margin: 0 0 18px;
+  color: var(--note-muted);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+}
+.note-contents ol {
+  display: inline-grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0 2.6em 0 0; /* the width of the numerals, so the list sits optically centred */
+  list-style: none;
+  text-align: left;
+}
+.note-contents a {
+  display: grid;
+  grid-template-columns: 2.6em auto;
+  align-items: baseline;
+  color: var(--note-text);
+  font-size: 19px;
+  font-style: italic;
+  line-height: 1.35;
+  text-decoration: none;
+}
+.note-contents a:hover { color: var(--note-accent); }
+.note-contents .note-num { padding-right: 14px; text-align: right; }
+.note-contents.is-self-numbered ol { padding-right: 0; }
+.note-contents.is-self-numbered a { display: block; }
+
+/* The prose */
+.note-body {
+  width: min(var(--note-measure), 100% - 44px);
+  margin: 0 auto;
+  color: var(--note-text);
+  font-family: var(--note-serif);
+  font-size: 21px;
+  font-variant-numeric: oldstyle-nums;
+  line-height: 1.62;
+  counter-reset: note-section;
+  hanging-punctuation: first;
+  text-wrap: pretty;
+}
+.note-body p { margin: 0; }
+.note-body > p + p { text-indent: 1.5em; }
+.note-body > p:first-of-type::first-line { font-variant-caps: all-small-caps; letter-spacing: .05em; }
+.note-body a { text-decoration-thickness: 1px; }
+.note-body strong { color: var(--ink); font-weight: 600; }
+.note-body [id] { scroll-margin-top: 72px; }
+
+/* Sections: a note's h2s, or its h3s when it has no h2. site.js divides the
+   running head and the contents at the same headings. */
+.note-body > h2,
+.note-body:is(:not(:has(> h2))) > h3 {
+  margin: 2.4em 0 1.15em;
+  color: var(--ink);
+  font-family: var(--note-serif);
+  font-size: 28px;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.2;
+  text-align: center;
+  text-wrap: balance;
+  counter-increment: note-section;
+}
+.note-body > h2::before,
+.note-body:is(:not(:has(> h2))) > h3::before {
+  display: block;
+  margin-bottom: 14px;
+  color: var(--note-accent);
+  content: counter(note-section, upper-roman);
+  content: counter(note-section, upper-roman) / "";
+  font-size: 12.5px;
+  font-style: normal;
+  letter-spacing: .24em;
+}
+.note-body.self-numbered > :is(h2, h3)::before { content: none; }
+.note-body > :is(h2, h3):first-child { margin-top: 0; }
+.note-body > h3 {
+  margin: 1.9em 0 .5em;
+  color: var(--ink);
+  font-family: var(--note-serif);
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.note-body h3 strong { font-weight: inherit; }
+
+.note-body :is(ul, ol) { margin: .8em 0; padding-left: 1.4em; }
+.note-body li { margin: .3em 0; padding-left: .2em; }
+.note-body li > :is(ul, ol) { margin: .3em 0; }
+.note-body ul > li::marker { color: var(--note-mark); }
+.note-body ol > li::marker { color: var(--note-accent); }
+
+.note-body blockquote { margin: 1.5em 0; padding: 0 2.4em; font-style: italic; }
+.note-body blockquote p + p { margin-top: .6em; }
+.note-body blockquote footer {
+  margin: .7em 0 0;
+  padding: 0;
+  border: 0;
+  color: var(--note-muted);
+  font-family: inherit;
+  font-size: 13px;
+  font-style: normal;
+  letter-spacing: .16em;
+  text-align: right;
+  text-transform: uppercase;
+}
+.note-body blockquote cite { font-size: 17px; font-style: italic; letter-spacing: 0; text-transform: none; }
+
+.note-body figure { margin: 1.8em 0; }
+.note-body img { width: 100%; border: 1px solid var(--note-rule); border-radius: 4px; }
+.note-body figcaption { margin-top: .6em; color: var(--note-muted); font-size: 15px; font-style: italic; text-align: center; }
+
+.note-body code {
+  padding: .1em .3em;
+  border-radius: 3px;
+  background: #efe8da;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: .78em;
+  font-variant-numeric: normal;
+}
+.note-body pre {
+  margin: 1.5em 0;
+  padding: 18px 20px;
+  overflow-x: auto;
+  border: 1px solid var(--note-rule);
+  border-radius: 6px;
+  background: #f1ebde;
+  font-size: 15px;
+  line-height: 1.55;
+  tab-size: 2;
+}
+.note-body pre code { padding: 0; background: none; font-size: inherit; }
+
+.note-body hr { width: 120px; height: 1px; margin: 2.6em auto 1.6em; border: 0; background: var(--note-rule); }
+.note-body .footnotes { color: var(--note-muted); font-size: 16px; line-height: 1.55; }
+.note-body .footnotes p + p { margin-top: .6em; }
+.note-body sup { font-size: .7em; line-height: 0; }
+.note-body sup a { padding: 0 .1em; color: var(--note-accent); text-decoration: none; }
+
+/* The end of the note */
+.note-body::after {
+  display: block;
+  width: 11px;
+  height: 11px;
+  margin: 60px auto 0;
+  content: "";
+  background: var(--note-accent);
+  transform: rotate(45deg);
+}
+.note-after {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px 32px;
+  width: min(var(--note-measure), 100% - 44px);
+  margin: 64px auto 0;
+  padding: 30px 0 0;
+  border-top: 1px solid var(--note-rule);
+  font-family: var(--note-serif);
+}
+.note-neighbour { display: grid; gap: 8px; max-width: 46%; text-decoration: none; }
+.note-neighbour.is-later { text-align: right; }
+.note-neighbour-label {
+  color: var(--note-muted);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+}
+.note-neighbour-title { color: var(--ink); font-size: 22px; font-style: italic; line-height: 1.2; }
+.note-neighbour:hover .note-neighbour-title { color: var(--note-accent); }
+.note-all {
+  color: var(--ink);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: .18em;
+  text-decoration: none;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.note-all::after { content: " →"; }
+.note-all:hover { color: var(--note-accent); }
+/* With a note on either side, the way back to the index takes its own line. */
+.note-after:has(.is-earlier):has(.is-later) .note-all { order: 3; flex-basis: 100%; text-align: center; }
+.note-foot {
+  margin: 0;
+  padding: 96px 22px 48px;
+  border-top: 0;
+  color: var(--note-muted);
+  font-family: var(--note-serif);
+  font-size: 12px;
+  letter-spacing: .18em;
+  text-align: center;
+  text-transform: uppercase;
+}
+.note-foot p { margin: 0; }
+
+@media (max-width: 900px) {
+  .note-shell > header.site { padding-inline: 28px; }
+}
+
+@media (max-width: 720px) {
+  .note-shell > header.site { padding-inline: 20px; }
+  .note-bar:not(.is-plain) .note-bar-title { display: none; }
+  .note-bar-section { flex: 1; font-size: 15px; }
+  .note-head { padding-top: 52px; }
+  .note-head::after { margin: 40px auto; }
+  .note-kicker { margin-bottom: 22px; }
+  .note-title-long { font-size: clamp(32px, 9vw, 40px); }
+  .note-dek { margin-top: 22px; }
+  .note-contents { margin-bottom: 56px; }
+  .note-contents a { font-size: 18px; }
+  .note-body { font-size: 19px; line-height: 1.6; }
+  .note-body > h2,
+  .note-body:is(:not(:has(> h2))) > h3 { font-size: 25px; }
+  .note-body > h3 { font-size: 19px; }
+  .note-body blockquote { padding: 0 1.1em; }
+  .note-body pre { padding: 14px 16px; font-size: 13.5px; }
+  .note-after { flex-direction: column; align-items: flex-start; gap: 22px; }
+  .note-neighbour { max-width: none; }
+  .note-neighbour.is-later { text-align: left; }
+  .note-all { order: 3; }
+  .note-after:has(.is-earlier):has(.is-later) .note-all { text-align: left; }
+}
 
 .visually-hidden {
   position: absolute;
@@ -2067,32 +1793,6 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
   clip-path: inset(50%);
   white-space: nowrap;
 }
-
-/* Neighbouring notes on the shelf */
-.reader-note-nav {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
-  margin: 34px 4px 0;
-  padding-top: 22px;
-  border-top: 1px solid var(--line);
-}
-.note-nav-link,
-.note-nav-empty { display: grid; gap: 4px; min-width: 0; text-decoration: none; }
-.note-nav-next { text-align: right; }
-.note-nav-kicker,
-.note-nav-empty {
-  color: var(--muted);
-  font-family: var(--utility);
-  font-size: .66rem;
-  font-weight: 700;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-}
-.note-nav-empty:last-child { text-align: right; }
-.note-nav-title { color: var(--ink); font-family: var(--display); font-size: 1.12rem; font-weight: 700; line-height: 1.15; }
-.note-nav-link:hover .note-nav-title { color: var(--rust); }
-.note-nav-link:hover .note-nav-kicker { color: var(--rust); }
 footer {
   margin-top: 54px;
   padding: 28px 0 8px;
@@ -2121,13 +1821,6 @@ footer {
   .register-kind, .register-year { display: none; }
   .post-meta { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .post-meta .card { margin: 0; }
-  .notebook-spread { grid-template-columns: 1fr; }
-  .notebook-spread::before { display: none; }
-  .notebook-spread .post-hero,
-  .notebook-spread .post-content { grid-column: 1; }
-  .notebook-spread .post-hero { min-height: auto; padding-bottom: 42px; }
-  .notebook-spread .post-content { grid-row: 2; border-top: 1px solid var(--line); }
-  .post-note-nav { grid-row: 3; }
 }
 
 @media (max-width: 720px) {
@@ -2234,51 +1927,6 @@ footer {
   .post-meta { grid-template-columns: 1fr; }
   .post-content { font-size: 1rem; }
   .callouts { grid-template-columns: 1fr; }
-  .post-reader { --reader-page-height: min(700px, calc(100svh - 220px)); --rule-step: 1.5625rem; margin: 28px 0 46px; }
-  /* Two rows, not three: every pixel the chrome gives back is a line of
-     prose the page can hold, and a short page is what sends a phone to the
-     scroll view. */
-  .reader-toolbar { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "label label view" "status progress view"; gap: 7px 12px; margin-bottom: 12px; align-items: center; }
-  .reader-label { grid-area: label; }
-  .reader-status { grid-area: status; justify-self: start; }
-  .reader-progress { grid-area: progress; align-self: center; }
-  .reader-view { grid-area: view; align-self: center; }
-  .reader-stage::before { box-shadow: 0 1px 0 var(--sheet-edge), 0 3px 0 var(--sheet), 0 18px 30px -10px rgba(43, 45, 35, .26); }
-  /* A phone is one sheet wide, so the leaf that turns covers the whole stage
-     and stands nearer the eye than a sheet on a spread does. */
-  .reader-turn { perspective: 1250px; }
-  .reader-page { flex-basis: 100%; scroll-snap-align: start; border-radius: 12px; }
-  .reader-spine { display: none; }
-  .reader-article-page::before { left: 30px; }
-  .reader-cover-page .post-hero { padding: 0 22px 18px; }
-  .reader-cover-page .post-title.cover-title { font-size: clamp(1.4rem, 6.4vw, 2rem); }
-  .cover-print { padding: 18px 0 14px; }
-  .cover-emblem { width: 104px; height: 80px; margin-bottom: 16px; }
-  .reader-cover-page .post-title.cover-title-long { font-size: clamp(1.1rem, 5.2vw, 1.5rem); }
-  .reader-page-header { padding: 16px 22px 0 44px; }
-  .reader-page-body { padding: 12px 22px 22px 44px; }
-  .reader-continuous { padding: 18px 22px 28px 44px; }
-  .reader-continuous::before { left: 30px; }
-  .notebook-prose { font-size: .97rem; }
-  .notebook-prose h2::before { left: -28px; width: 16px; }
-  .notebook-prose h3::before { left: -24px; width: 9px; }
-  .reader-page-footer { padding: 0 22px 14px; }
-  /* The two buttons share one row and the restart link drops below them, so
-     a label can never wrap a button onto a second line. */
-  .reader-pager { flex-wrap: wrap; margin-top: 13px; gap: 8px; }
-  .reader-button { flex: 1; min-height: 44px; padding-right: 8px; padding-left: 8px; font-size: .88rem; white-space: nowrap; }
-  .reader-pager-middle { order: 3; flex-basis: 100%; }
-  .reader-pager-middle:empty { display: none; }
-  .reader-hint { display: none; }
-  .reader-note-nav { grid-template-columns: 1fr; gap: 14px; }
-  .note-nav-next, .note-nav-empty:last-child { text-align: left; }
-  .notebook-spread { margin: 34px 0 48px; border-radius: 11px; }
-  .notebook-spread .post-hero { margin: 0; padding: 34px 24px 34px; }
-  .notebook-spread .post-title { font-size: clamp(2.65rem, 13vw, 4rem); }
-  .notebook-summary { font-size: .98rem; }
-  .notebook-spread .post-meta { grid-template-columns: 1fr 1fr; }
-  .notebook-spread .post-content { padding: 36px 24px 42px; }
-  .post-note-nav { padding: 18px 24px 20px; flex-direction: column; gap: 10px; }
   .site-shell > footer { margin-right: 20px; margin-left: 20px; }
 }
 
@@ -2463,36 +2111,28 @@ footer {
 }
 
 /* =========================================================
-   Print: a field note prints as the document it is, not as
-   whichever spread happened to be open.
+/* =========================================================
+   Print: a field note prints as the page of prose it is.
    ========================================================= */
 @media print {
   .page-masthead,
   .site-footer,
-  footer,
-  .reader-toolbar,
-  .reader-stage,
-  .reader-pager,
-  .reader-note-nav,
+  footer:not(blockquote footer),
   .trail-mark,
-  .scene-art { display: none !important; }
-  .post-reader[data-mode] .reader-continuous { display: block; }
-  .reader-continuous {
-    padding: 0;
-    border-radius: 0;
-    background: none;
-    box-shadow: none;
-  }
-  .reader-continuous::before { display: none; }
-  .notebook-prose { color: #1d1f1c; font-size: 11pt; }
-  .notebook-prose h2,
-  .notebook-prose h3 { break-after: avoid-page; }
-  .notebook-prose figure,
-  .notebook-prose img,
-  .notebook-prose pre,
-  .notebook-prose blockquote { break-inside: avoid; }
-  .notebook-prose pre { max-height: none; }
-  body { background: #fff; }
+  .menu-btn,
+  .scene-art,
+  .note-bar,
+  .note-contents,
+  .note-after { display: none !important; }
+  body,
+  .note-page { background: #fff; }
+  .note-shell > header.site { padding-inline: 0; }
+  .note-head { width: auto; padding-top: 12mm; }
+  .note-head::after { margin: 8mm auto; }
+  .note-body { width: auto; color: #1d1f1c; font-size: 11.5pt; }
+  .note-body > :is(h2, h3) { break-after: avoid-page; }
+  .note-body :is(figure, img, pre, blockquote) { break-inside: avoid; }
+  .note-body pre { overflow: visible; white-space: pre-wrap; }
   @page { margin: 18mm 16mm; }
 }
 

@@ -16,30 +16,30 @@
 <pre id="log">running…</pre>
 <div id="frames"></div>
 <script>
-/* Checks the reader against the promises it makes, in a real browser, at real
-   sizes. Run it with tools/check-reader.sh (or open it and read the list).
+/* Checks every field note against the promises the page makes, in a real
+   browser, at real sizes. Run it with tools/check-reader.sh (or open it and
+   read the list).
 
    The invariants:
-     1. the reader settles into a real view (never stuck loading)
-     2. a spread keeps every character of the article
-     3. a spread keeps every picture in the article
-     4. no page hides its own content
-     5. the controls are reachable without scrolling
-     6. a phone turns one sheet at a time rather than two
-     7. no duplicate ids leak out of the page copies
-     8. every outline entry knows its page                                    */
+     1. the note is set in Newsreader, in a column no wider than the measure
+     2. nothing makes the page scroll sideways (code scrolls in its own box)
+     3. every picture carries its size, so nothing jumps as it loads
+     4. the contents lists every section, and every entry lands on its heading
+        below the running head, not under it
+     5. the running head names the section being read and fills as the note
+        is read, all the way to the end
+     6. the running head opens into the contents and closes on a choice
+     7. the note knows its number and its neighbours from posts.json
+     8. no duplicate ids                                                      */
 
 const SIZES = [
-  { label: "desktop", width: 1440, height: 900, expect: "spread" },
-  { label: "laptop", width: 1280, height: 800, expect: "spread" },
-  { label: "small-laptop", width: 1180, height: 720, expect: "any" },
-  { label: "phone", width: 390, height: 844, expect: "spread" },
-  { label: "small-phone", width: 375, height: 667, expect: "any" }
+  { label: "desktop", width: 1440, height: 900 },
+  { label: "laptop", width: 1280, height: 800 },
+  { label: "tablet", width: 820, height: 1180 },
+  { label: "phone", width: 390, height: 844 },
+  { label: "small-phone", width: 375, height: 667 }
 ];
-
-// The stylesheet lays a phone out one page wide, so a turn there moves one
-// sheet and the status counts one page. Keep this in step with READER_PHONE.
-const columnsAt = (width) => (width <= 720 ? 1 : 2);
+const MEASURE = 714; // --note-measure in site.css
 
 const log = document.getElementById("log");
 const frames = document.getElementById("frames");
@@ -54,7 +54,13 @@ function record(ok, name, detail) {
     .join("\n");
 }
 
-const strip = (text) => text.replace(/\s+/g, "");
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+// Headless Chrome on virtual time does not reliably paint frames, so a scroll
+// event may never arrive on its own: deliver one, then let the page answer.
+const scrolled = async (win) => {
+  win.dispatchEvent(new Event("scroll"));
+  await wait(30);
+};
 
 function load(src, width, height) {
   return new Promise((resolve, reject) => {
@@ -65,14 +71,16 @@ function load(src, width, height) {
     frame.src = src;
     frame.addEventListener("load", () => {
       const started = Date.now();
+      // Settled once the series has been read (the kicker gets its number)
+      // and the fonts are in.
       const settle = () => {
         const doc = frame.contentDocument;
-        const reader = doc && doc.querySelector(".post-reader");
-        if (reader && reader.dataset.mode && reader.dataset.mode !== "loading") {
-          setTimeout(() => resolve(frame), 120);
+        const kicker = doc && doc.querySelector(".note-kicker");
+        if (kicker && /No\. \d+/.test(kicker.textContent)) {
+          doc.fonts.ready.then(() => setTimeout(() => resolve(frame), 120));
           return;
         }
-        if (Date.now() - started > 6000) { reject(new Error("reader never settled")); return; }
+        if (Date.now() - started > 6000) { reject(new Error("note never settled")); return; }
         setTimeout(settle, 80);
       };
       settle();
@@ -82,92 +90,112 @@ function load(src, width, height) {
   });
 }
 
-async function checkPost(path, size) {
-  const name = `${path.split("/").pop().replace(".html", "")} @ ${size.label}`;
+async function checkPost(post, posts, size) {
+  const name = `${post.path.split("/").pop().replace(".html", "")} @ ${size.label}`;
   let frame;
   try {
-    // #p1 pins the first spread so a remembered position cannot skew a run.
-    frame = await load(`../${path}#p1`, size.width, size.height);
+    frame = await load(`../${post.path}`, size.width, size.height);
   } catch (error) {
     record(false, name, error.message);
     return;
   }
-
+  const win = frame.contentWindow;
   const doc = frame.contentDocument;
-  const reader = doc.querySelector(".post-reader");
-  const mode = reader.dataset.mode;
-  const article = doc.querySelector(".reader-continuous .post-content");
+  doc.documentElement.style.scrollBehavior = "auto";
+  const body = doc.querySelector(".note-body");
+  const bar = doc.querySelector(".note-bar");
+  const fill = doc.querySelector(".note-progress > span");
 
-  if (size.expect !== "any") {
-    record(mode === size.expect, `${name}: mode`, `expected ${size.expect}, got ${mode}${reader.dataset.fallback ? " (" + reader.dataset.fallback + ")" : ""}`);
+  /* 1. Type and measure */
+  record(doc.fonts.check("21px Newsreader"), `${name}: Newsreader loaded`);
+  const column = body.getBoundingClientRect().width;
+  const viewport = doc.documentElement.clientWidth; // less any scrollbar
+  record(column <= MEASURE + 0.5 && column >= Math.min(MEASURE, viewport - 44) - 0.5,
+    `${name}: column on the measure`, `${Math.round(column)}px`);
+
+  /* 2. No sideways scroll */
+  const over = doc.documentElement.scrollWidth - doc.documentElement.clientWidth;
+  record(over <= 0, `${name}: no sideways scroll`, `${over}px over`);
+
+  /* 3. Sized pictures */
+  const unsized = [...body.querySelectorAll("img")].filter((img) => !img.getAttribute("width") || !img.getAttribute("height"));
+  record(unsized.length === 0, `${name}: pictures sized`, unsized.map((img) => img.getAttribute("src")).join(", "));
+
+  /* 4. Contents */
+  const sections = [...body.querySelectorAll(":scope > h2")];
+  const headings = sections.length ? sections : [...body.querySelectorAll(":scope > h3")];
+  const entries = [...doc.querySelectorAll(".note-contents a")];
+  if (headings.length > 1) {
+    record(entries.length === headings.length, `${name}: contents lists every section`, `${entries.length} of ${headings.length}`);
   } else {
-    record(mode === "spread" || mode === "continuous", `${name}: mode`, mode);
+    record(entries.length === 0, `${name}: no contents for an undivided note`, `${entries.length} entries`);
+  }
+  const barBottom = () => bar.getBoundingClientRect().bottom;
+  for (const [index, link] of entries.entries()) {
+    const target = doc.getElementById(decodeURIComponent(link.hash.slice(1)));
+    if (target !== headings[index]) {
+      record(false, `${name}: entry ${index + 1} lands on its heading`, `${link.hash} → ${target ? target.textContent : "nothing"}`);
+      continue;
+    }
+    link.click();
+    await scrolled(win);
+    const top = target.getBoundingClientRect().top;
+    // A heading near the end may not reach the top: it only has to be in view.
+    const inView = top >= barBottom() - 0.5 && top < size.height;
+    record(inView, `${name}: entry ${index + 1} clears the running head`, `heading at ${Math.round(top)}, head ends ${Math.round(barBottom())}`);
   }
 
-  const pager = doc.querySelector(".reader-pager");
-  const controls = mode === "spread" ? pager : doc.querySelector(".reader-toolbar");
-  const bottom = Math.round(controls.getBoundingClientRect().bottom);
-  record(bottom <= size.height, `${name}: controls reachable`, `bottom ${bottom} vs viewport ${size.height}`);
+  /* 5. Following the reader */
+  win.scrollTo(0, 0);
+  await scrolled(win);
+  const scale = () => {
+    const match = /scaleX\(([\d.]+)\)/.exec(fill.style.transform);
+    return match ? Number(match[1]) : NaN;
+  };
+  record(scale() === 0, `${name}: progress starts empty`, fill.style.transform);
+  const barName = doc.querySelector(".note-bar-name");
+  if (headings.length) {
+    const last = headings[headings.length - 1];
+    win.scrollTo(0, win.scrollY + last.getBoundingClientRect().top - 120);
+    await scrolled(win);
+    const shown = barName.textContent.trim();
+    // At the foot of a short note the last heading may never get near the top;
+    // then the head should at least have moved on from the first section.
+    const reached = last.getBoundingClientRect().top <= Math.min(size.height * 0.35, 260);
+    const expected = reached ? last.textContent.trim() : null;
+    record(expected ? shown === expected : shown !== headings[0].textContent.trim() || headings.length === 1,
+      `${name}: running head follows`, `shows “${shown}”`);
+  }
+  win.scrollTo(0, doc.documentElement.scrollHeight);
+  await scrolled(win);
+  record(scale() === 1, `${name}: progress fills by the end`, fill.style.transform);
 
-  if (mode === "spread") {
-    const bodies = [...doc.querySelectorAll(".reader-page-body")];
-    const paged = strip(bodies.map((body) => body.textContent).join(""));
-    const source = strip(article.textContent);
-    record(paged === source, `${name}: text intact`, `${paged.length} of ${source.length} characters`);
-
-    const columns = columnsAt(size.width);
-    const laidOut = doc.querySelector(".reader-page").getBoundingClientRect().width;
-    const stageWidth = doc.querySelector(".reader-stage").getBoundingClientRect().width;
-    record(Math.abs(laidOut - stageWidth / columns) < 2, `${name}: ${columns} page(s) across`,
-      `page ${Math.round(laidOut)}px of a ${Math.round(stageWidth)}px stage`);
-
-    const pagedImages = doc.querySelectorAll(".reader-page-body img").length;
-    const sourceImages = article.querySelectorAll("img").length;
-    record(pagedImages === sourceImages, `${name}: pictures intact`, `${pagedImages} of ${sourceImages}`);
-
-    // "Hidden" means content drawn below the page's content box, which is what
-    // a reader would actually lose; trailing margins do not count.
-    const hiddenBy = (body) => {
-      const last = body.lastElementChild;
-      if (!last) return 0;
-      const limit = body.getBoundingClientRect().bottom
-        - parseFloat(frame.contentWindow.getComputedStyle(body).paddingBottom);
-      return Math.round(last.getBoundingClientRect().bottom - limit);
-    };
-    // Safety: a page that runs long must be scrollable, never silently cut.
-    const clipped = bodies.filter((body) =>
-      !body.classList.contains("is-overflowing") && hiddenBy(body) > 1);
-    // Quality: needing that escape hatch at all means the measuring was off.
-    const strained = bodies.filter((body) => body.classList.contains("is-overflowing"));
-    record(strained.length === 0, `${name}: pages measured true`, `${strained.length} page(s) needed the overflow fallback`);
-    record(clipped.length === 0, `${name}: nothing clipped`, clipped
-      .map((body) => `page ${bodies.indexOf(body) + 2} over by ${hiddenBy(body)}px [${
-        [...body.children].map((child) => child.tagName + ":" + Math.round(child.getBoundingClientRect().height)).join(" ")}]`)
-      .join("; ") || "0 page(s) overflow");
-
-    const empty = bodies.filter((body) => !body.children.length);
-    record(empty.length === 0, `${name}: no blank pages`, `${empty.length} empty`);
-
-    const outlinePages = [...doc.querySelectorAll(".outline-page")];
-    const unresolved = outlinePages.filter((label) => !label.textContent.trim());
-    record(unresolved.length === 0, `${name}: outline resolves`, `${unresolved.length} entries without a page`);
-    // Turning has to move the spread and say so.
-    const track = doc.querySelector(".reader-track");
-    const startLeft = track.scrollLeft;
-    doc.querySelector(".reader-next").click();
-    await new Promise((resolve) => setTimeout(resolve, 900));
-    record(track.scrollLeft > startLeft, `${name}: next turns the page`, `scrollLeft ${startLeft} → ${track.scrollLeft}`);
-    const turnedStatus = doc.querySelector(".reader-status").textContent;
-    record(new RegExp(`Pages? ${1 + columns}\\b`).test(turnedStatus), `${name}: status follows the turn`, turnedStatus);
-    doc.querySelector(".reader-prev").click();
-    await new Promise((resolve) => setTimeout(resolve, 900));
-    record(track.scrollLeft === startLeft, `${name}: previous comes back`, `scrollLeft ${track.scrollLeft}`);
-  } else {
-    record(!!article && article.offsetHeight > 0, `${name}: article visible`, "scroll view shows the note");
+  /* 6. The running head opens into the contents */
+  if (headings.length) {
+    const summary = bar.querySelector("summary");
+    const menu = bar.querySelector(".note-bar-menu");
+    record(summary.getBoundingClientRect().height >= 40, `${name}: running head is a usable target`,
+      `${Math.round(summary.getBoundingClientRect().height)}px tall`);
+    summary.click();
+    await scrolled(win);
+    record(bar.open && menu.getBoundingClientRect().height > 0, `${name}: running head opens`);
+    const choice = menu.querySelectorAll("a")[0];
+    choice.click();
+    await scrolled(win);
+    record(!bar.open, `${name}: a choice closes it`);
   }
 
-  record(reader.dataset.mode === mode, `${name}: view stays put`, `settled as ${mode}, now ${reader.dataset.mode}`);
+  /* 7. Place in the series */
+  const sorted = [...posts].sort((a, b) => new Date(a.date) - new Date(b.date));
+  const position = sorted.findIndex((entry) => entry.path === post.path);
+  const kicker = doc.querySelector(".note-kicker").textContent.trim();
+  record(kicker === `Field Note No. ${String(position + 1).padStart(2, "0")}`, `${name}: numbered in the series`, kicker);
+  const earlier = doc.querySelector(".note-neighbour.is-earlier .note-neighbour-title")?.textContent;
+  const later = doc.querySelector(".note-neighbour.is-later .note-neighbour-title")?.textContent;
+  record(earlier === sorted[position - 1]?.title && later === sorted[position + 1]?.title,
+    `${name}: neighbours`, `${earlier || "—"} | ${later || "—"}`);
 
+  /* 8. Unique ids */
   const ids = [...doc.querySelectorAll("[id]")].map((node) => node.id);
   const duplicates = ids.filter((id, index) => ids.indexOf(id) !== index);
   record(duplicates.length === 0, `${name}: unique ids`, duplicates.join(", "));
@@ -179,7 +207,7 @@ async function checkPost(path, size) {
   const posts = await fetch("../posts/posts.json").then((response) => response.json());
   for (const size of SIZES) {
     for (const post of posts) {
-      await checkPost(post.path, size);
+      await checkPost(post, posts, size);
     }
   }
   lines.push("");
