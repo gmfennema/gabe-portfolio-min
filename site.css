@@ -23,6 +23,13 @@
   --display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
   --body: "Avenir Next", Avenir, "Segoe UI", Helvetica, Arial, sans-serif;
   --utility: "Avenir Next Condensed", "Arial Narrow", var(--body);
+  /* Field notes and their index */
+  --note-text: #2c332f;
+  --note-muted: #666c66;
+  --note-rule: #ddd3c2;
+  --note-accent: #a4572c; /* rust, deep enough for small type */
+  --note-mark: #c08a63;   /* rust for rules and ornaments */
+  --note-serif: Newsreader, "Iowan Old Style", "Palatino Linotype", Georgia, serif;
 }
 
 * { box-sizing: border-box; }
@@ -616,152 +623,56 @@ header.site {
   opacity: .72;
 }
 
-/* Field Notes */
-.notes-layout { margin: -8px 0 72px; }
-.field-notes-index { display: grid; gap: 58px; }
-.featured-notes h2,
-.notes-archive > h2 {
-  margin: 0 0 18px;
-  color: var(--ink);
-  font-family: var(--display);
-  font-size: clamp(1.65rem, 3vw, 2.15rem);
-  line-height: 1.05;
-}
-.note-feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; justify-items: center; }
-.note-book {
-  position: relative;
-  display: block;
-  width: min(100%, 224px);
-  color: var(--ink-soft);
-  text-decoration: none;
-}
-/* A closed memo book: kraft cover, rounded corners, staples on the spine edge. */
-.note-book-cover {
-  position: relative;
-  display: flex;
-  width: 100%;
-  aspect-ratio: 7 / 10;
-  padding: 24px 18px 20px 26px;
-  flex-direction: column;
-  align-items: center;
-  overflow: hidden;
-  border-radius: 3px 11px 11px 3px;
-  color: #1d1f1c;
-  background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .2 0 0 0 0 .15 0 0 0 0 .05 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E") 0 0 / 220px 220px,
-    linear-gradient(160deg, #d4c19f 0%, #c2ab84 100%);
-  box-shadow:
-    inset 8px 0 14px -10px rgba(60, 45, 20, .45),
-    0 1px 0 #ece3d0,
-    0 3px 0 #fdfaf2,
-    0 4px 0 #ece3d0,
-    0 18px 30px -12px rgba(43, 45, 35, .35);
-  text-align: center;
-  transition: transform .28s cubic-bezier(.2, .7, .2, 1), box-shadow .28s ease;
-}
-.note-book-spine { position: absolute; top: 0; bottom: 0; left: 5px; width: 4px; }
-.note-book-staple {
-  position: absolute;
-  left: 0;
-  width: 4px;
-  height: 18px;
-  border-radius: 2px;
-  background: linear-gradient(90deg, #8d8a80, #d8d5cb 45%, #a29e93);
-  box-shadow: 0 1px 1px rgba(43, 45, 35, .35), inset 0 0 0 .5px rgba(60, 55, 45, .5);
-}
-.note-book-staple:nth-child(1) { top: 12%; }
-.note-book-staple:nth-child(2) { top: 50%; margin-top: -9px; }
-.note-book-staple:nth-child(3) { bottom: 12%; }
-.note-book-emblem {
-  width: 84px;
-  height: 62px;
-  margin-bottom: 12px;
-  object-fit: contain;
-  opacity: .9;
-  mix-blend-mode: multiply;
-  transition: transform .28s ease;
-}
-.note-book-title {
+/* Field Notes index: the notebook's contents page, set like the notes. */
+.notes-contents { max-width: 780px; margin: 8px auto 0; font-family: var(--note-serif); }
+.notes-lede { display: flex; flex-direction: column; align-items: center; gap: 16px; margin: 0 0 18px; text-align: center; }
+.notes-label {
   margin: 0;
-  color: #1d1f1c;
-  font-family: Futura, "Avenir Next", "Century Gothic", "Trebuchet MS", sans-serif;
-  font-size: clamp(.82rem, 1.15vw, .98rem);
-  font-weight: 700;
-  letter-spacing: .11em;
-  line-height: 1.18;
-  text-transform: uppercase;
-  text-wrap: balance;
-}
-.note-book-title-long { font-size: clamp(.72rem, .95vw, .82rem); letter-spacing: .09em; }
-.note-book-stamp {
-  display: block;
-  margin-top: 9px;
-  font-family: Futura, "Avenir Next", "Century Gothic", "Trebuchet MS", sans-serif;
-  font-size: .5rem;
-  font-weight: 700;
-  letter-spacing: .05em;
-  line-height: 1.5;
-}
-/* The paper belly band wrapped around the lower half of the book. */
-.note-book-band {
-  position: absolute;
-  right: -2px;
-  bottom: 13%;
-  left: -2px;
-  z-index: 2;
-  display: -webkit-box;
-  padding: 10px 14px 11px;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 4;
-  color: var(--ink-soft);
-  background:
-    linear-gradient(90deg, rgba(60, 45, 20, .28), transparent 3px calc(100% - 3px), rgba(60, 45, 20, .28)),
-    var(--paper-soft);
-  box-shadow: 0 -1px 3px -1px rgba(43, 45, 35, .3), 0 3px 5px -3px rgba(43, 45, 35, .4);
-  font-size: .7rem;
+  padding-left: .24em; /* letter-spacing trails the last letter; this centres the word */
+  color: var(--note-muted);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: .24em;
   line-height: 1.4;
-  text-align: center;
-  transition: transform .28s cubic-bezier(.2, .7, .2, 1);
+  text-transform: uppercase;
 }
-.note-book:hover { color: var(--ink-soft); }
-.note-book:hover .note-book-cover,
-.note-book:hover .note-book-band { transform: translateY(-6px) rotate(-1.2deg); }
-.note-book:hover .note-book-cover {
-  box-shadow:
-    inset 8px 0 14px -10px rgba(60, 45, 20, .45),
-    0 1px 0 #ece3d0,
-    0 3px 0 #fdfaf2,
-    0 4px 0 #ece3d0,
-    0 26px 36px -12px rgba(43, 45, 35, .42);
-}
-.note-book:hover .note-book-emblem { transform: scale(1.04) rotate(-2deg); }
-.note-book:focus-visible { outline: none; }
-.note-book:focus-visible .note-book-cover { outline: 3px solid rgba(180, 102, 53, .7); outline-offset: 4px; }
-.notes-archive { margin-top: 0; }
-.notes-archive > h2 { display: flex; align-items: center; gap: 16px; }
-.notes-archive > h2::after { height: 1px; flex: 1; content: ""; background: var(--line); }
-.archive-year { display: grid; grid-template-columns: 132px 1fr; gap: 26px; padding: 26px 0 0; border-top: 1px solid var(--line); }
-.archive-year + .archive-year { margin-top: 12px; }
-.archive-year h3 { margin: 0; color: var(--ink); font-family: var(--display); font-size: clamp(2rem, 4vw, 3rem); line-height: 1; }
-.archive-year-list { min-width: 0; }
-.archive-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto 24px;
-  gap: 18px;
+.notes-count { margin: 0; color: var(--note-muted); font-size: 18px; font-style: italic; }
+.notes-year {
+  display: flex;
   align-items: center;
-  padding: 0 4px 17px;
-  color: var(--ink-soft);
+  gap: 18px;
+  margin: 46px 0 6px;
+  color: var(--note-accent);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: .3em;
+  line-height: 1.4;
+}
+.notes-year span { margin-right: -.3em; }
+.notes-year::before,
+.notes-year::after { flex: 1; height: 1px; content: ""; background: var(--note-rule); }
+.notes-list { margin: 0; padding: 0; list-style: none; }
+.notes-entry {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  column-gap: 22px;
+  padding: 16px 0 18px;
+  color: inherit;
   text-decoration: none;
 }
-.archive-row + .archive-row { padding-top: 17px; border-top: 1px solid rgba(212, 201, 181, .72); }
-.archive-row-copy { display: grid; gap: 3px; min-width: 0; }
-.archive-row strong { overflow: hidden; color: var(--ink); font-family: var(--display); font-size: 1.14rem; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
-.archive-row-copy > span { overflow: hidden; color: var(--muted); font-size: .84rem; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
-.archive-row time { color: var(--muted); font-size: .77rem; white-space: nowrap; }
-.archive-arrow { color: var(--rust); font-size: 1.18rem; opacity: 0; transform: translateX(-4px); transition: opacity .18s ease, transform .18s ease; }
-.archive-row:hover { color: var(--rust); }
-.archive-row:hover .archive-arrow { opacity: 1; transform: translateX(0); }
+.notes-side { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; padding-top: 9px; text-align: right; }
+.notes-no { color: var(--note-accent); font-size: 12px; font-weight: 500; letter-spacing: .16em; text-transform: uppercase; }
+.notes-date { color: var(--note-muted); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; white-space: nowrap; }
+.notes-line { display: flex; align-items: last baseline; gap: 12px; }
+.notes-title { color: var(--ink); font-size: 27px; font-style: italic; line-height: 1.2; text-wrap: balance; transition: color .2s ease; }
+/* A dotted leader out to the reading time, as a contents page runs out to its page numbers. */
+.notes-dots { flex: 1; min-width: 24px; border-bottom: 1px dotted #b3a78f; transform: translateY(-6px); }
+.notes-min { color: var(--note-muted); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; white-space: nowrap; }
+.notes-dek { display: block; max-width: 34em; margin-top: 7px; color: var(--note-muted); font-size: 17.5px; line-height: 1.5; text-wrap: pretty; }
+.notes-entry:hover .notes-title { color: var(--note-accent); }
+.notes-entry:hover .notes-dots { border-bottom-color: var(--note-mark); }
 
 /* Photography */
 .empty-gallery {
@@ -1370,12 +1281,6 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
 
 .note-page {
   --note-ground: #f8f4ec;
-  --note-text: #2c332f;
-  --note-muted: #666c66;
-  --note-rule: #ddd3c2;
-  --note-accent: #a4572c; /* rust, deep enough for small type */
-  --note-mark: #c08a63;   /* rust for rules and ornaments */
-  --note-serif: Newsreader, "Iowan Old Style", "Palatino Linotype", Georgia, serif;
   --note-measure: 714px;
   background: var(--note-ground);
 }
@@ -1501,16 +1406,17 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
   font-family: var(--note-serif);
   text-align: center;
 }
-.note-head::after {
+.note-head::after { margin: 52px auto; content: ""; }
+.note-head::after,
+.notes-ornament {
   display: block;
   width: 120px;
   height: 9px;
-  margin: 52px auto;
-  content: "";
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 9' fill='none' stroke='%23c08a63'%3E%3Cpath d='M0 4.5h50M70 4.5h50M60 .9l3.6 3.6L60 8.1l-3.6-3.6z'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 .note-kicker {
   margin: 0 0 28px;
+  padding-left: .24em;
   color: var(--note-accent);
   font-size: 12.5px;
   font-weight: 500;
@@ -1540,6 +1446,7 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
 }
 .note-meta {
   margin: 28px 0 0;
+  padding-left: .18em;
   color: var(--note-muted);
   font-size: 12.5px;
   letter-spacing: .18em;
@@ -1555,6 +1462,7 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
 }
 .note-contents-label {
   margin: 0 0 18px;
+  padding-left: .24em;
   color: var(--note-muted);
   font-size: 12px;
   font-weight: 500;
@@ -1744,7 +1652,7 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
 .note-after:has(.is-earlier):has(.is-later) .note-all { order: 3; flex-basis: 100%; text-align: center; }
 .note-foot {
   margin: 0;
-  padding: 96px 22px 48px;
+  padding: 96px 22px 48px calc(22px + .18em);
   border-top: 0;
   color: var(--note-muted);
   font-family: var(--note-serif);
@@ -1898,25 +1806,13 @@ footer {
   .logos-scroller { margin-right: -2px; margin-left: -2px; padding-right: 2px; padding-left: 2px; }
   .logos-track { width: max-content; justify-content: flex-start; gap: 18px; }
   .logo-item { flex-basis: 112px; width: 112px; height: 48px; }
-  .field-notes-index { gap: 44px; }
-  .note-feature-grid { grid-template-columns: 1fr; gap: 22px; }
-  .note-book { display: grid; width: min(100%, 320px); grid-template-columns: 124px minmax(0, 1fr); justify-items: start; align-items: center; gap: 18px; }
-  .note-book-cover { padding: 16px 10px 14px 16px; border-radius: 2px 9px 9px 2px; }
-  .note-book-emblem { width: 58px; height: 44px; margin-bottom: 8px; }
-  .note-book-title { font-size: .72rem; letter-spacing: .09em; }
-  .note-book-title-long { font-size: .62rem; }
-  .note-book-stamp { margin-top: 6px; font-size: .46rem; }
-  .note-book-staple { height: 13px; }
-  .note-book-band { position: static; display: block; padding: 0; -webkit-line-clamp: none; color: var(--muted); background: none; box-shadow: none; font-size: .9rem; text-align: left; }
-  .note-book:hover .note-book-band { transform: none; }
-  .note-book:hover .note-book-cover { transform: translateY(-3px) rotate(-1deg); }
-  .archive-year { grid-template-columns: 1fr; gap: 16px; padding-top: 22px; }
-  .archive-year h3 { font-size: 2.5rem; }
-  .archive-row { grid-template-columns: minmax(0, 1fr) 22px; gap: 12px; padding-bottom: 14px; }
-  .archive-row + .archive-row { padding-top: 14px; }
-  .archive-row time { grid-column: 1; grid-row: 2; font-size: .75rem; }
-  .archive-arrow { grid-column: 2; grid-row: 1 / span 2; opacity: 1; transform: none; }
-  .archive-row-copy > span { display: none; }
+  .notes-year { margin-top: 36px; }
+  .notes-entry { grid-template-columns: 1fr; padding: 14px 0 16px; }
+  .notes-side { flex-direction: row; align-items: baseline; gap: 10px; padding: 0 0 4px; text-align: left; }
+  .notes-date::before { margin-right: 10px; color: var(--note-mark); content: "·"; content: "·" / ""; }
+  .notes-title { font-size: 23px; }
+  .notes-min { font-size: 12px; }
+  .notes-dek { font-size: 16.5px; }
   .empty-gallery { min-height: 370px; padding: 32px 22px; }
   .about-hero { grid-template-columns: 1fr; margin: 42px 0 58px; }
   .about-portrait-wrap { width: min(330px, 92%); margin: 0 auto; }
@@ -2133,6 +2029,7 @@ footer {
   .note-body > :is(h2, h3) { break-after: avoid-page; }
   .note-body :is(figure, img, pre, blockquote) { break-inside: avoid; }
   .note-body pre { overflow: visible; white-space: pre-wrap; }
+  .reveal { opacity: 1 !important; translate: none !important; }
   @page { margin: 18mm 16mm; }
 }
 

@@ -17,7 +17,8 @@ Serve the folder and open it — nothing to compile:
 python3 -m http.server 8000
 ```
 
-Posts are hand-authored HTML in `posts/`, listed in `posts/posts.json` and
+Posts are hand-authored HTML in `posts/`, listed in `posts/posts.json` (title,
+date, path, summary, and the reading time `tools/reading-times.py` stamps) and
 `sitemap.xml`. Projects work the same way in `projects/`. Every page carries
 Open Graph and Twitter card tags with an absolute `og:url` and the shared card
 image, `https://gabefen.com/assets/og-woods.jpg`; copy them into new pages. The
@@ -26,14 +27,15 @@ straight from the two JSON files.
 
 ## Before you commit
 
-Three small tools keep the things that are easy to forget honest. All of them
+Four small tools keep the things that are easy to forget honest. All of them
 take `--check` and exit non-zero, so they can gate a deploy.
 
 | Command | What it does |
 | --- | --- |
 | `python3 tools/version-assets.py` | Rewrites the `?v=` on shared and woods asset links to the files' content hash. **Run this whenever any CSS or JS file changes** — otherwise browsers keep the copy they already have and the change never reaches anyone. New woods scripts must be classic scripts linked from `woods.html` (and listed in the tool), not ES-module imports, or they escape the versioning. |
 | `python3 tools/size-images.py` | Stamps `width`/`height` on every `<img>` from the file on disk. Run after adding pictures: an unsized picture holds no room until it loads, then shoves the text down under the reader — and moves the running head on with it. |
-| `tools/check-reader.sh` | Runs the field-note invariants in headless Chrome across every post at five screen sizes. Needs Chrome or Chromium (`CHROME=/path/to/chrome` to point at one). |
+| `python3 tools/reading-times.py` | Counts each note's words the way `site.js` does and writes its reading time into `posts/posts.json` as `minutes`. Run after adding or editing a note: the index reads the minutes from there, the note counts its own, and they should agree. |
+| `tools/check-reader.sh` | Runs the field-note invariants in headless Chrome across every post and the Field Notes index at five screen sizes. Needs Chrome or Chromium (`CHROME=/path/to/chrome` to point at one). |
 
 ## Field notes
 
@@ -73,12 +75,20 @@ without JavaScript. Everything is in `site.css` (the `.note-*` rules) and
 - **Pictures** are `<figure><img width height></figure>` and take their look
   from the stylesheet, not inline styles. Blockquote sources go in a `<footer>`
   inside the `<blockquote>`, with the work in `<cite>`.
+- **The index is the notebook's contents page.** `field-notes.html` keeps its
+  lakeside masthead; below it `renderFieldNotes()` lists every note from
+  `posts/posts.json`, newest first, under a rule for each year: the note's
+  number and date in the margin, its title in italics with a dotted leader out
+  to its reading time, and its summary beneath. Same type and colours as the
+  notes (the `--note-*` tokens live on `:root`).
 - **Checked from outside.** `tests/reader-invariants.html` (run it with
   `tools/check-reader.sh`) loads every post at five screen sizes and checks the
   font, the measure, no sideways scroll, sized pictures, that every contents
   entry lands on its heading clear of the running head, that the head follows
   the reader and fills by the end, that it opens and closes, the series number
-  and neighbours, and unique ids.
+  and neighbours, that its reading time matches posts.json, and unique ids. It
+  loads the index at the same sizes and checks every note is listed once,
+  newest first, under its year, with the right number and reading time.
 
 ## The woods (`woods.html`)
 

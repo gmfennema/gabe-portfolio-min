@@ -1,6 +1,12 @@
 (() => {
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+  const make = (tag, className, text) => {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  };
 
   $$("[data-year]").forEach((el) => {
     el.textContent = new Date().getFullYear();
@@ -203,139 +209,79 @@
     }
   }
 
-  function noteIllustration(title) {
-    if (/investments/i.test(title)) return "assets/sketch-coffee.svg";
-    if (/magic circles/i.test(title)) return "assets/sketch-circles.svg";
-    if (/episodic epics/i.test(title)) return "assets/sketch-mountain.svg";
-    return "assets/sketch-notebook.svg";
-  }
+  /* =========================================================
+     Field Notes index
 
-  function formatDate(value) {
-    return new Date(value + "T12:00:00").toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
-  }
+     The notebook's contents page: every note, newest first, under its
+     year, with its number in the series and its reading time. Both come
+     from posts/posts.json; tools/reading-times.py keeps the minutes there
+     in step with the notes themselves.
+     ========================================================= */
+
+  const NUMBER_WORDS = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+    "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty"];
 
   async function renderFieldNotes() {
-    const root = $("#field-notes-root") || $("#writing-root");
+    const root = $("#field-notes-root");
     if (!root) return;
 
     try {
       const response = await fetch("posts/posts.json", { cache: "no-store" });
       if (!response.ok) throw new Error("Could not load field notes");
       const posts = await response.json();
-      posts.sort((a, b) => new Date(b.date) - new Date(a.date));
+      const day = (post) => new Date(`${post.date}T12:00:00`);
+      const oldestFirst = [...posts].sort((a, b) => day(a) - day(b));
+      posts.sort((a, b) => day(b) - day(a));
 
-      const index = document.createElement("div");
-      index.className = "field-notes-index";
+      const contents = make("section", "notes-contents");
+      contents.setAttribute("aria-labelledby", "notes-contents-label");
+      const lede = make("div", "notes-lede");
+      const label = make("h2", "notes-label", "Contents");
+      label.id = "notes-contents-label";
+      const ornament = make("span", "notes-ornament");
+      ornament.setAttribute("aria-hidden", "true");
+      const count = NUMBER_WORDS[posts.length] || String(posts.length);
+      const since = day(oldestFirst[0]).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+      const summary = `${count[0].toUpperCase()}${count.slice(1)} note${posts.length === 1 ? "" : "s"}, ${since} to now`;
+      lede.append(label, ornament, make("p", "notes-count", summary));
+      contents.appendChild(lede);
 
-      const featured = document.createElement("section");
-      featured.className = "featured-notes";
-      featured.setAttribute("aria-labelledby", "featured-notes-heading");
-      const featuredHeading = document.createElement("h2");
-      featuredHeading.id = "featured-notes-heading";
-      featuredHeading.textContent = "Featured notes";
-      featured.appendChild(featuredHeading);
+      let year = null;
+      let list = null;
+      posts.forEach((post) => {
+        const date = day(post);
+        if (date.getFullYear() !== year) {
+          year = date.getFullYear();
+          const heading = make("h3", "notes-year");
+          heading.appendChild(make("span", null, String(year)));
+          list = make("ol", "notes-list");
+          contents.append(heading, list);
+        }
 
-      const featureGrid = document.createElement("div");
-      featureGrid.className = "note-feature-grid";
-      const chronological = [...posts].sort((a, b) => new Date(a.date) - new Date(b.date));
-      posts.slice(0, 3).forEach((post) => {
-        const link = document.createElement("a");
-        link.className = "note-book";
+        const side = make("span", "notes-side");
+        const number = String(oldestFirst.indexOf(post) + 1).padStart(2, "0");
+        const time = make("time", "notes-date", date.toLocaleDateString("en-US", { month: "short", day: "numeric" }));
+        time.dateTime = post.date;
+        side.append(make("span", "notes-no", `No. ${number}`), time);
+
+        const line = make("span", "notes-line");
+        const leader = make("span", "notes-dots");
+        leader.setAttribute("aria-hidden", "true");
+        line.append(make("span", "notes-title", post.title), leader);
+        if (post.minutes) line.appendChild(make("span", "notes-min", `${post.minutes} min`));
+        const main = make("span", "notes-main");
+        main.appendChild(line);
+        if (post.summary) main.appendChild(make("span", "notes-dek", post.summary));
+
+        const link = make("a", "notes-entry");
         link.href = post.path;
-        const number = chronological.indexOf(post) + 1;
-
-        const cover = document.createElement("span");
-        cover.className = "note-book-cover";
-        const spine = document.createElement("span");
-        spine.className = "note-book-spine";
-        spine.setAttribute("aria-hidden", "true");
-        spine.append(
-          Object.assign(document.createElement("span"), { className: "note-book-staple" }),
-          Object.assign(document.createElement("span"), { className: "note-book-staple" }),
-          Object.assign(document.createElement("span"), { className: "note-book-staple" })
-        );
-        const emblem = document.createElement("img");
-        emblem.className = "note-book-emblem";
-        emblem.src = noteIllustration(post.title);
-        emblem.alt = "";
-        const title = document.createElement("h3");
-        title.className = "note-book-title";
-        if (post.title.length > 34) title.classList.add("note-book-title-long");
-        title.textContent = post.title;
-        const stamp = document.createElement("span");
-        stamp.className = "note-book-stamp";
-        const date = document.createElement("time");
-        date.dateTime = post.date;
-        date.textContent = new Date(`${post.date}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-        stamp.append(`Field Note No. ${String(number).padStart(2, "0")} / `, date);
-        cover.append(spine, emblem, title, stamp);
-
-        const summary = document.createElement("span");
-        summary.className = "note-book-band";
-        summary.textContent = post.summary || "";
-
-        link.append(cover, summary);
-        featureGrid.appendChild(link);
-      });
-      featured.appendChild(featureGrid);
-
-      const archive = document.createElement("section");
-      archive.className = "notes-archive";
-      archive.setAttribute("aria-labelledby", "notes-archive-heading");
-      const archiveHeading = document.createElement("h2");
-      archiveHeading.id = "notes-archive-heading";
-      archiveHeading.textContent = "Browse by year";
-      archive.appendChild(archiveHeading);
-
-      const years = posts.reduce((groups, post) => {
-        const year = new Date(`${post.date}T12:00:00`).getFullYear();
-        if (!groups[year]) groups[year] = [];
-        groups[year].push(post);
-        return groups;
-      }, {});
-
-      Object.keys(years).sort((a, b) => b - a).forEach((year) => {
-        const yearSection = document.createElement("section");
-        yearSection.className = "archive-year";
-        yearSection.setAttribute("aria-labelledby", `year-${year}`);
-        const yearHeading = document.createElement("h3");
-        yearHeading.id = `year-${year}`;
-        yearHeading.textContent = year;
-        yearSection.appendChild(yearHeading);
-
-        const yearList = document.createElement("div");
-        yearList.className = "archive-year-list";
-        years[year].forEach((post) => {
-          const link = document.createElement("a");
-          link.className = "archive-row";
-          link.href = post.path;
-          const copy = document.createElement("span");
-          copy.className = "archive-row-copy";
-          const title = document.createElement("strong");
-          title.textContent = post.title;
-          const summary = document.createElement("span");
-          summary.textContent = post.summary || "";
-          copy.append(title, summary);
-          const date = document.createElement("time");
-          date.dateTime = post.date;
-          date.textContent = formatDate(post.date);
-          const arrow = document.createElement("span");
-          arrow.className = "archive-arrow";
-          arrow.setAttribute("aria-hidden", "true");
-          arrow.textContent = "→";
-          link.append(copy, date, arrow);
-          yearList.appendChild(link);
-        });
-        yearSection.appendChild(yearList);
-        archive.appendChild(yearSection);
+        link.append(side, main);
+        const item = make("li");
+        item.appendChild(link);
+        list.appendChild(item);
       });
 
-      index.append(featured, archive);
-      root.replaceChildren(index);
+      root.replaceChildren(contents);
     } catch (error) {
       root.innerHTML = "<p>Field notes could not be loaded right now.</p>";
     }
@@ -353,13 +299,6 @@
      ========================================================= */
 
   const NOTE_WORDS_PER_MINUTE = 220;
-
-  const make = (tag, className, text) => {
-    const node = document.createElement(tag);
-    if (className) node.className = className;
-    if (text !== undefined) node.textContent = text;
-    return node;
-  };
 
   const roman = (n) => [[10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]].reduce((out, [value, glyph]) => {
     while (n >= value) { out += glyph; n -= value; }
@@ -714,7 +653,7 @@
 
   /* ---- Scroll reveals for cards, rows, and notes (including ones rendered later) ---- */
   function setupReveals() {
-    const selector = ".section-heading, .pinned-card, .register-row, .note-book, .notes-archive li, .photo-item, .service-card, .logos";
+    const selector = ".section-heading, .pinned-card, .register-row, .notes-list li, .photo-item, .service-card, .logos";
     if (!("IntersectionObserver" in window) || prefersStill()) return;
     const io = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {

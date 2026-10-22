@@ -3,54 +3,63 @@
     "title": "Judgment vs. Discernment",
     "date": "2026-09-04",
     "path": "posts/judgment-vs-discernment.html",
-    "summary": "Judgment closes the case; discernment opens an investigation. Two questions for telling which one you’re actually doing."
+    "summary": "Judgment closes the case; discernment opens an investigation. Two questions for telling which one you’re actually doing.",
+    "minutes": 3
   },
   {
     "title": "The Best Investments of My 20s",
     "date": "2025-09-06",
     "path": "posts/the-best-investments-of-my-20s.html",
-    "summary": "Reflections at 30 on high‑ROI choices: espresso, photos, home gym, travel, marrying young, and kids."
+    "summary": "Reflections at 30 on high‑ROI choices: espresso, photos, home gym, travel, marrying young, and kids.",
+    "minutes": 6
   },
   {
     "title": "The Need for Episodic Epics",
     "date": "2024-01-14",
     "path": "posts/the-need-for-episodic-epics.html",
-    "summary": "Episodic epics like Foundation and Genesis cultivate humility beyond the hero’s journey—they remind us we aren’t the main character."
+    "summary": "Episodic epics like Foundation and Genesis cultivate humility beyond the hero’s journey—they remind us we aren’t the main character.",
+    "minutes": 1
   },
   {
     "title": "Collapsing Your Magic Circles",
     "date": "2025-08-13",
     "path": "posts/collapsing-your-magic-circles.html",
-    "summary": "Identify the games you're playing, intentionally collapse their ‘magic circles,’ and choose better rules on your terms."
+    "summary": "Identify the games you’re playing, intentionally collapse their ‘magic circles,’ and choose better rules on your terms.",
+    "minutes": 5
   },
   {
     "title": "Small Talk, Big Mistakes",
     "date": "2023-07-08",
     "path": "posts/small-talk-big-mistakes.html",
-    "summary": "Avoid the Law of Triviality—stop meetings from drifting to minutiae; use clear objectives and a framework."
+    "summary": "Avoid the Law of Triviality—stop meetings from drifting to minutiae; use clear objectives and a framework.",
+    "minutes": 1
   },
   {
     "title": "Career Advice for 20-Year-Old Me",
     "date": "2023-06-20",
     "path": "posts/career-advice-for-20-year-old-me.html",
-    "summary": "Treat your career like an investment portfolio—build durable career capital and spend company capital wisely."
+    "summary": "Treat your career like an investment portfolio—build durable career capital and spend company capital wisely.",
+    "minutes": 4
   },
   {
     "title": "Auto-Decline Events Outside of Working Hours in Google Calendar",
     "date": "2023-01-30",
     "path": "posts/auto-decline-events.html",
-    "summary": "A Google Apps Script to auto-decline or maybe‑respond to meetings outside your working hours."
+    "summary": "A Google Apps Script to auto-decline or maybe‑respond to meetings outside your working hours.",
+    "minutes": 2
   },
   {
     "title": "How to Publish a Google Sheets Add-on",
     "date": "2022-06-04",
     "path": "posts/how-to-publish-a-google-sheets-add-on.html",
-    "summary": "Step-by-step guide: website requirements, promo assets, YouTube OAuth video, and the final application."
+    "summary": "Step-by-step guide: website requirements, promo assets, YouTube OAuth video, and the final application.",
+    "minutes": 2
   },
   {
     "title": "How I Approach Content Marketing",
     "date": "2022-07-27",
     "path": "posts/how-i-approach-content-marketing.html",
-    "summary": "Value, relevance, and goals—plus strategy pillars and four proven content formats."
+    "summary": "Value, relevance, and goals—plus strategy pillars and four proven content formats.",
+    "minutes": 2
   }
 ]
