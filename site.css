@@ -1454,6 +1454,41 @@ hr.rule { height: 1px; margin: 34px 0; border: 0; background: var(--line); }
 }
 .note-dot { margin: 0 .7em; color: var(--note-mark); }
 
+/* Listen: a recording of the note, under the date. Without JavaScript the
+   browser's own player shows; setupNotes() swaps in a quieter one. */
+.note-listen { max-width: 420px; margin: 30px auto 0; }
+.note-listen audio { display: block; width: 100%; }
+.note-listen-player { display: flex; align-items: center; gap: 14px; }
+.note-listen-play {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 1px solid var(--note-mark);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--note-accent);
+  cursor: pointer;
+  transition: background-color .2s, color .2s;
+}
+.note-listen-play:hover,
+.note-listen-play:focus-visible { background: var(--note-accent); color: var(--note-ground); }
+.note-listen-play svg { width: 14px; height: 14px; fill: currentColor; }
+.note-listen-play .icon-pause,
+.note-listen-player.is-playing .icon-play { display: none; }
+.note-listen-player.is-playing .icon-pause { display: block; }
+.note-listen-seek { flex: 1; min-width: 0; margin: 0; accent-color: var(--note-accent); cursor: pointer; }
+.note-listen-time {
+  flex: none;
+  color: var(--note-muted);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .08em;
+}
+.note-listen-label { margin: 10px 0 0; color: var(--note-muted); font-size: 15px; font-style: italic; }
+
 .note-contents {
   width: min(var(--note-measure), 100% - 44px);
   margin: 0 auto 76px;
@@ -2019,6 +2054,7 @@ footer {
   .scene-art,
   .note-bar,
   .note-contents,
+  .note-listen,
   .note-after { display: none !important; }
   body,
   .note-page { background: #fff; }

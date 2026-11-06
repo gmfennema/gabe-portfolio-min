@@ -320,6 +320,49 @@
     return h2s.length ? h2s : $$(":scope > h3", body);
   }
 
+  /* A note's recording: a play button, a seek bar and the time, over the
+     page's own <audio>, which stays the browser's player without JavaScript. */
+  function setupListen(audio) {
+    const clock = (t) => {
+      const s = Math.max(0, Math.floor(t || 0));
+      return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+    };
+    let total = Number(audio.dataset.duration) || 0;
+    const player = make("div", "note-listen-player");
+    const play = make("button", "note-listen-play");
+    play.type = "button";
+    play.setAttribute("aria-label", "Play recording");
+    play.innerHTML = '<svg class="icon-play" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 1.5v11l9.5-5.5z"/></svg>'
+      + '<svg class="icon-pause" viewBox="0 0 14 14" aria-hidden="true"><path d="M2.5 1.5h3v11h-3zM8.5 1.5h3v11h-3z"/></svg>';
+    const seek = make("input", "note-listen-seek");
+    Object.assign(seek, { type: "range", min: 0, max: total || 1, step: 1, value: 0 });
+    seek.setAttribute("aria-label", "Position in recording");
+    const time = make("span", "note-listen-time", `0:00 / ${clock(total)}`);
+    player.append(play, seek, time);
+    audio.removeAttribute("controls");
+    audio.hidden = true;
+    audio.after(player);
+
+    const show = () => {
+      if (audio.duration && isFinite(audio.duration)) total = audio.duration;
+      seek.max = total || 1;
+      if (document.activeElement !== seek) seek.value = audio.currentTime;
+      time.textContent = `${clock(audio.currentTime)} / ${clock(total)}`;
+      seek.setAttribute("aria-valuetext", time.textContent);
+    };
+    play.addEventListener("click", () => (audio.paused ? audio.play() : audio.pause()));
+    seek.addEventListener("input", () => {
+      audio.currentTime = Number(seek.value);
+      show();
+    });
+    ["timeupdate", "loadedmetadata", "seeked"].forEach((type) => audio.addEventListener(type, show));
+    ["play", "pause", "ended"].forEach((type) => audio.addEventListener(type, () => {
+      const playing = !audio.paused && !audio.ended;
+      player.classList.toggle("is-playing", playing);
+      play.setAttribute("aria-label", playing ? "Pause recording" : "Play recording");
+    }));
+  }
+
   function setupNotes() {
     const note = $("main.note");
     const head = note && $(".note-head", note);
@@ -334,6 +377,9 @@
       dot.setAttribute("aria-hidden", "true");
       meta.append(dot, `${Math.max(1, Math.round(words / NOTE_WORDS_PER_MINUTE))} min read`);
     }
+
+    const listen = $(".note-listen audio", head);
+    if (listen) setupListen(listen);
 
     const ownNumbers = body.classList.contains("self-numbered");
     const sections = noteSections(body).map((heading, index) => {
